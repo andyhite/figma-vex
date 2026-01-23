@@ -46,9 +46,18 @@ interface ExportOptions {
   selectedCollections?: string[];
 }
 
+interface GitHubDispatchOptions {
+  repository: string; // Format: "owner/repo"
+  token: string;
+  workflowFileName?: string; // Defaults to "update-variables.yml"
+  exportTypes: ("css" | "scss" | "json" | "typescript")[];
+  exportOptions: ExportOptions;
+}
+
 interface PluginMessage {
-  type: "export-css" | "export-json" | "export-scss" | "export-typescript" | "get-collections" | "cancel";
+  type: "export-css" | "export-json" | "export-scss" | "export-typescript" | "get-collections" | "github-dispatch" | "cancel";
   options?: ExportOptions;
+  githubOptions?: GitHubDispatchOptions;
 }
 
 // ============================================================================
@@ -730,6 +739,141 @@ const exportTypeScript = async (options: ExportOptions): Promise<string> => {
 };
 
 // ============================================================================
+// GitHub Dispatch
+// ============================================================================
+
+/**
+ * Sends a repository_dispatch event to GitHub with generated variable exports.
+ */
+const sendGitHubDispatch = async (options: GitHubDispatchOptions): Promise<void> => {
+  // Validate and parse repository
+  const repoParts = options.repository.trim().split("/").filter(Boolean);
+  
+  if (repoParts.length !== 2) {
+    throw new Error("Invalid repository format. Expected 'owner/repo' (e.g., 'octocat/Hello-World')");
+  }
+
+  const [owner, repo] = repoParts;
+  
+  if (!owner || !repo) {
+    throw new Error("Repository owner and name are required");
+  }
+
+  // Validate token
+  const token = options.token.trim();
+  if (!token) {
+    throw new Error("GitHub token is required");
+  }
+
+  // Validate export types
+  if (!options.exportTypes || options.exportTypes.length === 0) {
+    throw new Error("At least one export type must be selected");
+  }
+
+  // Generate all requested export types
+  const exports: Record<string, string> = {};
+  const baseOptions = options.exportOptions;
+
+  try {
+    if (options.exportTypes.includes("css")) {
+      const cssOptions: ExportOptions = {
+        ...baseOptions,
+        includeCollectionComments: baseOptions.includeCollectionComments ?? true,
+        includeModeComments: baseOptions.includeModeComments ?? true,
+        selector: baseOptions.selector?.trim() || ":root",
+        useModesAsSelectors: baseOptions.useModesAsSelectors ?? false,
+      };
+      exports.css = await exportVariables(cssOptions);
+    }
+
+    if (options.exportTypes.includes("scss")) {
+      const scssOptions: ExportOptions = {
+        ...baseOptions,
+        includeCollectionComments: baseOptions.includeCollectionComments ?? true,
+        includeModeComments: false,
+        selector: ":root",
+        useModesAsSelectors: false,
+      };
+      exports.scss = await exportScss(scssOptions);
+    }
+
+    if (options.exportTypes.includes("json")) {
+      exports.json = await exportJson(baseOptions);
+    }
+
+    if (options.exportTypes.includes("typescript")) {
+      const tsOptions: ExportOptions = {
+        ...baseOptions,
+        includeCollectionComments: baseOptions.includeCollectionComments ?? false,
+        includeModeComments: false,
+        selector: ":root",
+        useModesAsSelectors: false,
+      };
+      exports.typescript = await exportTypeScript(tsOptions);
+    }
+  } catch (exportError) {
+    const errorMessage = exportError instanceof Error ? exportError.message : String(exportError);
+    throw new Error(`Failed to generate exports: ${errorMessage}`);
+  }
+
+  // Prepare the payload
+  const payload = {
+    event_type: "figma-variables-update",
+    client_payload: {
+      exports,
+      generated_at: new Date().toISOString(),
+      figma_file: figma.root.name,
+      workflow_file: options.workflowFileName || "update-variables.yml",
+    },
+  };
+
+  // Make the API call
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/dispatches`;
+  
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Accept": "application/vnd.github+json",
+        "Authorization": `Bearer ${token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (fetchError) {
+    throw new Error(`Network error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = `GitHub API error (${response.status})`;
+    
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorJson.errors?.[0]?.message || errorMessage;
+    } catch {
+      // If parsing fails, use the raw text if it's meaningful
+      if (errorText && errorText.length < 200) {
+        errorMessage = errorText;
+      }
+    }
+    
+    // Provide more specific error messages for common status codes
+    if (response.status === 401) {
+      errorMessage = "Authentication failed. Please check your GitHub token.";
+    } else if (response.status === 403) {
+      errorMessage = "Access forbidden. Ensure your token has 'repo' scope and repository access.";
+    } else if (response.status === 404) {
+      errorMessage = "Repository not found. Check the repository name and your access permissions.";
+    }
+    
+    throw new Error(errorMessage);
+  }
+};
+
+// ============================================================================
 // Plugin Entry Point
 // ============================================================================
 
@@ -789,6 +933,25 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
 
         const typescript = await exportTypeScript(options);
         figma.ui.postMessage({ type: "typescript-result", typescript });
+        break;
+      }
+
+      case "github-dispatch": {
+        if (!msg.githubOptions) {
+          throw new Error("GitHub options are required");
+        }
+
+        try {
+          await sendGitHubDispatch(msg.githubOptions);
+          figma.ui.postMessage({
+            type: "github-dispatch-success",
+            message: "Successfully sent to GitHub! The workflow should start shortly.",
+          });
+        } catch (githubError) {
+          // Re-throw with more context
+          const errorMessage = githubError instanceof Error ? githubError.message : String(githubError);
+          throw new Error(`GitHub dispatch failed: ${errorMessage}`);
+        }
         break;
       }
 

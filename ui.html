@@ -114,7 +114,8 @@
       accent-color: #18a0fb;
     }
 
-    input[type="text"] {
+    input[type="text"],
+    input[type="password"] {
       width: 100%;
       padding: 6px 8px;
       border: 1px solid #3c3c3c;
@@ -126,14 +127,20 @@
       transition: border-color 0.15s ease;
     }
 
-    input[type="text"]:focus {
+    input[type="text"]:focus,
+    input[type="password"]:focus {
       outline: none;
       border-color: #18a0fb;
       background: #2c2c2c;
     }
 
-    input[type="text"]::placeholder {
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder {
       color: #666666;
+    }
+
+    input[type="password"] {
+      letter-spacing: 2px;
     }
 
     .output-area {
@@ -337,6 +344,7 @@
     <button class="tab" data-tab="scss">SCSS</button>
     <button class="tab" data-tab="json">JSON</button>
     <button class="tab" data-tab="typescript">TypeScript</button>
+    <button class="tab" data-tab="github">GitHub</button>
     <button class="tab" data-tab="help">Help</button>
   </div>
 
@@ -446,6 +454,103 @@
     <div class="status" id="typescript-status"></div>
   </div>
 
+  <div id="github-tab" class="tab-content">
+    <div class="form-group">
+      <label class="text-label">GitHub Repository</label>
+      <input type="text" id="github-repo" placeholder="owner/repo (e.g., octocat/Hello-World)" />
+      <p style="margin-top: 4px; font-size: 10px; color: #666666;">
+        Format: owner/repository-name
+      </p>
+    </div>
+
+    <div class="form-group">
+      <label class="text-label">GitHub Personal Access Token</label>
+      <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxx" />
+      <p style="margin-top: 4px; font-size: 10px; color: #666666;">
+        Token needs <code>repo</code> scope. Create one at: <a href="https://github.com/settings/tokens" target="_blank" style="color: #18a0fb;">github.com/settings/tokens</a>
+      </p>
+    </div>
+
+    <div class="form-group">
+      <label class="text-label">Workflow File Name (optional)</label>
+      <input type="text" id="github-workflow" placeholder="update-variables.yml" value="update-variables.yml" />
+      <p style="margin-top: 4px; font-size: 10px; color: #666666;">
+        Optional metadata included in the payload (does not need to match an actual workflow file)
+      </p>
+    </div>
+
+    <div class="form-group">
+      <label class="text-label">Export Types</label>
+      <div style="margin-top: 8px;">
+        <label style="display: flex; align-items: center; margin-bottom: 8px;">
+          <input type="checkbox" id="github-export-css" checked />
+          <span style="margin-left: 8px;">CSS</span>
+        </label>
+        <label style="display: flex; align-items: center; margin-bottom: 8px;">
+          <input type="checkbox" id="github-export-scss" />
+          <span style="margin-left: 8px;">SCSS</span>
+        </label>
+        <label style="display: flex; align-items: center; margin-bottom: 8px;">
+          <input type="checkbox" id="github-export-json" checked />
+          <span style="margin-left: 8px;">JSON</span>
+        </label>
+        <label style="display: flex; align-items: center; margin-bottom: 8px;">
+          <input type="checkbox" id="github-export-typescript" />
+          <span style="margin-left: 8px;">TypeScript</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group" id="github-css-options">
+      <label class="text-label">CSS Options</label>
+      <div style="margin-top: 8px;">
+        <label style="display: flex; align-items: center; margin-bottom: 8px;">
+          <input type="text" id="github-css-selector" placeholder=":root" value=":root" style="width: 200px; margin-right: 8px;" />
+          <span>CSS Selector</span>
+        </label>
+        <label style="display: flex; align-items: center; margin-bottom: 8px;">
+          <input type="checkbox" id="github-use-modes-as-selectors" />
+          <span style="margin-left: 8px;">Export modes as separate selectors</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button class="btn-primary" id="github-dispatch">Send to GitHub</button>
+    </div>
+
+    <div class="status" id="github-status"></div>
+
+    <div class="help-section" style="margin-top: 20px;">
+      <h4>How it works</h4>
+      <p style="margin-bottom: 12px; color: #b3b3b3; font-size: 11px;">
+        This will trigger a <code>repository_dispatch</code> event in your GitHub repository with event type <code>figma-variables-update</code>. 
+        The payload includes all selected exports in the <code>client_payload.exports</code> object.
+      </p>
+      <h4 style="margin-top: 12px;">Payload Structure</h4>
+      <p style="margin-bottom: 8px; color: #b3b3b3; font-size: 11px;">
+        The dispatch payload contains:
+      </p>
+      <pre style="background: #1e1e1e; padding: 12px; border-radius: 3px; font-size: 10px; overflow-x: auto; color: #ffffff; border: 1px solid #3c3c3c; margin-top: 8px; white-space: pre-wrap; word-wrap: break-word;"><code>{
+  "event_type": "figma-variables-update",
+  "client_payload": {
+    "exports": {
+      "css": "...",
+      "scss": "...",
+      "json": "...",
+      "typescript": "..."
+    },
+    "generated_at": "2024-01-01T00:00:00.000Z",
+    "figma_file": "Design File",
+    "workflow_file": "update-variables.yml"
+  }
+}</code></pre>
+      <p style="margin-top: 12px; margin-bottom: 12px; color: #b3b3b3; font-size: 11px;">
+        Access the exports in your workflow via <code>${{ github.event.client_payload.exports.* }}</code>
+      </p>
+    </div>
+  </div>
+
   <div id="help-tab" class="tab-content">
     <div class="help-section">
       <h4>Description Field Format</h4>
@@ -538,6 +643,7 @@
       scss: 'Export variables as SCSS variables for use in Sass/SCSS stylesheets.',
       json: 'Export as JSON for use with Style Dictionary or other token tools.',
       typescript: 'Generate TypeScript type definitions for CSS custom properties.',
+      github: 'Send generated exports to GitHub via repository_dispatch event.',
       help: 'Learn how to configure variable exports using description fields.'
     };
 
@@ -556,7 +662,7 @@
         descriptionEl.textContent = description;
         descriptionEl.style.display = 'block';
         
-        // Hide common options on help tab
+        // Hide common options on help tab only
         const commonOptions = document.getElementById('common-options');
         if (tab.dataset.tab === 'help') {
           commonOptions.style.display = 'none';
@@ -577,6 +683,18 @@
 
     // Request collections on load
     parent.postMessage({ pluginMessage: { type: 'get-collections' } }, '*');
+
+    // Show CSS options initially if CSS export is checked
+    const cssCheckbox = document.getElementById('github-export-css');
+    const cssOptionsDiv = document.getElementById('github-css-options');
+    if (cssCheckbox && cssOptionsDiv) {
+      cssOptionsDiv.style.display = cssCheckbox.checked ? 'block' : 'none';
+      
+      // Toggle CSS options visibility when checkbox changes
+      cssCheckbox.addEventListener('change', (e) => {
+        cssOptionsDiv.style.display = e.target.checked ? 'block' : 'none';
+      });
+    }
 
     // Export CSS
     document.getElementById('export-css')?.addEventListener('click', () => {
@@ -643,6 +761,82 @@
 
       parent.postMessage({ pluginMessage: { type: 'export-typescript', options } }, '*');
       showStatus('typescript', 'Generating...');
+    });
+
+    // GitHub Dispatch
+    document.getElementById('github-dispatch')?.addEventListener('click', () => {
+      const repoInput = document.getElementById('github-repo');
+      const tokenInput = document.getElementById('github-token');
+      const workflowInput = document.getElementById('github-workflow');
+      
+      const repository = repoInput?.value?.trim();
+      const token = tokenInput?.value?.trim();
+      const workflowFileName = workflowInput?.value?.trim() || 'update-variables.yml';
+
+      // Validate inputs
+      if (!repository) {
+        showStatus('github', 'Please enter a GitHub repository', true);
+        repoInput?.focus();
+        return;
+      }
+
+      if (!token) {
+        showStatus('github', 'Please enter a GitHub token', true);
+        tokenInput?.focus();
+        return;
+      }
+
+      // Validate repository format (owner/repo)
+      const repoParts = repository.split('/').filter(Boolean);
+      if (repoParts.length !== 2) {
+        showStatus('github', 'Repository must be in format: owner/repo (e.g., octocat/Hello-World)', true);
+        repoInput?.focus();
+        return;
+      }
+
+      // Basic token format validation
+      if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+        // Warn but don't block - user might be using a different token format
+        console.warn('Token format may be incorrect. GitHub tokens typically start with ghp_ or github_pat_');
+      }
+
+      // Get selected export types
+      const exportTypes = [];
+      if (document.getElementById('github-export-css')?.checked) exportTypes.push('css');
+      if (document.getElementById('github-export-scss')?.checked) exportTypes.push('scss');
+      if (document.getElementById('github-export-json')?.checked) exportTypes.push('json');
+      if (document.getElementById('github-export-typescript')?.checked) exportTypes.push('typescript');
+
+      if (exportTypes.length === 0) {
+        showStatus('github', 'Please select at least one export type', true);
+        return;
+      }
+
+
+      // Get common options
+      const selectedCollections = getSelectedCollections();
+      const prefixInput = document.getElementById('common-prefix');
+      const cssSelectorInput = document.getElementById('github-css-selector');
+
+      const exportOptions = {
+        selector: cssSelectorInput?.value?.trim() || ':root',
+        prefix: prefixInput?.value?.trim() || undefined,
+        useModesAsSelectors: document.getElementById('github-use-modes-as-selectors')?.checked || false,
+        includeCollectionComments: document.getElementById('common-includeCollectionComments')?.checked ?? true,
+        includeModeComments: document.getElementById('css-includeModeComments')?.checked ?? true,
+        selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+      };
+
+      const githubOptions = {
+        repository,
+        token,
+        workflowFileName,
+        exportTypes,
+        exportOptions,
+      };
+
+      parent.postMessage({ pluginMessage: { type: 'github-dispatch', githubOptions } }, '*');
+      showStatus('github', 'Sending to GitHub...');
     });
 
     // Helper function to copy to clipboard using modern API
@@ -774,9 +968,11 @@
           output.value = msg.typescript || '';
         }
         showStatus('typescript', 'Generated successfully!');
+      } else if (msg.type === 'github-dispatch-success') {
+        showStatus('github', msg.message || 'Successfully sent to GitHub!');
       } else if (msg.type === 'error') {
         // Show error on all tabs since we don't know which one triggered it
-        ['css', 'scss', 'json', 'typescript'].forEach(tab => {
+        ['css', 'scss', 'json', 'typescript', 'github'].forEach(tab => {
           showStatus(tab, msg.message || 'An error occurred', true);
         });
       }

@@ -120,6 +120,7 @@ When "Export modes as separate selectors" is enabled:
 - ✅ Variable alias resolution
 - ✅ Multi-mode support
 - ✅ JSON export for Style Dictionary
+- ✅ GitHub integration with automatic PR creation
 - ✅ No external dependencies at runtime
 
 ## Development
@@ -150,6 +151,45 @@ figma-variables-export/
 ├── ui.html        # Plugin UI
 └── package.json   # Dependencies and scripts
 ```
+
+## GitHub Integration
+
+The plugin can send generated exports to GitHub via `repository_dispatch` events. This allows you to trigger custom workflows in your repository to process the exported variables.
+
+### Setup
+
+1. **Create a GitHub Personal Access Token**:
+   - Go to [GitHub Settings > Tokens](https://github.com/settings/tokens)
+   - Generate a new token with `repo` scope
+   - Copy the token
+
+2. **Use the plugin**:
+   - Open the GitHub tab in the plugin
+   - Enter your repository: `owner/repo`
+   - Paste your GitHub token
+   - Select export types to include
+   - Click "Send to GitHub"
+
+### Payload Structure
+
+The plugin sends a `repository_dispatch` event with:
+- **Event type**: `figma-variables-update`
+- **Payload**:
+  ```json
+  {
+    "exports": {
+      "css": "...",
+      "scss": "...",
+      "json": "...",
+      "typescript": "..."
+    },
+    "generated_at": "2024-01-01T00:00:00.000Z",
+    "figma_file": "Design File",
+    "workflow_file": "update-variables.yml"
+  }
+  ```
+
+Access the exports in your workflow via `${{ github.event.client_payload.exports.* }}`.
 
 ## License
 
