@@ -1,0 +1,23 @@
+{
+  "name": "figma-variables-export",
+  "version": "1.0.0",
+  "description": "Figma Variables Export Plugin",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "variables"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.90.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.3"
+  }
+}
