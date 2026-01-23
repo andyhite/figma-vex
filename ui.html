@@ -211,6 +211,32 @@
     .status.error {
       color: #f24822;
     }
+
+    .collections-list {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      padding: 8px;
+      background: #fafafa;
+      margin-top: 8px;
+    }
+
+    .collections-list label {
+      display: flex;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 11px;
+    }
+
+    .collections-list input[type="checkbox"] {
+      margin-right: 6px;
+    }
+
+    .scrollable {
+      max-height: 200px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
@@ -218,7 +244,9 @@
 
   <div class="tabs">
     <button class="tab active" data-tab="css">CSS</button>
+    <button class="tab" data-tab="scss">SCSS</button>
     <button class="tab" data-tab="json">JSON</button>
+    <button class="tab" data-tab="typescript">TypeScript</button>
     <button class="tab" data-tab="help">Help</button>
   </div>
 
@@ -227,26 +255,38 @@
 
     <div class="form-group">
       <label class="text-label">CSS Selector</label>
-      <input type="text" id="selector" value=":root" />
+      <input type="text" id="css-selector" value=":root" />
+    </div>
+
+    <div class="form-group">
+      <label class="text-label">Variable Prefix (optional)</label>
+      <input type="text" id="css-prefix" placeholder="e.g., ds, theme" />
+    </div>
+
+    <div class="form-group">
+      <label class="text-label">Collections</label>
+      <div class="collections-list" id="css-collections">
+        <div style="color: #666; font-size: 11px;">Loading collections...</div>
+      </div>
     </div>
 
     <div class="form-group">
       <label>
-        <input type="checkbox" id="useModesAsSelectors" />
+        <input type="checkbox" id="css-useModesAsSelectors" />
         Export modes as separate selectors
       </label>
     </div>
 
     <div class="form-group">
       <label>
-        <input type="checkbox" id="includeCollectionComments" checked />
+        <input type="checkbox" id="css-includeCollectionComments" checked />
         Include collection comments
       </label>
     </div>
 
     <div class="form-group">
       <label>
-        <input type="checkbox" id="includeModeComments" checked />
+        <input type="checkbox" id="css-includeModeComments" checked />
         Include mode comments
       </label>
     </div>
@@ -260,15 +300,60 @@
 
     <div class="button-row">
       <button class="btn-secondary" id="copy-css">Copy to Clipboard</button>
+      <button class="btn-secondary" id="download-css">Download</button>
     </div>
 
     <div class="status" id="css-status"></div>
+  </div>
+
+  <div id="scss-tab" class="tab-content">
+    <h3>Options</h3>
+
+    <div class="form-group">
+      <label class="text-label">Variable Prefix (optional)</label>
+      <input type="text" id="scss-prefix" placeholder="e.g., ds, theme" />
+    </div>
+
+    <div class="form-group">
+      <label class="text-label">Collections</label>
+      <div class="collections-list" id="scss-collections">
+        <div style="color: #666; font-size: 11px;">Loading collections...</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="scss-includeCollectionComments" checked />
+        Include collection comments
+      </label>
+    </div>
+
+    <div class="button-row">
+      <button class="btn-primary" id="export-scss">Generate SCSS</button>
+    </div>
+
+    <h3>Output</h3>
+    <textarea class="output-area" id="scss-output" readonly placeholder="Click 'Generate SCSS' to export variables..."></textarea>
+
+    <div class="button-row">
+      <button class="btn-secondary" id="copy-scss">Copy to Clipboard</button>
+      <button class="btn-secondary" id="download-scss">Download</button>
+    </div>
+
+    <div class="status" id="scss-status"></div>
   </div>
 
   <div id="json-tab" class="tab-content">
     <p style="margin-bottom: 12px; color: #666;">
       Export as JSON for use with Style Dictionary or other token tools.
     </p>
+
+    <div class="form-group">
+      <label class="text-label">Collections</label>
+      <div class="collections-list" id="json-collections">
+        <div style="color: #666; font-size: 11px;">Loading collections...</div>
+      </div>
+    </div>
 
     <div class="button-row">
       <button class="btn-primary" id="export-json">Generate JSON</button>
@@ -279,9 +364,42 @@
 
     <div class="button-row">
       <button class="btn-secondary" id="copy-json">Copy to Clipboard</button>
+      <button class="btn-secondary" id="download-json">Download</button>
     </div>
 
     <div class="status" id="json-status"></div>
+  </div>
+
+  <div id="typescript-tab" class="tab-content">
+    <p style="margin-bottom: 12px; color: #666;">
+      Generate TypeScript type definitions for CSS custom properties.
+    </p>
+
+    <div class="form-group">
+      <label class="text-label">Variable Prefix (optional)</label>
+      <input type="text" id="ts-prefix" placeholder="e.g., ds, theme" />
+    </div>
+
+    <div class="form-group">
+      <label class="text-label">Collections</label>
+      <div class="collections-list" id="ts-collections">
+        <div style="color: #666; font-size: 11px;">Loading collections...</div>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button class="btn-primary" id="export-typescript">Generate TypeScript</button>
+    </div>
+
+    <h3>Output</h3>
+    <textarea class="output-area" id="typescript-output" readonly placeholder="Click 'Generate TypeScript' to export types..."></textarea>
+
+    <div class="button-row">
+      <button class="btn-secondary" id="copy-typescript">Copy to Clipboard</button>
+      <button class="btn-secondary" id="download-typescript">Download</button>
+    </div>
+
+    <div class="status" id="typescript-status"></div>
   </div>
 
   <div id="help-tab" class="tab-content">
@@ -322,6 +440,43 @@
   </div>
 
   <script>
+    let collections = [];
+
+    // Helper function to download file
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Helper function to get selected collections
+    function getSelectedCollections(prefix) {
+      const checkboxes = document.querySelectorAll(`#${prefix}-collections input[type="checkbox"]:checked`);
+      return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    // Helper function to render collections
+    function renderCollections(containerId, selectedIds = []) {
+      const container = document.getElementById(containerId);
+      if (collections.length === 0) {
+        container.innerHTML = '<div style="color: #666; font-size: 11px;">No collections found</div>';
+        return;
+      }
+
+      container.innerHTML = collections.map(collection => `
+        <label>
+          <input type="checkbox" value="${collection.id}" ${selectedIds.includes(collection.id) ? 'checked' : ''} />
+          ${collection.name}
+        </label>
+      `).join('');
+    }
+
     // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -333,13 +488,19 @@
       });
     });
 
+    // Request collections on load
+    parent.postMessage({ pluginMessage: { type: 'get-collections' } }, '*');
+
     // Export CSS
     document.getElementById('export-css').addEventListener('click', () => {
+      const selectedCollections = getSelectedCollections('css');
       const options = {
-        selector: document.getElementById('selector').value || ':root',
-        useModesAsSelectors: document.getElementById('useModesAsSelectors').checked,
-        includeCollectionComments: document.getElementById('includeCollectionComments').checked,
-        includeModeComments: document.getElementById('includeModeComments').checked,
+        selector: document.getElementById('css-selector').value || ':root',
+        prefix: document.getElementById('css-prefix').value.trim() || undefined,
+        useModesAsSelectors: document.getElementById('css-useModesAsSelectors').checked,
+        includeCollectionComments: document.getElementById('css-includeCollectionComments').checked,
+        includeModeComments: document.getElementById('css-includeModeComments').checked,
+        selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
       };
 
       parent.postMessage({ pluginMessage: { type: 'export-css', options } }, '*');
@@ -347,11 +508,50 @@
       document.getElementById('css-status').className = 'status';
     });
 
+    // Export SCSS
+    document.getElementById('export-scss').addEventListener('click', () => {
+      const selectedCollections = getSelectedCollections('scss');
+      const options = {
+        selector: ':root',
+        prefix: document.getElementById('scss-prefix').value.trim() || undefined,
+        includeCollectionComments: document.getElementById('scss-includeCollectionComments').checked,
+        includeModeComments: false,
+        useModesAsSelectors: false,
+        selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+      };
+
+      parent.postMessage({ pluginMessage: { type: 'export-scss', options } }, '*');
+      document.getElementById('scss-status').textContent = 'Generating...';
+      document.getElementById('scss-status').className = 'status';
+    });
+
     // Export JSON
     document.getElementById('export-json').addEventListener('click', () => {
-      parent.postMessage({ pluginMessage: { type: 'export-json' } }, '*');
+      const selectedCollections = getSelectedCollections('json');
+      const options = {
+        selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+      };
+
+      parent.postMessage({ pluginMessage: { type: 'export-json', options } }, '*');
       document.getElementById('json-status').textContent = 'Generating...';
       document.getElementById('json-status').className = 'status';
+    });
+
+    // Export TypeScript
+    document.getElementById('export-typescript').addEventListener('click', () => {
+      const selectedCollections = getSelectedCollections('ts');
+      const options = {
+        selector: ':root',
+        prefix: document.getElementById('ts-prefix').value.trim() || undefined,
+        includeCollectionComments: false,
+        includeModeComments: false,
+        useModesAsSelectors: false,
+        selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+      };
+
+      parent.postMessage({ pluginMessage: { type: 'export-typescript', options } }, '*');
+      document.getElementById('typescript-status').textContent = 'Generating...';
+      document.getElementById('typescript-status').className = 'status';
     });
 
     // Copy buttons
@@ -359,8 +559,16 @@
       const output = document.getElementById('css-output');
       output.select();
       document.execCommand('copy');
-
       const status = document.getElementById('css-status');
+      status.textContent = 'Copied to clipboard!';
+      status.className = 'status success';
+    });
+
+    document.getElementById('copy-scss').addEventListener('click', () => {
+      const output = document.getElementById('scss-output');
+      output.select();
+      document.execCommand('copy');
+      const status = document.getElementById('scss-status');
       status.textContent = 'Copied to clipboard!';
       status.className = 'status success';
     });
@@ -369,15 +577,72 @@
       const output = document.getElementById('json-output');
       output.select();
       document.execCommand('copy');
-
       const status = document.getElementById('json-status');
       status.textContent = 'Copied to clipboard!';
       status.className = 'status success';
     });
 
+    document.getElementById('copy-typescript').addEventListener('click', () => {
+      const output = document.getElementById('typescript-output');
+      output.select();
+      document.execCommand('copy');
+      const status = document.getElementById('typescript-status');
+      status.textContent = 'Copied to clipboard!';
+      status.className = 'status success';
+    });
+
+    // Download buttons
+    document.getElementById('download-css').addEventListener('click', () => {
+      const content = document.getElementById('css-output').value;
+      if (content) {
+        downloadFile(content, 'variables.css', 'text/css');
+        const status = document.getElementById('css-status');
+        status.textContent = 'Downloaded!';
+        status.className = 'status success';
+      }
+    });
+
+    document.getElementById('download-scss').addEventListener('click', () => {
+      const content = document.getElementById('scss-output').value;
+      if (content) {
+        downloadFile(content, 'variables.scss', 'text/scss');
+        const status = document.getElementById('scss-status');
+        status.textContent = 'Downloaded!';
+        status.className = 'status success';
+      }
+    });
+
+    document.getElementById('download-json').addEventListener('click', () => {
+      const content = document.getElementById('json-output').value;
+      if (content) {
+        downloadFile(content, 'variables.json', 'application/json');
+        const status = document.getElementById('json-status');
+        status.textContent = 'Downloaded!';
+        status.className = 'status success';
+      }
+    });
+
+    document.getElementById('download-typescript').addEventListener('click', () => {
+      const content = document.getElementById('typescript-output').value;
+      if (content) {
+        downloadFile(content, 'variables.d.ts', 'text/typescript');
+        const status = document.getElementById('typescript-status');
+        status.textContent = 'Downloaded!';
+        status.className = 'status success';
+      }
+    });
+
     // Receive messages from plugin
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
+
+      if (msg.type === 'collections-list') {
+        collections = msg.collections;
+        renderCollections('css-collections');
+        renderCollections('scss-collections');
+        renderCollections('json-collections');
+        renderCollections('ts-collections');
+      }
 
       if (msg.type === 'css-result') {
         document.getElementById('css-output').value = msg.css;
@@ -385,10 +650,22 @@
         document.getElementById('css-status').className = 'status success';
       }
 
+      if (msg.type === 'scss-result') {
+        document.getElementById('scss-output').value = msg.scss;
+        document.getElementById('scss-status').textContent = 'Generated successfully!';
+        document.getElementById('scss-status').className = 'status success';
+      }
+
       if (msg.type === 'json-result') {
         document.getElementById('json-output').value = msg.json;
         document.getElementById('json-status').textContent = 'Generated successfully!';
         document.getElementById('json-status').className = 'status success';
+      }
+
+      if (msg.type === 'typescript-result') {
+        document.getElementById('typescript-output').value = msg.typescript;
+        document.getElementById('typescript-status').textContent = 'Generated successfully!';
+        document.getElementById('typescript-status').className = 'status success';
       }
     };
   </script>

@@ -42,10 +42,12 @@ interface ExportOptions {
   includeModeComments: boolean;
   selector: string;
   useModesAsSelectors: boolean;
+  prefix?: string;
+  selectedCollections?: string[];
 }
 
 interface PluginMessage {
-  type: "export-css" | "export-json" | "cancel";
+  type: "export-css" | "export-json" | "export-scss" | "export-typescript" | "get-collections" | "cancel";
   options?: ExportOptions;
 }
 
@@ -242,6 +244,7 @@ const resolveValue = async (
   variables: Variable[],
   resolvedType: VariableResolvedDataType,
   config: TokenConfig,
+  prefix = "",
   depth = 0,
 ): Promise<string> => {
   // Prevent infinite recursion
@@ -257,7 +260,8 @@ const resolveValue = async (
 
     if (aliasedVar) {
       const aliasedCssName = toCssName(aliasedVar.name);
-      return `var(--${aliasedCssName})`;
+      const prefixedName = prefix ? `${prefix}-${aliasedCssName}` : aliasedCssName;
+      return `var(--${prefixedName})`;
     }
 
     return "/* unresolved alias */";
@@ -299,10 +303,17 @@ const resolveValue = async (
 
 const exportVariables = async (options: ExportOptions): Promise<string> => {
   const variables = await figma.variables.getLocalVariablesAsync();
-  const collections = await figma.variables.getLocalVariableCollectionsAsync();
+  let collections = await figma.variables.getLocalVariableCollectionsAsync();
 
   if (variables.length === 0) {
     return "/* No variables found in this file */";
+  }
+
+  // Filter collections if specified
+  if (options.selectedCollections && options.selectedCollections.length > 0) {
+    collections = collections.filter((c) =>
+      options.selectedCollections!.includes(c.id),
+    );
   }
 
   const lines: string[] = [
@@ -318,6 +329,7 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
     variable: Variable,
     modeId: string,
     indent = "  ",
+    prefix = "",
   ): Promise<string> => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
@@ -329,15 +341,17 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
     if (value === undefined) return "";
 
     const cssName = toCssName(variable.name);
+    const prefixedName = prefix ? `${prefix}-${cssName}` : cssName;
     const cssValue = await resolveValue(
       value,
       modeId,
       variables,
       variable.resolvedType,
       config,
+      prefix,
     );
 
-    return `${indent}--${cssName}: ${cssValue};`;
+    return `${indent}--${prefixedName}: ${cssValue};`;
   };
 
   if (options.useModesAsSelectors) {
@@ -363,7 +377,12 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
           .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
 
         for (const variable of collectionVars) {
-          const line = await processVariable(variable, mode.modeId);
+          const line = await processVariable(
+            variable,
+            mode.modeId,
+            "  ",
+            options.prefix,
+          );
           if (line) lines.push(line);
         }
 
@@ -388,7 +407,12 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
         .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
 
       for (const variable of collectionVars) {
-        const line = await processVariable(variable, collection.defaultModeId);
+        const line = await processVariable(
+          variable,
+          collection.defaultModeId,
+          "  ",
+          options.prefix,
+        );
         if (line) lines.push(line);
       }
 
@@ -434,9 +458,16 @@ const formatRawValue = (
   return value;
 };
 
-const exportJson = async (): Promise<string> => {
+const exportJson = async (options?: ExportOptions): Promise<string> => {
   const variables = await figma.variables.getLocalVariablesAsync();
-  const collections = await figma.variables.getLocalVariableCollectionsAsync();
+  let collections = await figma.variables.getLocalVariableCollectionsAsync();
+
+  // Filter collections if specified
+  if (options?.selectedCollections && options.selectedCollections.length > 0) {
+    collections = collections.filter((c) =>
+      options.selectedCollections!.includes(c.id),
+    );
+  }
 
   const result: Record<string, unknown> = {};
 
@@ -503,13 +534,173 @@ const exportJson = async (): Promise<string> => {
 };
 
 // ============================================================================
+// SCSS/SASS Export
+// ============================================================================
+
+const exportScss = async (options: ExportOptions): Promise<string> => {
+  const variables = await figma.variables.getLocalVariablesAsync();
+  let collections = await figma.variables.getLocalVariableCollectionsAsync();
+
+  if (variables.length === 0) {
+    return "// No variables found in this file";
+  }
+
+  // Filter collections if specified
+  if (options.selectedCollections && options.selectedCollections.length > 0) {
+    collections = collections.filter((c) =>
+      options.selectedCollections!.includes(c.id),
+    );
+  }
+
+  const lines: string[] = [
+    "//",
+    "// Auto-generated SCSS Variables",
+    `// Exported from Figma: ${figma.root.name}`,
+    `// Generated: ${new Date().toISOString()}`,
+    "//",
+    "",
+  ];
+
+  const processScssVariable = async (
+    variable: Variable,
+    modeId: string,
+    prefix = "",
+  ): Promise<string> => {
+    const config: TokenConfig = {
+      ...DEFAULT_CONFIG,
+      ...parseDescription(variable.description),
+    };
+
+    const value = variable.valuesByMode[modeId];
+    if (value === undefined) return "";
+
+    const scssName = toCssName(variable.name);
+    const prefixedName = prefix ? `$${prefix}-${scssName}` : `$${scssName}`;
+    const scssValue = await resolveValue(
+      value,
+      modeId,
+      variables,
+      variable.resolvedType,
+      config,
+      prefix,
+    );
+
+    // Convert var() references to SCSS variable references
+    const scssValueFormatted = scssValue.replace(
+      /var\(--([^)]+)\)/g,
+      (_, varName) => {
+        return `$${varName}`;
+      },
+    );
+
+    return `${prefixedName}: ${scssValueFormatted};`;
+  };
+
+  for (const collection of collections) {
+    if (options.includeCollectionComments) {
+      lines.push(`// Collection: ${collection.name}`);
+    }
+
+    const collectionVars = variables
+      .filter((v) => v.variableCollectionId === collection.id)
+      .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
+
+    for (const variable of collectionVars) {
+      const line = await processScssVariable(
+        variable,
+        collection.defaultModeId,
+        options.prefix,
+      );
+      if (line) lines.push(line);
+    }
+
+    // Add newline between collections
+    if (collections.indexOf(collection) < collections.length - 1) {
+      lines.push("");
+    }
+  }
+
+  return lines.join("\n");
+};
+
+// ============================================================================
+// TypeScript Types Export
+// ============================================================================
+
+const exportTypeScript = async (options: ExportOptions): Promise<string> => {
+  const variables = await figma.variables.getLocalVariablesAsync();
+  let collections = await figma.variables.getLocalVariableCollectionsAsync();
+
+  if (variables.length === 0) {
+    return "// No variables found in this file";
+  }
+
+  // Filter collections if specified
+  if (options.selectedCollections && options.selectedCollections.length > 0) {
+    collections = collections.filter((c) =>
+      options.selectedCollections!.includes(c.id),
+    );
+  }
+
+  const lines: string[] = [
+    "/**",
+    " * Auto-generated TypeScript types for CSS Custom Properties",
+    ` * Exported from Figma: ${figma.root.name}`,
+    ` * Generated: ${new Date().toISOString()}`,
+    " */",
+    "",
+    "export type CSSVariableName =",
+  ];
+
+  const variableNames: string[] = [];
+
+  for (const collection of collections) {
+    const collectionVars = variables
+      .filter((v) => v.variableCollectionId === collection.id)
+      .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
+
+    for (const variable of collectionVars) {
+      const cssName = toCssName(variable.name);
+      const prefixedName = options.prefix
+        ? `${options.prefix}-${cssName}`
+        : cssName;
+      variableNames.push(`  | "--${prefixedName}"`);
+    }
+  }
+
+  if (variableNames.length === 0) {
+    return "// No variables found in this file";
+  }
+
+  lines.push(...variableNames);
+  lines.push(";");
+  lines.push("");
+  lines.push("declare module 'csstype' {");
+  lines.push("  interface Properties {");
+  lines.push("    [key: CSSVariableName]: string | number;");
+  lines.push("  }");
+  lines.push("}");
+
+  return lines.join("\n");
+};
+
+// ============================================================================
 // Plugin Entry Point
 // ============================================================================
 
-figma.showUI(__html__, { width: 480, height: 600 });
+figma.showUI(__html__, { width: 520, height: 700 });
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
   switch (msg.type) {
+    case "get-collections": {
+      const collections = await figma.variables.getLocalVariableCollectionsAsync();
+      figma.ui.postMessage({
+        type: "collections-list",
+        collections: collections.map((c) => ({ id: c.id, name: c.name })),
+      });
+      break;
+    }
+
     case "export-css": {
       const options: ExportOptions = msg.options ?? {
         includeCollectionComments: true,
@@ -524,8 +715,34 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
     }
 
     case "export-json": {
-      const json = await exportJson();
+      const json = await exportJson(msg.options);
       figma.ui.postMessage({ type: "json-result", json });
+      break;
+    }
+
+    case "export-scss": {
+      const options: ExportOptions = msg.options ?? {
+        includeCollectionComments: true,
+        includeModeComments: false,
+        selector: ":root",
+        useModesAsSelectors: false,
+      };
+
+      const scss = await exportScss(options);
+      figma.ui.postMessage({ type: "scss-result", scss });
+      break;
+    }
+
+    case "export-typescript": {
+      const options: ExportOptions = msg.options ?? {
+        includeCollectionComments: false,
+        includeModeComments: false,
+        selector: ":root",
+        useModesAsSelectors: false,
+      };
+
+      const typescript = await exportTypeScript(options);
+      figma.ui.postMessage({ type: "typescript-result", typescript });
       break;
     }
 
