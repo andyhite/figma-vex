@@ -94,12 +94,23 @@ const parseDescription = (description: string): Partial<TokenConfig> => {
 // Name Conversion
 // ============================================================================
 
-const toCssName = (name: string): string =>
-  name
+/**
+ * Converts a variable name to a valid CSS custom property name.
+ * Handles slashes, spaces, and camelCase conversion.
+ */
+const toCssName = (name: string): string => {
+  if (!name || typeof name !== "string") {
+    return "";
+  }
+  return name
     .replace(/\//g, "-")
     .replace(/\s+/g, "-")
     .replace(/([a-z])([A-Z])/g, "$1-$2")
+    .replace(/[^a-z0-9-]/gi, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
     .toLowerCase();
+};
 
 // ============================================================================
 // Color Conversion Utilities
@@ -112,6 +123,7 @@ const toHex = (n: number): string => {
 
 const rgbToHex = (color: RGBA): string => {
   const hex = `#${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}`;
+  // Include alpha channel only if it's less than 1 (not fully opaque)
   return color.a !== undefined && color.a < 1 ? `${hex}${toHex(color.a)}` : hex;
 };
 
@@ -215,10 +227,19 @@ const formatColor = (
 // Number Formatting
 // ============================================================================
 
-const cleanNumber = (value: number, decimals = 4): string =>
-  Number.isInteger(value)
+/**
+ * Formats a number, removing trailing zeros from decimal values.
+ * @param value - The number to format
+ * @param decimals - Maximum number of decimal places (default: 4)
+ */
+const cleanNumber = (value: number, decimals = 4): string => {
+  if (!Number.isFinite(value)) {
+    return String(value);
+  }
+  return Number.isInteger(value)
     ? String(value)
     : value.toFixed(decimals).replace(/\.?0+$/, "");
+};
 
 const formatNumber = (value: number, config: TokenConfig): string => {
   const formatters: Record<TokenConfig["unit"], () => string> = {
@@ -238,6 +259,10 @@ const formatNumber = (value: number, config: TokenConfig): string => {
 // Value Resolution
 // ============================================================================
 
+/**
+ * Resolves a variable value to its string representation.
+ * Handles variable aliases, colors, numbers, strings, and booleans.
+ */
 const resolveValue = async (
   value: VariableValue,
   modeId: string,
@@ -246,6 +271,7 @@ const resolveValue = async (
   config: TokenConfig,
   prefix = "",
   depth = 0,
+  visited = new Set<string>(),
 ): Promise<string> => {
   // Prevent infinite recursion
   if (depth > 10) return "/* circular reference */";
@@ -253,10 +279,18 @@ const resolveValue = async (
   // Handle variable alias - output as CSS var() reference
   if (
     typeof value === "object" &&
+    value !== null &&
     "type" in value &&
     value.type === "VARIABLE_ALIAS"
   ) {
-    const aliasedVar = variables.find((v) => v.id === value.id);
+    const aliasId = value.id;
+    
+    // Check for circular references
+    if (visited.has(aliasId)) {
+      return "/* circular reference */";
+    }
+
+    const aliasedVar = variables.find((v) => v.id === aliasId);
 
     if (aliasedVar) {
       const aliasedCssName = toCssName(aliasedVar.name);
@@ -270,20 +304,22 @@ const resolveValue = async (
   // Handle by type
   switch (resolvedType) {
     case "COLOR":
-      if (typeof value === "object" && "r" in value) {
+      if (typeof value === "object" && value !== null && "r" in value) {
         return formatColor(value as RGBA, config.colorFormat);
       }
       break;
 
     case "FLOAT":
-      if (typeof value === "number") {
+      if (typeof value === "number" && Number.isFinite(value)) {
         return formatNumber(value, config);
       }
       break;
 
     case "STRING":
       if (typeof value === "string") {
-        return `"${value}"`;
+        // Escape quotes in string values
+        const escaped = value.replace(/"/g, '\\"');
+        return `"${escaped}"`;
       }
       break;
 
@@ -294,7 +330,37 @@ const resolveValue = async (
       break;
   }
 
-  return String(value);
+  // Fallback: convert to string
+  return String(value ?? "");
+};
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Filters collections based on selected collections option.
+ */
+const filterCollections = (
+  collections: VariableCollection[],
+  selectedCollectionIds?: string[],
+): VariableCollection[] => {
+  if (selectedCollectionIds && selectedCollectionIds.length > 0) {
+    return collections.filter((c) => selectedCollectionIds.includes(c.id));
+  }
+  return collections;
+};
+
+/**
+ * Gets variables for a collection, sorted alphabetically.
+ */
+const getCollectionVariables = (
+  variables: Variable[],
+  collectionId: string,
+): Variable[] => {
+  return variables
+    .filter((v) => v.variableCollectionId === collectionId)
+    .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
 };
 
 // ============================================================================
@@ -309,12 +375,10 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
     return "/* No variables found in this file */";
   }
 
-  // Filter collections if specified
-  if (options.selectedCollections && options.selectedCollections.length > 0) {
-    collections = collections.filter((c) =>
-      options.selectedCollections!.includes(c.id),
-    );
-  }
+  collections = filterCollections(collections, options.selectedCollections);
+
+  // Validate selector
+  const selector = options.selector?.trim() || ":root";
 
   const lines: string[] = [
     "/**",
@@ -362,19 +426,17 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
 
       for (const mode of collection.modes) {
         const isDefault = mode.name.toLowerCase() === "default";
-        const selector = isDefault
-          ? options.selector
-          : `${options.selector}[data-theme="${mode.name.toLowerCase()}"], .theme-${mode.name.toLowerCase()}`;
+        const modeSelector = isDefault
+          ? selector
+          : `${selector}[data-theme="${mode.name.toLowerCase()}"], .theme-${mode.name.toLowerCase()}`;
 
         if (options.includeModeComments) {
           lines.push(`/* Mode: ${mode.name} */`);
         }
 
-        lines.push(`${selector} {`);
+        lines.push(`${modeSelector} {`);
 
-        const collectionVars = variables
-          .filter((v) => v.variableCollectionId === collection.id)
-          .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
+        const collectionVars = getCollectionVariables(variables, collection.id);
 
         for (const variable of collectionVars) {
           const line = await processVariable(
@@ -395,16 +457,14 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
       }
     }
   } else {
-    lines.push(`${options.selector} {`);
+    lines.push(`${selector} {`);
 
     for (const collection of collections) {
       if (options.includeCollectionComments) {
         lines.push(`  /* ${collection.name} */`);
       }
 
-      const collectionVars = variables
-        .filter((v) => v.variableCollectionId === collection.id)
-        .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
+      const collectionVars = getCollectionVariables(variables, collection.id);
 
       for (const variable of collectionVars) {
         const line = await processVariable(
@@ -432,6 +492,10 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
 // JSON Export (Style Dictionary compatible)
 // ============================================================================
 
+/**
+ * Formats a raw value for JSON export (Style Dictionary compatible).
+ * Handles variable aliases and color values.
+ */
 const formatRawValue = (
   value: VariableValue,
   type: VariableResolvedDataType,
@@ -439,6 +503,7 @@ const formatRawValue = (
 ): unknown => {
   if (
     typeof value === "object" &&
+    value !== null &&
     "type" in value &&
     value.type === "VARIABLE_ALIAS"
   ) {
@@ -451,7 +516,7 @@ const formatRawValue = (
     return `{${value.id}}`; // Fallback if variable not found
   }
 
-  if (type === "COLOR" && typeof value === "object" && "r" in value) {
+  if (type === "COLOR" && typeof value === "object" && value !== null && "r" in value) {
     return rgbToHex(value as RGBA);
   }
 
@@ -462,19 +527,13 @@ const exportJson = async (options?: ExportOptions): Promise<string> => {
   const variables = await figma.variables.getLocalVariablesAsync();
   let collections = await figma.variables.getLocalVariableCollectionsAsync();
 
-  // Filter collections if specified
-  if (options?.selectedCollections && options.selectedCollections.length > 0) {
-    collections = collections.filter((c) =>
-      options.selectedCollections!.includes(c.id),
-    );
-  }
+  collections = filterCollections(collections, options?.selectedCollections);
 
   const result: Record<string, unknown> = {};
 
   for (const collection of collections) {
     const collectionData: Record<string, unknown> = {};
-    const collectionVars = variables
-      .filter((v) => v.variableCollectionId === collection.id)
+    const collectionVars = getCollectionVariables(variables, collection.id)
       .sort((a, b) => a.name.localeCompare(b.name));
 
     for (const variable of collectionVars) {
@@ -545,12 +604,7 @@ const exportScss = async (options: ExportOptions): Promise<string> => {
     return "// No variables found in this file";
   }
 
-  // Filter collections if specified
-  if (options.selectedCollections && options.selectedCollections.length > 0) {
-    collections = collections.filter((c) =>
-      options.selectedCollections!.includes(c.id),
-    );
-  }
+  collections = filterCollections(collections, options.selectedCollections);
 
   const lines: string[] = [
     "//",
@@ -601,9 +655,7 @@ const exportScss = async (options: ExportOptions): Promise<string> => {
       lines.push(`// Collection: ${collection.name}`);
     }
 
-    const collectionVars = variables
-      .filter((v) => v.variableCollectionId === collection.id)
-      .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
+    const collectionVars = getCollectionVariables(variables, collection.id);
 
     for (const variable of collectionVars) {
       const line = await processScssVariable(
@@ -635,12 +687,7 @@ const exportTypeScript = async (options: ExportOptions): Promise<string> => {
     return "// No variables found in this file";
   }
 
-  // Filter collections if specified
-  if (options.selectedCollections && options.selectedCollections.length > 0) {
-    collections = collections.filter((c) =>
-      options.selectedCollections!.includes(c.id),
-    );
-  }
+  collections = filterCollections(collections, options.selectedCollections);
 
   const lines: string[] = [
     "/**",
@@ -655,9 +702,7 @@ const exportTypeScript = async (options: ExportOptions): Promise<string> => {
   const variableNames: string[] = [];
 
   for (const collection of collections) {
-    const collectionVars = variables
-      .filter((v) => v.variableCollectionId === collection.id)
-      .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
+    const collectionVars = getCollectionVariables(variables, collection.id);
 
     for (const variable of collectionVars) {
       const cssName = toCssName(variable.name);
@@ -691,64 +736,79 @@ const exportTypeScript = async (options: ExportOptions): Promise<string> => {
 figma.showUI(__html__, { width: 520, height: 700 });
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
-  switch (msg.type) {
-    case "get-collections": {
-      const collections = await figma.variables.getLocalVariableCollectionsAsync();
-      figma.ui.postMessage({
-        type: "collections-list",
-        collections: collections.map((c) => ({ id: c.id, name: c.name })),
-      });
-      break;
+  try {
+    switch (msg.type) {
+      case "get-collections": {
+        const collections = await figma.variables.getLocalVariableCollectionsAsync();
+        figma.ui.postMessage({
+          type: "collections-list",
+          collections: collections.map((c) => ({ id: c.id, name: c.name })),
+        });
+        break;
+      }
+
+      case "export-css": {
+        const options: ExportOptions = msg.options ?? {
+          includeCollectionComments: true,
+          includeModeComments: true,
+          selector: ":root",
+          useModesAsSelectors: false,
+        };
+
+        const css = await exportVariables(options);
+        figma.ui.postMessage({ type: "css-result", css });
+        break;
+      }
+
+      case "export-json": {
+        const json = await exportJson(msg.options);
+        figma.ui.postMessage({ type: "json-result", json });
+        break;
+      }
+
+      case "export-scss": {
+        const options: ExportOptions = msg.options ?? {
+          includeCollectionComments: true,
+          includeModeComments: false,
+          selector: ":root",
+          useModesAsSelectors: false,
+        };
+
+        const scss = await exportScss(options);
+        figma.ui.postMessage({ type: "scss-result", scss });
+        break;
+      }
+
+      case "export-typescript": {
+        const options: ExportOptions = msg.options ?? {
+          includeCollectionComments: false,
+          includeModeComments: false,
+          selector: ":root",
+          useModesAsSelectors: false,
+        };
+
+        const typescript = await exportTypeScript(options);
+        figma.ui.postMessage({ type: "typescript-result", typescript });
+        break;
+      }
+
+      case "cancel": {
+        figma.closePlugin();
+        break;
+      }
+
+      default: {
+        // TypeScript should catch this, but handle unknown message types gracefully
+        console.warn("Unknown message type:", (msg as { type: string }).type);
+        break;
+      }
     }
-
-    case "export-css": {
-      const options: ExportOptions = msg.options ?? {
-        includeCollectionComments: true,
-        includeModeComments: true,
-        selector: ":root",
-        useModesAsSelectors: false,
-      };
-
-      const css = await exportVariables(options);
-      figma.ui.postMessage({ type: "css-result", css });
-      break;
-    }
-
-    case "export-json": {
-      const json = await exportJson(msg.options);
-      figma.ui.postMessage({ type: "json-result", json });
-      break;
-    }
-
-    case "export-scss": {
-      const options: ExportOptions = msg.options ?? {
-        includeCollectionComments: true,
-        includeModeComments: false,
-        selector: ":root",
-        useModesAsSelectors: false,
-      };
-
-      const scss = await exportScss(options);
-      figma.ui.postMessage({ type: "scss-result", scss });
-      break;
-    }
-
-    case "export-typescript": {
-      const options: ExportOptions = msg.options ?? {
-        includeCollectionComments: false,
-        includeModeComments: false,
-        selector: ":root",
-        useModesAsSelectors: false,
-      };
-
-      const typescript = await exportTypeScript(options);
-      figma.ui.postMessage({ type: "typescript-result", typescript });
-      break;
-    }
-
-    case "cancel": {
-      figma.closePlugin();
-      break;
-    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    figma.ui.postMessage({
+      type: "error",
+      message: `Export failed: ${errorMessage}`,
+    });
+    console.error("Plugin error:", error);
   }
 };

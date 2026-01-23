@@ -10,56 +10,72 @@
 
     body {
       font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 12px;
-      color: #333;
-      padding: 16px;
-      background: #fff;
+      font-size: 11px;
+      color: #ffffff;
+      padding: 0;
+      background: #1e1e1e;
+      -webkit-font-smoothing: antialiased;
     }
 
     h2 {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      margin-bottom: 12px;
-      color: #000;
+      margin: 0;
+      padding: 16px 16px 8px;
+      color: #ffffff;
     }
 
     h3 {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      margin: 16px 0 8px;
-      color: #333;
+      margin: 0 0 12px 0;
+      color: #ffffff;
+    }
+
+    h3:first-child {
+      margin-top: 0;
     }
 
     .tabs {
       display: flex;
       gap: 0;
+      margin: 0;
+      padding: 12px 16px 0;
+      border-bottom: 1px solid #2c2c2c;
+      background: #1e1e1e;
       margin-bottom: 16px;
-      border-bottom: 1px solid #e5e5e5;
     }
 
     .tab {
-      padding: 8px 16px;
+      padding: 10px 12px;
       border: none;
       background: none;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 500;
-      color: #666;
+      color: #b3b3b3;
       border-bottom: 2px solid transparent;
       margin-bottom: -1px;
+      transition: color 0.15s ease;
     }
 
     .tab:hover {
-      color: #333;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .tab.active {
-      color: #18a0fb;
+      color: #ffffff;
       border-bottom-color: #18a0fb;
     }
 
     .tab-content {
       display: none;
+      padding: 16px;
+    }
+
+    .tab-content > h3:first-child {
+      margin-top: 0;
     }
 
     .tab-content.active {
@@ -70,51 +86,69 @@
       margin-bottom: 12px;
     }
 
+    .form-group:last-of-type {
+      margin-bottom: 0;
+    }
+
     label {
       display: flex;
       align-items: center;
       gap: 8px;
       cursor: pointer;
       margin-bottom: 6px;
+      color: #b3b3b3;
     }
 
     label.text-label {
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       font-weight: 500;
+      color: #ffffff;
+      font-size: 11px;
     }
 
     input[type="checkbox"] {
       width: 14px;
       height: 14px;
       cursor: pointer;
+      accent-color: #18a0fb;
     }
 
     input[type="text"] {
       width: 100%;
-      padding: 8px;
-      border: 1px solid #e5e5e5;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 6px 8px;
+      border: 1px solid #3c3c3c;
+      border-radius: 3px;
+      font-size: 11px;
       font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      background: #2c2c2c;
+      color: #ffffff;
+      transition: border-color 0.15s ease;
     }
 
     input[type="text"]:focus {
       outline: none;
       border-color: #18a0fb;
+      background: #2c2c2c;
+    }
+
+    input[type="text"]::placeholder {
+      color: #666666;
     }
 
     .output-area {
       width: 100%;
       height: 200px;
       padding: 12px;
-      border: 1px solid #e5e5e5;
-      border-radius: 4px;
+      border: 1px solid #3c3c3c;
+      border-radius: 3px;
       font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-      font-size: 11px;
+      font-size: 10px;
       line-height: 1.5;
       resize: vertical;
-      background: #fafafa;
+      background: #1e1e1e;
+      color: #ffffff;
+      transition: border-color 0.15s ease;
     }
 
     .output-area:focus {
@@ -122,86 +156,110 @@
       border-color: #18a0fb;
     }
 
+    .output-area::placeholder {
+      color: #666666;
+    }
+
     .button-row {
       display: flex;
       gap: 8px;
-      margin-top: 12px;
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+
+    .button-row:first-of-type {
+      margin-top: 0;
     }
 
     button {
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 3px;
+      font-size: 11px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.15s ease;
+      border: none;
     }
 
     .btn-primary {
       background: #18a0fb;
-      color: #fff;
-      border: none;
+      color: #ffffff;
     }
 
     .btn-primary:hover {
       background: #0d8de5;
     }
 
+    .btn-primary:active {
+      background: #0a7acc;
+    }
+
     .btn-secondary {
-      background: #fff;
-      color: #333;
-      border: 1px solid #e5e5e5;
+      background: #2c2c2c;
+      color: #ffffff;
+      border: 1px solid #3c3c3c;
     }
 
     .btn-secondary:hover {
-      background: #f5f5f5;
+      background: #353535;
+      border-color: #4c4c4c;
+    }
+
+    .btn-secondary:active {
+      background: #252525;
     }
 
     .btn-success {
       background: #1bc47d;
-      color: #fff;
-      border: none;
+      color: #ffffff;
     }
 
     .help-section {
       margin-top: 20px;
       padding: 12px;
-      background: #f5f5f5;
-      border-radius: 6px;
+      background: #2c2c2c;
+      border-radius: 3px;
+      border: 1px solid #3c3c3c;
     }
 
     .help-section h4 {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       margin-bottom: 8px;
-      color: #666;
+      color: #b3b3b3;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
     .help-section code {
       display: inline-block;
-      background: #e5e5e5;
+      background: #1e1e1e;
       padding: 2px 6px;
-      border-radius: 3px;
+      border-radius: 2px;
       font-family: 'SF Mono', Monaco, 'Courier New', monospace;
       font-size: 10px;
+      color: #ffffff;
+      border: 1px solid #3c3c3c;
     }
 
     .help-section ul {
       list-style: none;
       font-size: 11px;
-      color: #666;
+      color: #b3b3b3;
     }
 
     .help-section li {
       margin-bottom: 4px;
     }
 
+    .help-section p {
+      color: #b3b3b3;
+    }
+
     .status {
-      margin-top: 8px;
+      margin-top: 12px;
       font-size: 11px;
-      color: #666;
+      color: #b3b3b3;
     }
 
     .status.success {
@@ -215,33 +273,65 @@
     .collections-list {
       max-height: 150px;
       overflow-y: auto;
-      border: 1px solid #e5e5e5;
-      border-radius: 4px;
+      border: 1px solid #3c3c3c;
+      border-radius: 3px;
       padding: 8px;
-      background: #fafafa;
+      background: #2c2c2c;
       margin-top: 8px;
     }
 
     .collections-list label {
       display: flex;
       align-items: center;
-      padding: 4px 0;
+      padding: 6px 4px;
       font-size: 11px;
+      color: #b3b3b3;
+      border-radius: 2px;
+      transition: background 0.15s ease;
+    }
+
+    .collections-list label:hover {
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .collections-list input[type="checkbox"] {
-      margin-right: 6px;
+      margin-right: 8px;
+    }
+
+    p {
+      color: #b3b3b3;
     }
 
     .scrollable {
       max-height: 200px;
       overflow-y: auto;
     }
+
+    /* Scrollbar styling */
+    .collections-list::-webkit-scrollbar,
+    .output-area::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .collections-list::-webkit-scrollbar-track,
+    .output-area::-webkit-scrollbar-track {
+      background: #1e1e1e;
+    }
+
+    .collections-list::-webkit-scrollbar-thumb,
+    .output-area::-webkit-scrollbar-thumb {
+      background: #4c4c4c;
+      border-radius: 4px;
+    }
+
+    .collections-list::-webkit-scrollbar-thumb:hover,
+    .output-area::-webkit-scrollbar-thumb:hover {
+      background: #5c5c5c;
+    }
   </style>
 </head>
 <body>
-  <h2>Variables Export</h2>
-
   <div class="tabs">
     <button class="tab active" data-tab="css">CSS</button>
     <button class="tab" data-tab="scss">SCSS</button>
@@ -250,37 +340,39 @@
     <button class="tab" data-tab="help">Help</button>
   </div>
 
-  <div id="css-tab" class="tab-content active">
-    <h3>Options</h3>
+  <div id="tab-description" style="padding: 0 16px 12px; color: #b3b3b3; font-size: 11px;"></div>
 
+  <div id="common-options" style="padding: 0 16px 0;">
+    <div class="form-group">
+      <label class="text-label">Variable Prefix (optional)</label>
+      <input type="text" id="common-prefix" placeholder="e.g., ds, theme" />
+    </div>
+
+    <div class="form-group">
+      <label class="text-label">Collections</label>
+      <div class="collections-list" id="common-collections">
+        <div style="color: #666666; font-size: 11px;">Loading collections...</div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0;">
+      <label>
+        <input type="checkbox" id="common-includeCollectionComments" checked />
+        Include collection comments
+      </label>
+    </div>
+  </div>
+
+  <div id="css-tab" class="tab-content active">
     <div class="form-group">
       <label class="text-label">CSS Selector</label>
       <input type="text" id="css-selector" value=":root" />
     </div>
 
     <div class="form-group">
-      <label class="text-label">Variable Prefix (optional)</label>
-      <input type="text" id="css-prefix" placeholder="e.g., ds, theme" />
-    </div>
-
-    <div class="form-group">
-      <label class="text-label">Collections</label>
-      <div class="collections-list" id="css-collections">
-        <div style="color: #666; font-size: 11px;">Loading collections...</div>
-      </div>
-    </div>
-
-    <div class="form-group">
       <label>
         <input type="checkbox" id="css-useModesAsSelectors" />
         Export modes as separate selectors
-      </label>
-    </div>
-
-    <div class="form-group">
-      <label>
-        <input type="checkbox" id="css-includeCollectionComments" checked />
-        Include collection comments
       </label>
     </div>
 
@@ -307,27 +399,6 @@
   </div>
 
   <div id="scss-tab" class="tab-content">
-    <h3>Options</h3>
-
-    <div class="form-group">
-      <label class="text-label">Variable Prefix (optional)</label>
-      <input type="text" id="scss-prefix" placeholder="e.g., ds, theme" />
-    </div>
-
-    <div class="form-group">
-      <label class="text-label">Collections</label>
-      <div class="collections-list" id="scss-collections">
-        <div style="color: #666; font-size: 11px;">Loading collections...</div>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>
-        <input type="checkbox" id="scss-includeCollectionComments" checked />
-        Include collection comments
-      </label>
-    </div>
-
     <div class="button-row">
       <button class="btn-primary" id="export-scss">Generate SCSS</button>
     </div>
@@ -344,17 +415,6 @@
   </div>
 
   <div id="json-tab" class="tab-content">
-    <p style="margin-bottom: 12px; color: #666;">
-      Export as JSON for use with Style Dictionary or other token tools.
-    </p>
-
-    <div class="form-group">
-      <label class="text-label">Collections</label>
-      <div class="collections-list" id="json-collections">
-        <div style="color: #666; font-size: 11px;">Loading collections...</div>
-      </div>
-    </div>
-
     <div class="button-row">
       <button class="btn-primary" id="export-json">Generate JSON</button>
     </div>
@@ -371,22 +431,6 @@
   </div>
 
   <div id="typescript-tab" class="tab-content">
-    <p style="margin-bottom: 12px; color: #666;">
-      Generate TypeScript type definitions for CSS custom properties.
-    </p>
-
-    <div class="form-group">
-      <label class="text-label">Variable Prefix (optional)</label>
-      <input type="text" id="ts-prefix" placeholder="e.g., ds, theme" />
-    </div>
-
-    <div class="form-group">
-      <label class="text-label">Collections</label>
-      <div class="collections-list" id="ts-collections">
-        <div style="color: #666; font-size: 11px;">Loading collections...</div>
-      </div>
-    </div>
-
     <div class="button-row">
       <button class="btn-primary" id="export-typescript">Generate TypeScript</button>
     </div>
@@ -405,7 +449,7 @@
   <div id="help-tab" class="tab-content">
     <div class="help-section">
       <h4>Description Field Format</h4>
-      <p style="margin-bottom: 12px; color: #666;">
+      <p style="margin-bottom: 12px; color: #b3b3b3;">
         Add these instructions to any variable's description field to control export:
       </p>
 
@@ -456,26 +500,46 @@
     }
 
     // Helper function to get selected collections
-    function getSelectedCollections(prefix) {
-      const checkboxes = document.querySelectorAll(`#${prefix}-collections input[type="checkbox"]:checked`);
-      return Array.from(checkboxes).map(cb => cb.value);
+    function getSelectedCollections() {
+      const checkboxes = document.querySelectorAll('#common-collections input[type="checkbox"]:checked');
+      return Array.from(checkboxes)
+        .map(cb => cb.value)
+        .filter(Boolean); // Remove any empty values
     }
 
     // Helper function to render collections
-    function renderCollections(containerId, selectedIds = []) {
-      const container = document.getElementById(containerId);
+    function renderCollections() {
+      const container = document.getElementById('common-collections');
       if (collections.length === 0) {
-        container.innerHTML = '<div style="color: #666; font-size: 11px;">No collections found</div>';
+        container.innerHTML = '<div style="color: #666666; font-size: 11px;">No collections found</div>';
         return;
       }
 
       container.innerHTML = collections.map(collection => `
         <label>
-          <input type="checkbox" value="${collection.id}" ${selectedIds.includes(collection.id) ? 'checked' : ''} />
+          <input type="checkbox" value="${collection.id}" checked />
           ${collection.name}
         </label>
       `).join('');
     }
+
+    // Helper function to show status message
+    function showStatus(tab, message, isError = false) {
+      const statusElement = document.getElementById(tab + '-status');
+      if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.className = isError ? 'status error' : 'status success';
+      }
+    }
+
+    // Tab descriptions
+    const tabDescriptions = {
+      css: 'Export variables as CSS custom properties with customizable selectors and formatting options.',
+      scss: 'Export variables as SCSS variables for use in Sass/SCSS stylesheets.',
+      json: 'Export as JSON for use with Style Dictionary or other token tools.',
+      typescript: 'Generate TypeScript type definitions for CSS custom properties.',
+      help: 'Learn how to configure variable exports using description fields.'
+    };
 
     // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
@@ -485,150 +549,192 @@
 
         tab.classList.add('active');
         document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+        
+        // Update tab description
+        const descriptionEl = document.getElementById('tab-description');
+        const description = tabDescriptions[tab.dataset.tab];
+        descriptionEl.textContent = description;
+        descriptionEl.style.display = 'block';
+        
+        // Hide common options on help tab
+        const commonOptions = document.getElementById('common-options');
+        if (tab.dataset.tab === 'help') {
+          commonOptions.style.display = 'none';
+        } else {
+          commonOptions.style.display = 'block';
+        }
       });
     });
+
+    // Initialize description for default tab (CSS)
+    const defaultTab = document.querySelector('.tab.active');
+    if (defaultTab) {
+      const descriptionEl = document.getElementById('tab-description');
+      const description = tabDescriptions[defaultTab.dataset.tab];
+      descriptionEl.textContent = description;
+      descriptionEl.style.display = 'block';
+    }
 
     // Request collections on load
     parent.postMessage({ pluginMessage: { type: 'get-collections' } }, '*');
 
     // Export CSS
-    document.getElementById('export-css').addEventListener('click', () => {
-      const selectedCollections = getSelectedCollections('css');
+    document.getElementById('export-css')?.addEventListener('click', () => {
+      const selectedCollections = getSelectedCollections();
+      const selectorInput = document.getElementById('css-selector');
+      const prefixInput = document.getElementById('common-prefix');
+      
       const options = {
-        selector: document.getElementById('css-selector').value || ':root',
-        prefix: document.getElementById('css-prefix').value.trim() || undefined,
-        useModesAsSelectors: document.getElementById('css-useModesAsSelectors').checked,
-        includeCollectionComments: document.getElementById('css-includeCollectionComments').checked,
-        includeModeComments: document.getElementById('css-includeModeComments').checked,
+        selector: selectorInput?.value?.trim() || ':root',
+        prefix: prefixInput?.value?.trim() || undefined,
+        useModesAsSelectors: document.getElementById('css-useModesAsSelectors')?.checked || false,
+        includeCollectionComments: document.getElementById('common-includeCollectionComments')?.checked ?? true,
+        includeModeComments: document.getElementById('css-includeModeComments')?.checked ?? true,
         selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
       };
 
       parent.postMessage({ pluginMessage: { type: 'export-css', options } }, '*');
-      document.getElementById('css-status').textContent = 'Generating...';
-      document.getElementById('css-status').className = 'status';
+      showStatus('css', 'Generating...');
     });
 
     // Export SCSS
-    document.getElementById('export-scss').addEventListener('click', () => {
-      const selectedCollections = getSelectedCollections('scss');
+    document.getElementById('export-scss')?.addEventListener('click', () => {
+      const selectedCollections = getSelectedCollections();
+      const prefixInput = document.getElementById('common-prefix');
+      
       const options = {
         selector: ':root',
-        prefix: document.getElementById('scss-prefix').value.trim() || undefined,
-        includeCollectionComments: document.getElementById('scss-includeCollectionComments').checked,
+        prefix: prefixInput?.value?.trim() || undefined,
+        includeCollectionComments: document.getElementById('common-includeCollectionComments')?.checked ?? true,
         includeModeComments: false,
         useModesAsSelectors: false,
         selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
       };
 
       parent.postMessage({ pluginMessage: { type: 'export-scss', options } }, '*');
-      document.getElementById('scss-status').textContent = 'Generating...';
-      document.getElementById('scss-status').className = 'status';
+      showStatus('scss', 'Generating...');
     });
 
     // Export JSON
-    document.getElementById('export-json').addEventListener('click', () => {
-      const selectedCollections = getSelectedCollections('json');
+    document.getElementById('export-json')?.addEventListener('click', () => {
+      const selectedCollections = getSelectedCollections();
       const options = {
+        includeCollectionComments: document.getElementById('common-includeCollectionComments')?.checked ?? true,
         selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
       };
 
       parent.postMessage({ pluginMessage: { type: 'export-json', options } }, '*');
-      document.getElementById('json-status').textContent = 'Generating...';
-      document.getElementById('json-status').className = 'status';
+      showStatus('json', 'Generating...');
     });
 
     // Export TypeScript
-    document.getElementById('export-typescript').addEventListener('click', () => {
-      const selectedCollections = getSelectedCollections('ts');
+    document.getElementById('export-typescript')?.addEventListener('click', () => {
+      const selectedCollections = getSelectedCollections();
+      const prefixInput = document.getElementById('common-prefix');
+      
       const options = {
         selector: ':root',
-        prefix: document.getElementById('ts-prefix').value.trim() || undefined,
-        includeCollectionComments: false,
+        prefix: prefixInput?.value?.trim() || undefined,
+        includeCollectionComments: document.getElementById('common-includeCollectionComments')?.checked ?? false,
         includeModeComments: false,
         useModesAsSelectors: false,
         selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
       };
 
       parent.postMessage({ pluginMessage: { type: 'export-typescript', options } }, '*');
-      document.getElementById('typescript-status').textContent = 'Generating...';
-      document.getElementById('typescript-status').className = 'status';
+      showStatus('typescript', 'Generating...');
     });
+
+    // Helper function to copy to clipboard using modern API
+    async function copyToClipboard(text, statusElement) {
+      try {
+        await navigator.clipboard.writeText(text);
+        statusElement.textContent = 'Copied to clipboard!';
+        statusElement.className = 'status success';
+      } catch (err) {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          statusElement.textContent = 'Copied to clipboard!';
+          statusElement.className = 'status success';
+        } catch (fallbackErr) {
+          statusElement.textContent = 'Failed to copy';
+          statusElement.className = 'status error';
+        } finally {
+          document.body.removeChild(textarea);
+        }
+      }
+    }
 
     // Copy buttons
-    document.getElementById('copy-css').addEventListener('click', () => {
+    document.getElementById('copy-css')?.addEventListener('click', async () => {
       const output = document.getElementById('css-output');
-      output.select();
-      document.execCommand('copy');
       const status = document.getElementById('css-status');
-      status.textContent = 'Copied to clipboard!';
-      status.className = 'status success';
+      if (output && status && output.value) {
+        await copyToClipboard(output.value, status);
+      }
     });
 
-    document.getElementById('copy-scss').addEventListener('click', () => {
+    document.getElementById('copy-scss')?.addEventListener('click', async () => {
       const output = document.getElementById('scss-output');
-      output.select();
-      document.execCommand('copy');
       const status = document.getElementById('scss-status');
-      status.textContent = 'Copied to clipboard!';
-      status.className = 'status success';
+      if (output && status && output.value) {
+        await copyToClipboard(output.value, status);
+      }
     });
 
-    document.getElementById('copy-json').addEventListener('click', () => {
+    document.getElementById('copy-json')?.addEventListener('click', async () => {
       const output = document.getElementById('json-output');
-      output.select();
-      document.execCommand('copy');
       const status = document.getElementById('json-status');
-      status.textContent = 'Copied to clipboard!';
-      status.className = 'status success';
+      if (output && status && output.value) {
+        await copyToClipboard(output.value, status);
+      }
     });
 
-    document.getElementById('copy-typescript').addEventListener('click', () => {
+    document.getElementById('copy-typescript')?.addEventListener('click', async () => {
       const output = document.getElementById('typescript-output');
-      output.select();
-      document.execCommand('copy');
       const status = document.getElementById('typescript-status');
-      status.textContent = 'Copied to clipboard!';
-      status.className = 'status success';
+      if (output && status && output.value) {
+        await copyToClipboard(output.value, status);
+      }
     });
 
     // Download buttons
-    document.getElementById('download-css').addEventListener('click', () => {
-      const content = document.getElementById('css-output').value;
-      if (content) {
-        downloadFile(content, 'variables.css', 'text/css');
-        const status = document.getElementById('css-status');
-        status.textContent = 'Downloaded!';
-        status.className = 'status success';
+    document.getElementById('download-css')?.addEventListener('click', () => {
+      const output = document.getElementById('css-output');
+      if (output && output.value) {
+        downloadFile(output.value, 'variables.css', 'text/css');
+        showStatus('css', 'Downloaded!');
       }
     });
 
-    document.getElementById('download-scss').addEventListener('click', () => {
-      const content = document.getElementById('scss-output').value;
-      if (content) {
-        downloadFile(content, 'variables.scss', 'text/scss');
-        const status = document.getElementById('scss-status');
-        status.textContent = 'Downloaded!';
-        status.className = 'status success';
+    document.getElementById('download-scss')?.addEventListener('click', () => {
+      const output = document.getElementById('scss-output');
+      if (output && output.value) {
+        downloadFile(output.value, 'variables.scss', 'text/scss');
+        showStatus('scss', 'Downloaded!');
       }
     });
 
-    document.getElementById('download-json').addEventListener('click', () => {
-      const content = document.getElementById('json-output').value;
-      if (content) {
-        downloadFile(content, 'variables.json', 'application/json');
-        const status = document.getElementById('json-status');
-        status.textContent = 'Downloaded!';
-        status.className = 'status success';
+    document.getElementById('download-json')?.addEventListener('click', () => {
+      const output = document.getElementById('json-output');
+      if (output && output.value) {
+        downloadFile(output.value, 'variables.json', 'application/json');
+        showStatus('json', 'Downloaded!');
       }
     });
 
-    document.getElementById('download-typescript').addEventListener('click', () => {
-      const content = document.getElementById('typescript-output').value;
-      if (content) {
-        downloadFile(content, 'variables.d.ts', 'text/typescript');
-        const status = document.getElementById('typescript-status');
-        status.textContent = 'Downloaded!';
-        status.className = 'status success';
+    document.getElementById('download-typescript')?.addEventListener('click', () => {
+      const output = document.getElementById('typescript-output');
+      if (output && output.value) {
+        downloadFile(output.value, 'variables.d.ts', 'text/typescript');
+        showStatus('typescript', 'Downloaded!');
       }
     });
 
@@ -636,36 +742,43 @@
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
 
+      if (!msg || !msg.type) {
+        console.warn('Received invalid message:', msg);
+        return;
+      }
+
       if (msg.type === 'collections-list') {
-        collections = msg.collections;
-        renderCollections('css-collections');
-        renderCollections('scss-collections');
-        renderCollections('json-collections');
-        renderCollections('ts-collections');
-      }
-
-      if (msg.type === 'css-result') {
-        document.getElementById('css-output').value = msg.css;
-        document.getElementById('css-status').textContent = 'Generated successfully!';
-        document.getElementById('css-status').className = 'status success';
-      }
-
-      if (msg.type === 'scss-result') {
-        document.getElementById('scss-output').value = msg.scss;
-        document.getElementById('scss-status').textContent = 'Generated successfully!';
-        document.getElementById('scss-status').className = 'status success';
-      }
-
-      if (msg.type === 'json-result') {
-        document.getElementById('json-output').value = msg.json;
-        document.getElementById('json-status').textContent = 'Generated successfully!';
-        document.getElementById('json-status').className = 'status success';
-      }
-
-      if (msg.type === 'typescript-result') {
-        document.getElementById('typescript-output').value = msg.typescript;
-        document.getElementById('typescript-status').textContent = 'Generated successfully!';
-        document.getElementById('typescript-status').className = 'status success';
+        collections = msg.collections || [];
+        renderCollections();
+      } else if (msg.type === 'css-result') {
+        const output = document.getElementById('css-output');
+        if (output) {
+          output.value = msg.css || '';
+        }
+        showStatus('css', 'Generated successfully!');
+      } else if (msg.type === 'scss-result') {
+        const output = document.getElementById('scss-output');
+        if (output) {
+          output.value = msg.scss || '';
+        }
+        showStatus('scss', 'Generated successfully!');
+      } else if (msg.type === 'json-result') {
+        const output = document.getElementById('json-output');
+        if (output) {
+          output.value = msg.json || '';
+        }
+        showStatus('json', 'Generated successfully!');
+      } else if (msg.type === 'typescript-result') {
+        const output = document.getElementById('typescript-output');
+        if (output) {
+          output.value = msg.typescript || '';
+        }
+        showStatus('typescript', 'Generated successfully!');
+      } else if (msg.type === 'error') {
+        // Show error on all tabs since we don't know which one triggered it
+        ['css', 'scss', 'json', 'typescript'].forEach(tab => {
+          showStatus(tab, msg.message || 'An error occurred', true);
+        });
       }
     };
   </script>
