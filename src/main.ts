@@ -247,7 +247,7 @@ const resolveValue = async (
   // Prevent infinite recursion
   if (depth > 10) return "/* circular reference */";
 
-  // Handle variable alias
+  // Handle variable alias - output as CSS var() reference
   if (
     typeof value === "object" &&
     "type" in value &&
@@ -256,23 +256,8 @@ const resolveValue = async (
     const aliasedVar = variables.find((v) => v.id === value.id);
 
     if (aliasedVar) {
-      const aliasedValue = aliasedVar.valuesByMode[modeId];
-
-      if (aliasedValue !== undefined) {
-        const aliasedConfig = {
-          ...config,
-          ...parseDescription(aliasedVar.description),
-        };
-
-        return resolveValue(
-          aliasedValue,
-          modeId,
-          variables,
-          aliasedVar.resolvedType,
-          aliasedConfig,
-          depth + 1,
-        );
-      }
+      const aliasedCssName = toCssName(aliasedVar.name);
+      return `var(--${aliasedCssName})`;
     }
 
     return "/* unresolved alias */";
@@ -373,9 +358,9 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
 
         lines.push(`${selector} {`);
 
-        const collectionVars = variables.filter(
-          (v) => v.variableCollectionId === collection.id,
-        );
+        const collectionVars = variables
+          .filter((v) => v.variableCollectionId === collection.id)
+          .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
 
         for (const variable of collectionVars) {
           const line = await processVariable(variable, mode.modeId);
@@ -383,6 +368,11 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
         }
 
         lines.push("}", "");
+      }
+
+      // Add newline between collections
+      if (collections.indexOf(collection) < collections.length - 1) {
+        lines.push("");
       }
     }
   } else {
@@ -393,16 +383,17 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
         lines.push(`  /* ${collection.name} */`);
       }
 
-      const collectionVars = variables.filter(
-        (v) => v.variableCollectionId === collection.id,
-      );
+      const collectionVars = variables
+        .filter((v) => v.variableCollectionId === collection.id)
+        .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
 
       for (const variable of collectionVars) {
         const line = await processVariable(variable, collection.defaultModeId);
         if (line) lines.push(line);
       }
 
-      if (options.includeCollectionComments) {
+      // Add newline between collections
+      if (collections.indexOf(collection) < collections.length - 1) {
         lines.push("");
       }
     }
@@ -420,13 +411,20 @@ const exportVariables = async (options: ExportOptions): Promise<string> => {
 const formatRawValue = (
   value: VariableValue,
   type: VariableResolvedDataType,
+  variables: Variable[],
 ): unknown => {
   if (
     typeof value === "object" &&
     "type" in value &&
     value.type === "VARIABLE_ALIAS"
   ) {
-    return `{${value.id}}`;
+    const aliasedVar = variables.find((v) => v.id === value.id);
+    if (aliasedVar) {
+      // Convert variable name to token path (e.g., "color/primary" -> "color.primary")
+      const tokenPath = aliasedVar.name.split("/").join(".");
+      return `{${tokenPath}}`;
+    }
+    return `{${value.id}}`; // Fallback if variable not found
   }
 
   if (type === "COLOR" && typeof value === "object" && "r" in value) {
@@ -444,9 +442,9 @@ const exportJson = async (): Promise<string> => {
 
   for (const collection of collections) {
     const collectionData: Record<string, unknown> = {};
-    const collectionVars = variables.filter(
-      (v) => v.variableCollectionId === collection.id,
-    );
+    const collectionVars = variables
+      .filter((v) => v.variableCollectionId === collection.id)
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     for (const variable of collectionVars) {
       const config = parseDescription(variable.description);
@@ -474,7 +472,7 @@ const exportJson = async (): Promise<string> => {
 
       // Add value(s)
       if (collection.modes.length === 1) {
-        token.$value = formatRawValue(rawValue, variable.resolvedType);
+        token.$value = formatRawValue(rawValue, variable.resolvedType, variables);
       } else {
         token.$value = Object.fromEntries(
           collection.modes.map((mode) => [
@@ -482,6 +480,7 @@ const exportJson = async (): Promise<string> => {
             formatRawValue(
               variable.valuesByMode[mode.modeId],
               variable.resolvedType,
+              variables,
             ),
           ]),
         );
