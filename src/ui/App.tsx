@@ -11,6 +11,7 @@ import { Checkbox } from './components/common/Checkbox';
 import { FormField } from './components/common/FormField';
 import { FormGroup } from './components/common/FormGroup';
 import { Input } from './components/common/Input';
+import { useAutoResize } from './hooks/useAutoResize';
 import { useCollections } from './hooks/useCollections';
 
 const TABS = [
@@ -36,11 +37,12 @@ export default function App() {
   const [prefix, setPrefix] = useState('');
   const [includeCollectionComments, setIncludeCollectionComments] = useState(true);
   const { collections, selectedCollections, toggleCollection, loading } = useCollections();
+  const containerRef = useAutoResize([activeTab]);
 
   const showCommonOptions = activeTab !== 'help';
 
   return (
-    <div className="min-h-screen bg-figma-bg text-figma-text">
+    <div ref={containerRef} className="bg-figma-bg text-figma-text">
       <TabBar tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
 
       {showCommonOptions && (

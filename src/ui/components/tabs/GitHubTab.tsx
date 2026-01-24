@@ -202,7 +202,15 @@ export function GitHubTab({
         <Button onClick={handleDispatch}>Send to GitHub</Button>
       </ButtonGroup>
 
-      {status.message && <StatusMessage type={status.type}>{status.message}</StatusMessage>}
+      {status.message && (
+        <StatusMessage
+          type={status.type}
+          autoDismiss={status.type === 'success' ? 3000 : 5000}
+          onDismiss={() => setStatus({ message: '', type: 'info' })}
+        >
+          {status.message}
+        </StatusMessage>
+      )}
 
       <div className="help-section mt-5 rounded border border-figma-border bg-figma-bg-secondary p-3">
         <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-figma-text-secondary">

@@ -10,5 +10,5 @@ interface FormFieldProps {
  * Use this to wrap Input, Checkbox, or other form elements.
  */
 export function FormField({ children, className = '' }: FormFieldProps) {
-  return <div className={`mb-4 ${className}`}>{children}</div>;
+  return <div className={`form-group mb-4 ${className}`}>{children}</div>;
 }

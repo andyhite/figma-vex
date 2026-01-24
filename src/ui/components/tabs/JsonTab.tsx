@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '../common/Button';
 import { ButtonGroup } from '../common/ButtonGroup';
+import { CopyIcon } from '../common/CopyIcon';
+import { DownloadIcon } from '../common/DownloadIcon';
+import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
-import { StatusMessage } from '../common/StatusMessage';
-import { usePluginMessage } from '../../hooks/usePluginMessage';
 import { useClipboard } from '../../hooks/useClipboard';
+import { usePluginMessage } from '../../hooks/usePluginMessage';
 import type { ExportOptions } from '@shared/types';
 
 interface JsonTabProps {
@@ -60,6 +62,7 @@ export function JsonTab({ selectedCollections, includeCollectionComments }: Json
         message: copied ? 'Copied to clipboard!' : 'Failed to copy',
         type: copied ? 'success' : 'error',
       });
+      setTimeout(() => setStatus({ message: '', type: 'info' }), 3000);
     }
   }, [output, copyToClipboard, copied]);
 
@@ -75,6 +78,7 @@ export function JsonTab({ selectedCollections, includeCollectionComments }: Json
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       setStatus({ message: 'Downloaded!', type: 'success' });
+      setTimeout(() => setStatus({ message: '', type: 'info' }), 3000);
     }
   }, [output]);
 
@@ -83,21 +87,30 @@ export function JsonTab({ selectedCollections, includeCollectionComments }: Json
       <ButtonGroup>
         <Button onClick={handleExport}>Generate JSON</Button>
       </ButtonGroup>
-      <OutputArea
-        label="Output"
-        value={output}
-        readOnly
-        placeholder="Click 'Generate JSON' to export variables..."
-      />
-      <ButtonGroup>
-        <Button variant="secondary" onClick={handleCopy}>
-          Copy to Clipboard
-        </Button>
-        <Button variant="secondary" onClick={handleDownload}>
-          Download
-        </Button>
-      </ButtonGroup>
-      {status.message && <StatusMessage type={status.type}>{status.message}</StatusMessage>}
+      {output && (
+        <OutputArea
+          label="Output"
+          value={output}
+          readOnly
+          placeholder="Click 'Generate JSON' to export variables..."
+          statusMessage={status.message}
+          statusType={status.type}
+          actions={
+            <>
+              <IconButton
+                icon={<CopyIcon />}
+                aria-label="Copy to clipboard"
+                onClick={handleCopy}
+              />
+              <IconButton
+                icon={<DownloadIcon />}
+                aria-label="Download"
+                onClick={handleDownload}
+              />
+            </>
+          }
+        />
+      )}
     </div>
   );
 }

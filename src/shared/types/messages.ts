@@ -34,6 +34,7 @@ export type PluginMessage =
   | { type: 'export-json'; options: ExportOptions }
   | { type: 'export-typescript'; options: ExportOptions }
   | { type: 'github-dispatch'; githubOptions: GitHubDispatchOptions }
+  | { type: 'resize-window'; width?: number; height: number }
   | { type: 'cancel' };
 
 // Messages from Plugin to UI

@@ -9,7 +9,8 @@ import { sendGitHubDispatch } from './services/githubService';
 
 // UI dimensions
 const UI_WIDTH = 520;
-const UI_HEIGHT = 700;
+const UI_HEIGHT_COMPACT = 600; // Height when no output is shown
+const UI_HEIGHT_EXPANDED = 850; // Height when output is shown
 
 /**
  * Sends a message to the UI.
@@ -133,6 +134,13 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       break;
     }
 
+    case 'resize-window': {
+      const width = msg.width ?? UI_WIDTH;
+      const height = msg.height;
+      figma.ui.resize(width, height);
+      break;
+    }
+
     case 'cancel': {
       figma.closePlugin();
       break;
@@ -146,7 +154,7 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
 }
 
 // Initialize plugin
-figma.showUI(__html__, { width: UI_WIDTH, height: UI_HEIGHT });
+figma.showUI(__html__, { width: UI_WIDTH, height: UI_HEIGHT_COMPACT });
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
   try {
