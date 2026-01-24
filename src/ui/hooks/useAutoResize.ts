@@ -9,7 +9,7 @@ export function useAutoResize(deps: unknown[] = []) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { resizeWindow } = useWindowResize();
   const lastHeightRef = useRef<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -20,11 +20,11 @@ export function useAutoResize(deps: unknown[] = []) {
       // This is more accurate than scrollHeight for measuring visible content
       const rect = container.getBoundingClientRect();
       const contentHeight = Math.ceil(rect.height);
-      
+
       // Set a reasonable maximum height (800px) - beyond this, scrolling will be required
       const MAX_HEIGHT = 800;
       const height = Math.min(contentHeight, MAX_HEIGHT);
-      
+
       // Only resize if the height actually changed (prevents infinite loops)
       if (height !== lastHeightRef.current && height > 0) {
         lastHeightRef.current = height;
@@ -70,6 +70,7 @@ export function useAutoResize(deps: unknown[] = []) {
       resizeObserver.disconnect();
       mutationObserver.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resizeWindow, ...deps]);
 
   return containerRef;

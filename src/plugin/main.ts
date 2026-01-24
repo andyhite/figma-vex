@@ -10,7 +10,6 @@ import { sendGitHubDispatch } from './services/githubService';
 // UI dimensions
 const UI_WIDTH = 520;
 const UI_HEIGHT_COMPACT = 600; // Height when no output is shown
-const UI_HEIGHT_EXPANDED = 850; // Height when output is shown
 
 /**
  * Sends a message to the UI.

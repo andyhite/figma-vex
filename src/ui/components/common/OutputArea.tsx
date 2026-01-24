@@ -48,7 +48,9 @@ export function OutputArea({
     <FormField>
       <div className="relative">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className={`text-xs font-semibold transition-colors ${labelColor}`}>{displayLabel}</h3>
+          <h3 className={`text-xs font-semibold transition-colors ${labelColor}`}>
+            {displayLabel}
+          </h3>
           {actions && <div className="flex items-center gap-1">{actions}</div>}
         </div>
         <textarea

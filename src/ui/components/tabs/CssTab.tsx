@@ -5,7 +5,6 @@ import { Checkbox } from '../common/Checkbox';
 import { CopyIcon } from '../common/CopyIcon';
 import { DownloadIcon } from '../common/DownloadIcon';
 import { FormField } from '../common/FormField';
-import { FormGroup } from '../common/FormGroup';
 import { IconButton } from '../common/IconButton';
 import { Input } from '../common/Input';
 import { OutputArea } from '../common/OutputArea';
@@ -128,16 +127,8 @@ export function CssTab({ prefix, selectedCollections, includeCollectionComments 
           statusType={status.type}
           actions={
             <>
-              <IconButton
-                icon={<CopyIcon />}
-                aria-label="Copy to clipboard"
-                onClick={handleCopy}
-              />
-              <IconButton
-                icon={<DownloadIcon />}
-                aria-label="Download"
-                onClick={handleDownload}
-              />
+              <IconButton icon={<CopyIcon />} aria-label="Copy to clipboard" onClick={handleCopy} />
+              <IconButton icon={<DownloadIcon />} aria-label="Download" onClick={handleDownload} />
             </>
           }
         />

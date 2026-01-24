@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
     lib: {
       entry: resolve(__dirname, 'src/plugin/main.ts'),
       formats: ['es'],
-      fileName: () => 'main.js',
+      fileName: () => 'plugin.js',
     },
     outDir: 'dist',
     emptyDirOnBuildStart: false,

@@ -13,8 +13,6 @@ interface FormHelpTextProps {
  */
 export function FormHelpText({ children, className = '' }: FormHelpTextProps) {
   return (
-    <p className={`-mt-2.5 mb-4 text-[10px] text-figma-text-tertiary ${className}`}>
-      {children}
-    </p>
+    <p className={`-mt-2.5 mb-4 text-[10px] text-figma-text-tertiary ${className}`}>{children}</p>
   );
 }

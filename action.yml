@@ -1,0 +1,41 @@
+name: 'Figma VEX'
+description: 'Update design tokens from Figma Variables Export'
+inputs:
+  token:
+    description: 'GitHub token for creating branches and PRs'
+    required: false
+    default: '${{ github.token }}'
+  base-branch:
+    description: 'Target branch for the PR'
+    required: false
+  pr-title:
+    description: 'PR title and commit message'
+    required: false
+    default: 'chore: update design tokens from figma'
+  css-path:
+    description: 'Path to write CSS variables'
+    required: false
+  scss-path:
+    description: 'Path to write SCSS variables'
+    required: false
+  json-path:
+    description: 'Path to write JSON tokens'
+    required: false
+  typescript-path:
+    description: 'Path to write TypeScript definitions'
+    required: false
+outputs:
+  pr-url:
+    description: 'URL of the created or updated pull request'
+  pr-number:
+    description: 'Number of the created or updated pull request'
+  branch:
+    description: 'Name of the branch used'
+  updated:
+    description: 'true if existing PR was updated, false if new PR created'
+runs:
+  using: 'node20'
+  main: 'dist/action.js'
+branding:
+  icon: 'git-pull-request'
+  color: 'blue'

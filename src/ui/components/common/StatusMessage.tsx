@@ -37,7 +37,13 @@ export function StatusMessage({
       border: 'border-figma-success/30',
       text: 'text-figma-success',
       icon: (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <path
             d="M13.5 4L6 11.5L2.5 8"
             stroke="currentColor"
@@ -53,7 +59,13 @@ export function StatusMessage({
       border: 'border-figma-error/30',
       text: 'text-figma-error',
       icon: (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <path
             d="M4 4L12 12M12 4L4 12"
             stroke="currentColor"
@@ -69,7 +81,13 @@ export function StatusMessage({
       border: 'border-figma-border',
       text: 'text-figma-text-secondary',
       icon: (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <path
             d="M8 11V8M8 5H8.01"
             stroke="currentColor"

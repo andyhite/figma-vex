@@ -1,10 +1,7 @@
 import type { ExportOptions } from '@shared/types';
 import { rgbToHex } from '@plugin/formatters/colorFormatter';
 import { parseDescription } from '@plugin/utils/descriptionParser';
-import {
-  filterCollections,
-  getCollectionVariablesByName,
-} from '@plugin/utils/collectionUtils';
+import { filterCollections, getCollectionVariablesByName } from '@plugin/utils/collectionUtils';
 
 /**
  * Formats a raw value for JSON export (Style Dictionary compatible).

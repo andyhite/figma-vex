@@ -98,16 +98,8 @@ export function TypeScriptTab({ prefix, selectedCollections }: TypeScriptTabProp
           statusType={status.type}
           actions={
             <>
-              <IconButton
-                icon={<CopyIcon />}
-                aria-label="Copy to clipboard"
-                onClick={handleCopy}
-              />
-              <IconButton
-                icon={<DownloadIcon />}
-                aria-label="Download"
-                onClick={handleDownload}
-              />
+              <IconButton icon={<CopyIcon />} aria-label="Copy to clipboard" onClick={handleCopy} />
+              <IconButton icon={<DownloadIcon />} aria-label="Download" onClick={handleDownload} />
             </>
           }
         />

@@ -8,9 +8,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export function Input({ label, className = '', ...props }: InputProps) {
   return (
     <FormField>
-      {label && (
-        <label className="mb-1.5 block text-xs font-medium text-figma-text">{label}</label>
-      )}
+      {label && <label className="mb-1.5 block text-xs font-medium text-figma-text">{label}</label>}
       <input className={`input ${className}`} {...props} />
     </FormField>
   );

@@ -2,7 +2,7 @@
   "name": "Vex - Flexible Variables Export",
   "id": "vex-flexible-variables-export",
   "api": "1.0.0",
-  "main": "dist/main.js",
+  "main": "dist/plugin.js",
   "ui": "dist/index.html",
   "capabilities": [],
   "enableProposedApi": false,
