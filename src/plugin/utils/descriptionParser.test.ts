@@ -72,3 +72,139 @@ describe('Regex patterns', () => {
     expect(FORMAT_REGEX.test('format: invalid')).toBe(false);
   });
 });
+
+describe('edge cases', () => {
+  it('should handle description with multiple unit declarations (first wins)', () => {
+    const result = parseDescription('unit: px\nunit: rem');
+    expect(result.unit).toBe('px');
+  });
+
+  it('should handle description with multiple format declarations (first wins)', () => {
+    const result = parseDescription('format: hex\nformat: rgb');
+    expect(result.colorFormat).toBe('hex');
+  });
+
+  it('should handle description with unit and format in different order', () => {
+    const result1 = parseDescription('unit: rem\nformat: hex');
+    const result2 = parseDescription('format: hex\nunit: rem');
+    expect(result1.unit).toBe('rem');
+    expect(result1.colorFormat).toBe('hex');
+    expect(result2.unit).toBe('rem');
+    expect(result2.colorFormat).toBe('hex');
+  });
+
+  it('should handle remBase with zero (edge case)', () => {
+    const result = parseDescription('unit: rem:0');
+    expect(result.unit).toBe('rem');
+    expect(result.remBase).toBe(0);
+  });
+
+  it('should handle remBase with very large number', () => {
+    const result = parseDescription('unit: rem:999999');
+    expect(result.unit).toBe('rem');
+    expect(result.remBase).toBe(999999);
+  });
+
+  it('should handle remBase with negative number (regex only matches digits)', () => {
+    const result = parseDescription('unit: rem:-16');
+    expect(result.unit).toBe('rem');
+    // The regex (\d+) only matches digits after the colon, so -16 doesn't match
+    // and remBase won't be set
+    expect(result.remBase).toBeUndefined();
+  });
+
+  it('should handle remBase with decimal (should parse as integer)', () => {
+    const result = parseDescription('unit: rem:16.5');
+    expect(result.unit).toBe('rem');
+    expect(result.remBase).toBe(16); // parseInt truncates
+  });
+
+  it('should handle description with unit in middle of text', () => {
+    const result = parseDescription('This is a unit: px description');
+    expect(result.unit).toBe('px');
+  });
+
+  it('should handle description with format in middle of text', () => {
+    const result = parseDescription('Use format: hex for colors');
+    expect(result.colorFormat).toBe('hex');
+  });
+
+  it('should handle description with partial matches', () => {
+    const result = parseDescription('unit: px format: hex');
+    expect(result.unit).toBe('px');
+    expect(result.colorFormat).toBe('hex');
+  });
+
+  it('should handle description with unit and format on same line', () => {
+    const result = parseDescription('unit: rem format: rgb');
+    expect(result.unit).toBe('rem');
+    expect(result.colorFormat).toBe('rgb');
+  });
+
+  it('should handle description with extra text before and after', () => {
+    const result = parseDescription('Some text before unit: rem:20 and format: hsl more text');
+    expect(result.unit).toBe('rem');
+    expect(result.remBase).toBe(20);
+    expect(result.colorFormat).toBe('hsl');
+  });
+
+  it('should handle description with newlines and tabs', () => {
+    const result = parseDescription('unit:\trem:16\nformat:\thex');
+    expect(result.unit).toBe('rem');
+    expect(result.remBase).toBe(16);
+    expect(result.colorFormat).toBe('hex');
+  });
+
+  it('should handle description with case variations in unit value', () => {
+    expect(parseDescription('unit: PX')).toEqual({ unit: 'px' });
+    expect(parseDescription('unit: REM')).toEqual({ unit: 'rem' });
+    expect(parseDescription('unit: Em')).toEqual({ unit: 'em' });
+  });
+
+  it('should handle description with case variations in format value', () => {
+    expect(parseDescription('format: HEX')).toEqual({ colorFormat: 'hex' });
+    expect(parseDescription('format: RGB')).toEqual({ colorFormat: 'rgb' });
+    expect(parseDescription('format: Hsl')).toEqual({ colorFormat: 'hsl' });
+  });
+
+  it('should handle description with remBase as string of digits', () => {
+    const result = parseDescription('unit: rem:0016');
+    expect(result.unit).toBe('rem');
+    expect(result.remBase).toBe(16); // parseInt handles leading zeros
+  });
+
+  it('should handle description with invalid remBase (non-numeric)', () => {
+    const result = parseDescription('unit: rem:abc');
+    expect(result.unit).toBe('rem');
+    // When remBase is non-numeric, parseInt returns NaN, but the regex won't match
+    // So remBase won't be set
+    expect(result.remBase).toBeUndefined();
+  });
+
+  it('should handle very long description', () => {
+    const longDesc = 'unit: rem:16\n' + 'format: hex\n' + 'a'.repeat(1000);
+    const result = parseDescription(longDesc);
+    expect(result.unit).toBe('rem');
+    expect(result.remBase).toBe(16);
+    expect(result.colorFormat).toBe('hex');
+  });
+
+  it('should handle description with special characters', () => {
+    const result = parseDescription('unit: px!@#$%^&*()');
+    expect(result.unit).toBe('px');
+  });
+
+  it('should handle description with only whitespace', () => {
+    expect(parseDescription('   \n\t   ')).toEqual({});
+  });
+
+  it('should handle description with unit: but no value', () => {
+    const result = parseDescription('unit:');
+    expect(result).toEqual({});
+  });
+
+  it('should handle description with format: but no value', () => {
+    const result = parseDescription('format:');
+    expect(result).toEqual({});
+  });
+});

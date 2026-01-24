@@ -133,4 +133,237 @@ describe('resolveValue', () => {
     );
     expect(result).toBe('/* circular reference */');
   });
+
+  describe('edge cases', () => {
+    it('should handle null values', async () => {
+      const result = await resolveValue(
+        null as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'STRING',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('');
+    });
+
+    it('should handle undefined values', async () => {
+      const result = await resolveValue(
+        undefined as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'STRING',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('');
+    });
+
+    it('should handle string with newlines', async () => {
+      const result = await resolveValue(
+        'line1\nline2',
+        'mode-1',
+        mockVariables,
+        'STRING',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('"line1\nline2"');
+    });
+
+    it('should handle string with backslashes', async () => {
+      const result = await resolveValue(
+        'path\\to\\file',
+        'mode-1',
+        mockVariables,
+        'STRING',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('"path\\to\\file"');
+    });
+
+    it('should handle string with both quotes and backslashes', async () => {
+      const result = await resolveValue(
+        'say "hi" and \\bye',
+        'mode-1',
+        mockVariables,
+        'STRING',
+        DEFAULT_CONFIG
+      );
+      // Only quotes are escaped, backslashes are preserved as-is
+      expect(result).toBe('"say \\"hi\\" and \\bye"');
+    });
+
+    it('should handle empty string', async () => {
+      const result = await resolveValue('', 'mode-1', mockVariables, 'STRING', DEFAULT_CONFIG);
+      expect(result).toBe('""');
+    });
+
+    it('should handle type mismatch - COLOR type with non-object value', async () => {
+      const result = await resolveValue(
+        'not-a-color' as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'COLOR',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('not-a-color');
+    });
+
+    it('should handle type mismatch - COLOR type with invalid object', async () => {
+      const result = await resolveValue(
+        { x: 1, y: 2 } as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'COLOR',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('[object Object]');
+    });
+
+    it('should handle FLOAT type with non-finite number', async () => {
+      const result = await resolveValue(
+        Infinity as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'FLOAT',
+        DEFAULT_CONFIG
+      );
+      // Non-finite numbers don't pass the Number.isFinite check, so fall through to fallback
+      expect(result).toBe('Infinity');
+    });
+
+    it('should handle FLOAT type with NaN', async () => {
+      const result = await resolveValue(
+        NaN as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'FLOAT',
+        DEFAULT_CONFIG
+      );
+      // NaN doesn't pass the Number.isFinite check, so fall through to fallback
+      expect(result).toBe('NaN');
+    });
+
+    it('should handle zero float value', async () => {
+      const result = await resolveValue(0, 'mode-1', mockVariables, 'FLOAT', DEFAULT_CONFIG);
+      expect(result).toBe('0px');
+    });
+
+    it('should handle negative float value', async () => {
+      const result = await resolveValue(-10, 'mode-1', mockVariables, 'FLOAT', DEFAULT_CONFIG);
+      expect(result).toBe('-10px');
+    });
+
+    it('should handle very large float value', async () => {
+      const result = await resolveValue(
+        999999,
+        'mode-1',
+        mockVariables,
+        'FLOAT',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('999999px');
+    });
+
+    it('should handle very small float value', async () => {
+      const result = await resolveValue(
+        0.0001,
+        'mode-1',
+        mockVariables,
+        'FLOAT',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('0.0001px');
+    });
+
+    it('should handle color with missing alpha', async () => {
+      const color = { r: 1, g: 0, b: 0 };
+      const result = await resolveValue(
+        color as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'COLOR',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('#ff0000');
+    });
+
+    it('should handle color with alpha 0', async () => {
+      const color = { r: 1, g: 0, b: 0, a: 0 };
+      const result = await resolveValue(
+        color as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'COLOR',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('#ff000000');
+    });
+
+    it('should handle color with very small alpha', async () => {
+      const color = { r: 1, g: 0, b: 0, a: 0.001 };
+      const result = await resolveValue(
+        color as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'COLOR',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('#ff000000');
+    });
+
+    it('should handle color with boundary RGB values (0 and 1)', async () => {
+      const black = { r: 0, g: 0, b: 0, a: 1 };
+      const white = { r: 1, g: 1, b: 1, a: 1 };
+      const resultBlack = await resolveValue(
+        black,
+        'mode-1',
+        mockVariables,
+        'COLOR',
+        DEFAULT_CONFIG
+      );
+      const resultWhite = await resolveValue(
+        white,
+        'mode-1',
+        mockVariables,
+        'COLOR',
+        DEFAULT_CONFIG
+      );
+      expect(resultBlack).toBe('#000000');
+      expect(resultWhite).toBe('#ffffff');
+    });
+
+    it('should handle variable alias with empty variables array', async () => {
+      const alias = { type: 'VARIABLE_ALIAS', id: 'var-1' };
+      const result = await resolveValue(
+        alias as VariableValue,
+        'mode-1',
+        [],
+        'COLOR',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('/* unresolved alias */');
+    });
+
+    it('should handle unknown resolved type', async () => {
+      const result = await resolveValue(
+        42,
+        'mode-1',
+        mockVariables,
+        'UNKNOWN' as VariableResolvedDataType,
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('42');
+    });
+
+    it('should handle object value that is not an alias', async () => {
+      const obj = { some: 'value' };
+      const result = await resolveValue(
+        obj as unknown as VariableValue,
+        'mode-1',
+        mockVariables,
+        'STRING',
+        DEFAULT_CONFIG
+      );
+      expect(result).toBe('[object Object]');
+    });
+  });
 });

@@ -8,7 +8,7 @@ export default defineConfig({
   root: 'src/ui',
   build: {
     outDir: '../../dist',
-    emptyDirOnBuildStart: false,
+    emptyOutDir: false,
     target: 'esnext',
     assetsInlineLimit: 100000000,
     chunkSizeWarningLimit: 100000000,
