@@ -3,22 +3,23 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TypeScriptTab } from './TypeScriptTab';
 import * as usePluginMessage from '../../hooks/usePluginMessage';
-import * as useClipboard from '../../hooks/useClipboard';
+import * as useOutputActions from '../../hooks/useOutputActions';
+import type { UIMessage } from '@shared/types';
 
 vi.mock('../../../hooks/usePluginMessage');
-vi.mock('../../../hooks/useClipboard');
+vi.mock('../../../hooks/useOutputActions');
 
 describe('TypeScriptTab', () => {
   const mockSendMessage = vi.fn();
-  let mockListenToMessage: (callback: (message: unknown) => void) => () => void;
-  let messageHandler: ((message: unknown) => void) | null = null;
-  const mockCopyToClipboard = vi.fn().mockResolvedValue(true);
+  let mockListenToMessage: (callback: (message: UIMessage) => void) => () => void;
+  let messageHandler: ((message: UIMessage) => void) | null = null;
+  const mockSetStatus = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     messageHandler = null;
 
-    mockListenToMessage = vi.fn((callback: (message: unknown) => void) => {
+    mockListenToMessage = vi.fn((callback: (message: UIMessage) => void) => {
       messageHandler = callback;
       return vi.fn();
     });
@@ -28,16 +29,16 @@ describe('TypeScriptTab', () => {
       listenToMessage: mockListenToMessage,
     });
 
-    vi.spyOn(useClipboard, 'useClipboard').mockReturnValue({
-      copyToClipboard: mockCopyToClipboard,
-      copied: false,
+    vi.spyOn(useOutputActions, 'useOutputActions').mockReturnValue({
+      handleCopy: vi.fn(),
+      handleDownload: vi.fn(),
+      status: { message: '', type: 'info' },
+      setStatus: mockSetStatus,
     });
   });
 
   it('should send export-typescript message when generate is clicked', async () => {
-    render(
-      <TypeScriptTab prefix="ds" selectedCollections={['1']} />
-    );
+    render(<TypeScriptTab prefix="ds" selectedCollections={['1']} />);
 
     const button = screen.getByRole('button', { name: 'Generate TypeScript' });
     await userEvent.click(button);

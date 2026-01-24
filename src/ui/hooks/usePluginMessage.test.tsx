@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { usePluginMessage } from './usePluginMessage';
 import * as pluginBridge from '../services/pluginBridge';
-import type { PluginMessage, UIMessage } from '@shared/types';
+import type { PluginMessage } from '@shared/types';
 
 vi.mock('../services/pluginBridge');
 

@@ -31,6 +31,9 @@ describe('pluginBridge', () => {
         options: {
           selector: ':root',
           prefix: 'ds',
+          includeCollectionComments: false,
+          includeModeComments: false,
+          useModesAsSelectors: false,
         },
       };
       postMessage(message);

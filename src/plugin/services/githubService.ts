@@ -1,4 +1,5 @@
 import type { GitHubDispatchOptions } from '@shared/types';
+import { GITHUB_API_CONFIG } from '@shared/config';
 
 export interface DispatchPayload {
   event_type: string;
@@ -102,7 +103,7 @@ export async function sendGitHubDispatch(
     options.workflowFileName || 'update-variables.yml'
   );
 
-  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/dispatches`;
+  const url = `${GITHUB_API_CONFIG.BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/dispatches`;
 
   let response;
   try {
@@ -111,7 +112,7 @@ export async function sendGitHubDispatch(
       headers: {
         Accept: 'application/vnd.github+json',
         Authorization: `Bearer ${token}`,
-        'X-GitHub-Api-Version': '2022-11-28',
+        'X-GitHub-Api-Version': GITHUB_API_CONFIG.API_VERSION,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),

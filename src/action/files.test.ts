@@ -44,7 +44,7 @@ describe('files', () => {
       const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
       const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
+      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
 
       const files: FileWrite[] = [{ path: '/path/to/file.css', content: 'content' }];
 
@@ -64,7 +64,7 @@ describe('files', () => {
     });
 
     it('should handle nested directory paths', () => {
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
       const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
       const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/deeply/nested/path');
@@ -85,10 +85,10 @@ describe('files', () => {
     });
 
     it('should handle file path with special characters', () => {
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
       const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
+      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
 
       const files: FileWrite[] = [
         { path: '/path/to/file (1).css', content: 'content' },
@@ -101,10 +101,10 @@ describe('files', () => {
     });
 
     it('should handle file path with unicode characters', () => {
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
       const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
+      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
 
       const files: FileWrite[] = [
         { path: '/path/to/café.css', content: 'content' },
@@ -117,9 +117,9 @@ describe('files', () => {
 
     it('should handle very long file paths', () => {
       const longPath = '/very/' + 'long/'.repeat(100) + 'file.css';
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
       const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/very/long/path');
 
       const files: FileWrite[] = [{ path: longPath, content: 'content' }];
@@ -131,10 +131,10 @@ describe('files', () => {
     });
 
     it('should handle file with empty content', () => {
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
       const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
+      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
 
       const files: FileWrite[] = [{ path: '/path/to/empty.css', content: '' }];
 
@@ -145,10 +145,10 @@ describe('files', () => {
 
     it('should handle file with very large content', () => {
       const largeContent = 'a'.repeat(1000000);
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
       const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
+      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
 
       const files: FileWrite[] = [{ path: '/path/to/large.css', content: largeContent }];
 
@@ -158,9 +158,9 @@ describe('files', () => {
     });
 
     it('should handle file path at root', () => {
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
       const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/');
 
       const files: FileWrite[] = [{ path: '/file.css', content: 'content' }];
@@ -172,10 +172,10 @@ describe('files', () => {
     });
 
     it('should handle multiple files with same directory', () => {
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
       const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
+      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
 
       const files: FileWrite[] = [
         { path: '/path/to/file1.css', content: 'content1' },
@@ -190,10 +190,10 @@ describe('files', () => {
     });
 
     it('should handle file path with trailing slash in directory', () => {
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
       const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/path/to/');
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      vi.spyOn(path, 'dirname').mockReturnValue('/path/to/');
 
       const files: FileWrite[] = [{ path: '/path/to/file.css', content: 'content' }];
 

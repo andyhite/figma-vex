@@ -5,9 +5,9 @@ import { CopyIcon } from '../common/CopyIcon';
 import { DownloadIcon } from '../common/DownloadIcon';
 import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
-import { useClipboard } from '../../hooks/useClipboard';
+import { useOutputActions } from '../../hooks/useOutputActions';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions } from '@shared/types';
+import type { ExportOptions, UIMessage } from '@shared/types';
 
 interface TypeScriptTabProps {
   prefix: string;
@@ -16,29 +16,28 @@ interface TypeScriptTabProps {
 
 export function TypeScriptTab({ prefix, selectedCollections }: TypeScriptTabProps) {
   const [output, setOutput] = useState('');
-  const [status, setStatus] = useState<{ message: string; type: 'success' | 'error' | 'info' }>({
-    message: '',
-    type: 'info',
-  });
   const { sendMessage, listenToMessage } = usePluginMessage();
-  const { copyToClipboard, copied } = useClipboard();
+  const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
+    filename: 'variables.d.ts',
+    mimeType: 'text/typescript',
+  });
 
   // Listen for TypeScript results
   const handleMessage = useCallback(
-    (message: { type: string; typescript?: string; message?: string }) => {
+    (message: UIMessage) => {
       if (message.type === 'typescript-result') {
-        setOutput(message.typescript || '');
+        setOutput(message.typescript);
         setStatus({ message: 'Generated successfully!', type: 'success' });
       } else if (message.type === 'error') {
-        setStatus({ message: message.message || 'An error occurred', type: 'error' });
+        setStatus({ message: message.message, type: 'error' });
       }
     },
-    []
+    [setStatus]
   );
 
   // Set up message listener
   useEffect(() => {
-    const cleanup = listenToMessage(handleMessage as (msg: unknown) => void);
+    const cleanup = listenToMessage(handleMessage);
     return cleanup;
   }, [listenToMessage, handleMessage]);
 
@@ -54,34 +53,7 @@ export function TypeScriptTab({ prefix, selectedCollections }: TypeScriptTabProp
 
     sendMessage({ type: 'export-typescript', options });
     setStatus({ message: 'Generating...', type: 'info' });
-  }, [prefix, selectedCollections, sendMessage]);
-
-  const handleCopy = useCallback(async () => {
-    if (output) {
-      await copyToClipboard(output);
-      setStatus({
-        message: copied ? 'Copied to clipboard!' : 'Failed to copy',
-        type: copied ? 'success' : 'error',
-      });
-      setTimeout(() => setStatus({ message: '', type: 'info' }), 3000);
-    }
-  }, [output, copyToClipboard, copied]);
-
-  const handleDownload = useCallback(() => {
-    if (output) {
-      const blob = new Blob([output], { type: 'text/typescript' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'variables.d.ts';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      setStatus({ message: 'Downloaded!', type: 'success' });
-      setTimeout(() => setStatus({ message: '', type: 'info' }), 3000);
-    }
-  }, [output]);
+  }, [prefix, selectedCollections, sendMessage, setStatus]);
 
   return (
     <div>
@@ -98,8 +70,16 @@ export function TypeScriptTab({ prefix, selectedCollections }: TypeScriptTabProp
           statusType={status.type}
           actions={
             <>
-              <IconButton icon={<CopyIcon />} aria-label="Copy to clipboard" onClick={handleCopy} />
-              <IconButton icon={<DownloadIcon />} aria-label="Download" onClick={handleDownload} />
+              <IconButton
+                icon={<CopyIcon />}
+                aria-label="Copy to clipboard"
+                onClick={() => handleCopy(output)}
+              />
+              <IconButton
+                icon={<DownloadIcon />}
+                aria-label="Download"
+                onClick={() => handleDownload(output)}
+              />
             </>
           }
         />

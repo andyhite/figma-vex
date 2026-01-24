@@ -8,9 +8,9 @@ import { FormField } from '../common/FormField';
 import { IconButton } from '../common/IconButton';
 import { Input } from '../common/Input';
 import { OutputArea } from '../common/OutputArea';
-import { useClipboard } from '../../hooks/useClipboard';
+import { useOutputActions } from '../../hooks/useOutputActions';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions } from '@shared/types';
+import type { ExportOptions, UIMessage } from '@shared/types';
 
 interface CssTabProps {
   prefix: string;
@@ -23,26 +23,28 @@ export function CssTab({ prefix, selectedCollections, includeCollectionComments 
   const [useModesAsSelectors, setUseModesAsSelectors] = useState(false);
   const [includeModeComments, setIncludeModeComments] = useState(true);
   const [output, setOutput] = useState('');
-  const [status, setStatus] = useState<{ message: string; type: 'success' | 'error' | 'info' }>({
-    message: '',
-    type: 'info',
-  });
   const { sendMessage, listenToMessage } = usePluginMessage();
-  const { copyToClipboard, copied } = useClipboard();
+  const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
+    filename: 'variables.css',
+    mimeType: 'text/css',
+  });
 
   // Listen for CSS results
-  const handleMessage = useCallback((message: { type: string; css?: string; message?: string }) => {
-    if (message.type === 'css-result') {
-      setOutput(message.css || '');
-      setStatus({ message: 'Generated successfully!', type: 'success' });
-    } else if (message.type === 'error') {
-      setStatus({ message: message.message || 'An error occurred', type: 'error' });
-    }
-  }, []);
+  const handleMessage = useCallback(
+    (message: UIMessage) => {
+      if (message.type === 'css-result') {
+        setOutput(message.css);
+        setStatus({ message: 'Generated successfully!', type: 'success' });
+      } else if (message.type === 'error') {
+        setStatus({ message: message.message, type: 'error' });
+      }
+    },
+    [setStatus]
+  );
 
   // Set up message listener
   useEffect(() => {
-    const cleanup = listenToMessage(handleMessage as (msg: unknown) => void);
+    const cleanup = listenToMessage(handleMessage);
     return cleanup;
   }, [listenToMessage, handleMessage]);
 
@@ -66,36 +68,8 @@ export function CssTab({ prefix, selectedCollections, includeCollectionComments 
     includeModeComments,
     selectedCollections,
     sendMessage,
+    setStatus,
   ]);
-
-  const handleCopy = useCallback(async () => {
-    if (output) {
-      await copyToClipboard(output);
-      setStatus({
-        message: copied ? 'Copied to clipboard!' : 'Failed to copy',
-        type: copied ? 'success' : 'error',
-      });
-      // Clear status after showing in label
-      setTimeout(() => setStatus({ message: '', type: 'info' }), 3000);
-    }
-  }, [output, copyToClipboard, copied]);
-
-  const handleDownload = useCallback(() => {
-    if (output) {
-      const blob = new Blob([output], { type: 'text/css' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'variables.css';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      setStatus({ message: 'Downloaded!', type: 'success' });
-      // Clear status after showing in label
-      setTimeout(() => setStatus({ message: '', type: 'info' }), 3000);
-    }
-  }, [output]);
 
   return (
     <div>
@@ -127,8 +101,16 @@ export function CssTab({ prefix, selectedCollections, includeCollectionComments 
           statusType={status.type}
           actions={
             <>
-              <IconButton icon={<CopyIcon />} aria-label="Copy to clipboard" onClick={handleCopy} />
-              <IconButton icon={<DownloadIcon />} aria-label="Download" onClick={handleDownload} />
+              <IconButton
+                icon={<CopyIcon />}
+                aria-label="Copy to clipboard"
+                onClick={() => handleCopy(output)}
+              />
+              <IconButton
+                icon={<DownloadIcon />}
+                aria-label="Download"
+                onClick={() => handleDownload(output)}
+              />
             </>
           }
         />

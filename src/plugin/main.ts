@@ -1,15 +1,13 @@
 /// <reference types="@figma/plugin-typings" />
 
-import type { PluginMessage, ExportOptions, UIMessage } from '@shared/types';
+import type { PluginMessage, UIMessage } from '@shared/types';
+import { UI_CONFIG } from '@shared/config';
 import { exportToCss } from './exporters/cssExporter';
 import { exportToScss } from './exporters/scssExporter';
 import { exportToJson } from './exporters/jsonExporter';
 import { exportToTypeScript } from './exporters/typescriptExporter';
-import { sendGitHubDispatch } from './services/githubService';
-
-// UI dimensions
-const UI_WIDTH = 520;
-const UI_HEIGHT_COMPACT = 600; // Height when no output is shown
+import { sendGitHubDispatch, generateExports } from './services';
+import { mergeWithDefaults } from './utils/optionDefaults';
 
 /**
  * Sends a message to the UI.
@@ -18,17 +16,6 @@ function postToUI(message: UIMessage): void {
   figma.ui.postMessage(message);
 }
 
-/**
- * Gets the default export options.
- */
-function getDefaultOptions(): ExportOptions {
-  return {
-    includeCollectionComments: true,
-    includeModeComments: true,
-    selector: ':root',
-    useModesAsSelectors: false,
-  };
-}
 
 /**
  * Main message handler.
@@ -48,35 +35,28 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
     }
 
     case 'export-css': {
-      const options = msg.options != null ? msg.options : getDefaultOptions();
+      const options = mergeWithDefaults('css', msg.options);
       const css = await exportToCss(variables, collections, fileName, options);
       postToUI({ type: 'css-result', css });
       break;
     }
 
     case 'export-scss': {
-      const options =
-        msg.options != null ? msg.options : { ...getDefaultOptions(), includeModeComments: false };
+      const options = mergeWithDefaults('scss', msg.options);
       const scss = await exportToScss(variables, collections, fileName, options);
       postToUI({ type: 'scss-result', scss });
       break;
     }
 
     case 'export-json': {
-      const json = await exportToJson(variables, collections, msg.options);
+      const options = mergeWithDefaults('json', msg.options);
+      const json = await exportToJson(variables, collections, options);
       postToUI({ type: 'json-result', json });
       break;
     }
 
     case 'export-typescript': {
-      const options =
-        msg.options != null
-          ? msg.options
-          : {
-              ...getDefaultOptions(),
-              includeCollectionComments: false,
-              includeModeComments: false,
-            };
+      const options = mergeWithDefaults('typescript', msg.options);
       const typescript = await exportToTypeScript(variables, collections, fileName, options);
       postToUI({ type: 'typescript-result', typescript });
       break;
@@ -87,43 +67,13 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
         throw new Error('GitHub options are required');
       }
 
-      const exports: Record<string, string> = {};
-      const baseOptions = msg.githubOptions.exportOptions;
-
-      if (msg.githubOptions.exportTypes.includes('css')) {
-        exports.css = await exportToCss(variables, collections, fileName, {
-          ...baseOptions,
-          includeCollectionComments:
-            baseOptions.includeCollectionComments != null
-              ? baseOptions.includeCollectionComments
-              : true,
-          includeModeComments:
-            baseOptions.includeModeComments != null ? baseOptions.includeModeComments : true,
-        });
-      }
-
-      if (msg.githubOptions.exportTypes.includes('scss')) {
-        exports.scss = await exportToScss(variables, collections, fileName, {
-          ...baseOptions,
-          includeCollectionComments:
-            baseOptions.includeCollectionComments != null
-              ? baseOptions.includeCollectionComments
-              : true,
-          includeModeComments: false,
-        });
-      }
-
-      if (msg.githubOptions.exportTypes.includes('json')) {
-        exports.json = await exportToJson(variables, collections, baseOptions);
-      }
-
-      if (msg.githubOptions.exportTypes.includes('typescript')) {
-        exports.typescript = await exportToTypeScript(variables, collections, fileName, {
-          ...baseOptions,
-          includeCollectionComments: false,
-          includeModeComments: false,
-        });
-      }
+      const exports = await generateExports(
+        variables,
+        collections,
+        fileName,
+        msg.githubOptions.exportTypes,
+        msg.githubOptions.exportOptions
+      );
 
       await sendGitHubDispatch(msg.githubOptions, exports, fileName);
       postToUI({
@@ -134,7 +84,7 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
     }
 
     case 'resize-window': {
-      const width = msg.width ?? UI_WIDTH;
+      const width = msg.width ?? UI_CONFIG.WIDTH;
       const height = msg.height;
       figma.ui.resize(width, height);
       break;
@@ -153,7 +103,7 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
 }
 
 // Initialize plugin
-figma.showUI(__html__, { width: UI_WIDTH, height: UI_HEIGHT_COMPACT });
+figma.showUI(__html__, { width: UI_CONFIG.WIDTH, height: UI_CONFIG.HEIGHT_COMPACT });
 
 figma.ui.onmessage = async (msg: PluginMessage) => {
   try {

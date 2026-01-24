@@ -8,6 +8,7 @@ import { TypeScriptTab } from './components/tabs/TypeScriptTab';
 import { GitHubTab } from './components/tabs/GitHubTab';
 import { HelpTab } from './components/tabs/HelpTab';
 import { Checkbox } from './components/common/Checkbox';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { FormField } from './components/common/FormField';
 import { FormGroup } from './components/common/FormGroup';
 import { Input } from './components/common/Input';
@@ -92,42 +93,54 @@ export default function App() {
       )}
 
       <TabPanel id="css" activeTab={activeTab}>
-        <CssTab
-          prefix={prefix}
-          selectedCollections={selectedCollections}
-          includeCollectionComments={includeCollectionComments}
-        />
+        <ErrorBoundary>
+          <CssTab
+            prefix={prefix}
+            selectedCollections={selectedCollections}
+            includeCollectionComments={includeCollectionComments}
+          />
+        </ErrorBoundary>
       </TabPanel>
 
       <TabPanel id="scss" activeTab={activeTab}>
-        <ScssTab
-          prefix={prefix}
-          selectedCollections={selectedCollections}
-          includeCollectionComments={includeCollectionComments}
-        />
+        <ErrorBoundary>
+          <ScssTab
+            prefix={prefix}
+            selectedCollections={selectedCollections}
+            includeCollectionComments={includeCollectionComments}
+          />
+        </ErrorBoundary>
       </TabPanel>
 
       <TabPanel id="json" activeTab={activeTab}>
-        <JsonTab
-          selectedCollections={selectedCollections}
-          includeCollectionComments={includeCollectionComments}
-        />
+        <ErrorBoundary>
+          <JsonTab
+            selectedCollections={selectedCollections}
+            includeCollectionComments={includeCollectionComments}
+          />
+        </ErrorBoundary>
       </TabPanel>
 
       <TabPanel id="typescript" activeTab={activeTab}>
-        <TypeScriptTab prefix={prefix} selectedCollections={selectedCollections} />
+        <ErrorBoundary>
+          <TypeScriptTab prefix={prefix} selectedCollections={selectedCollections} />
+        </ErrorBoundary>
       </TabPanel>
 
       <TabPanel id="github" activeTab={activeTab}>
-        <GitHubTab
-          prefix={prefix}
-          selectedCollections={selectedCollections}
-          includeCollectionComments={includeCollectionComments}
-        />
+        <ErrorBoundary>
+          <GitHubTab
+            prefix={prefix}
+            selectedCollections={selectedCollections}
+            includeCollectionComments={includeCollectionComments}
+          />
+        </ErrorBoundary>
       </TabPanel>
 
       <TabPanel id="help" activeTab={activeTab}>
-        <HelpTab />
+        <ErrorBoundary>
+          <HelpTab />
+        </ErrorBoundary>
       </TabPanel>
     </div>
   );

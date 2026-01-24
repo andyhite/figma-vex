@@ -1,4 +1,5 @@
 import type { TokenConfig } from '@shared/types';
+import { RESOLUTION_CONFIG } from '@shared/config';
 import { toCssName, toPrefixedName } from '@plugin/formatters/nameFormatter';
 import { formatColor } from '@plugin/formatters/colorFormatter';
 import { formatNumber } from '@plugin/formatters/numberFormatter';
@@ -21,7 +22,7 @@ export async function resolveValue(
   visited = new Set<string>()
 ): Promise<string> {
   // Prevent infinite recursion
-  if (depth > 10) return '/* circular reference */';
+  if (depth > RESOLUTION_CONFIG.MAX_ALIAS_DEPTH) return '/* circular reference */';
 
   // Handle variable alias - output as CSS var() reference
   if (

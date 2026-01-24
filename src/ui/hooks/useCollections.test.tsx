@@ -2,20 +2,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useCollections } from './useCollections';
 import * as usePluginMessage from './usePluginMessage';
-import type { CollectionInfo } from '@shared/types';
+import type { CollectionInfo, UIMessage } from '@shared/types';
 
 vi.mock('./usePluginMessage');
 
 describe('useCollections', () => {
   const mockSendMessage = vi.fn();
-  let mockListenToMessage: (callback: (message: unknown) => void) => () => void;
-  let messageHandler: ((message: unknown) => void) | null = null;
+  let mockListenToMessage: (callback: (message: UIMessage) => void) => () => void;
+  let messageHandler: ((message: UIMessage) => void) | null = null;
 
   beforeEach(() => {
     vi.clearAllMocks();
     messageHandler = null;
 
-    mockListenToMessage = vi.fn((callback: (message: unknown) => void) => {
+    mockListenToMessage = vi.fn((callback: (message: UIMessage) => void) => {
       messageHandler = callback;
       return vi.fn(); // Return cleanup function
     });

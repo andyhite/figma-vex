@@ -19,7 +19,7 @@ describe('TabBar', () => {
   });
 
   it('should highlight active tab', () => {
-    const { container } = render(
+    render(
       <TabBar tabs={tabs} activeTab="tab2" onTabChange={() => {}} />
     );
 

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, render, act } from '@testing-library/react';
-import React from 'react';
 import { useAutoResize } from './useAutoResize';
 import * as useWindowResize from './useWindowResize';
 
@@ -28,22 +27,16 @@ function TestComponent({
 describe('useAutoResize', () => {
   const mockResizeWindow = vi.fn();
 
-  let resizeObserverCallback: (() => void) | null = null;
-  let mutationObserverCallback: (() => void) | null = null;
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    resizeObserverCallback = null;
-    mutationObserverCallback = null;
     
     vi.spyOn(useWindowResize, 'useWindowResize').mockReturnValue({
       resizeWindow: mockResizeWindow,
     });
 
-    // Mock ResizeObserver - capture callback
-    global.ResizeObserver = vi.fn().mockImplementation((callback) => {
-      resizeObserverCallback = callback as () => void;
+    // Mock ResizeObserver
+    global.ResizeObserver = vi.fn().mockImplementation(() => {
       return {
         observe: vi.fn(),
         disconnect: vi.fn(),
@@ -51,9 +44,8 @@ describe('useAutoResize', () => {
       };
     });
 
-    // Mock MutationObserver - capture callback
-    global.MutationObserver = vi.fn().mockImplementation((callback) => {
-      mutationObserverCallback = callback as () => void;
+    // Mock MutationObserver
+    global.MutationObserver = vi.fn().mockImplementation(() => {
       return {
         observe: vi.fn(),
         disconnect: vi.fn(),
@@ -290,7 +282,7 @@ describe('useAutoResize', () => {
   });
 
   it('should handle missing container gracefully', () => {
-    const { result } = renderHook(() => useAutoResize());
+    renderHook(() => useAutoResize());
 
     // Ref is null, should not throw
     expect(() => {

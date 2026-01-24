@@ -3,23 +3,25 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CssTab } from './CssTab';
 import * as usePluginMessage from '../../hooks/usePluginMessage';
-import * as useClipboard from '../../hooks/useClipboard';
+import * as useOutputActions from '../../hooks/useOutputActions';
+import type { UIMessage } from '@shared/types';
 
 vi.mock('../../../hooks/usePluginMessage');
-vi.mock('../../../hooks/useClipboard');
+vi.mock('../../../hooks/useOutputActions');
 
 describe('CssTab', () => {
   const mockSendMessage = vi.fn();
-  let mockListenToMessage: (callback: (message: unknown) => void) => () => void;
-  let messageHandler: ((message: unknown) => void) | null = null;
-  const mockCopyToClipboard = vi.fn().mockResolvedValue(true);
-  const mockCopied = false;
+  let mockListenToMessage: (callback: (message: UIMessage) => void) => () => void;
+  let messageHandler: ((message: UIMessage) => void) | null = null;
+  const mockHandleCopy = vi.fn();
+  const mockHandleDownload = vi.fn();
+  const mockSetStatus = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     messageHandler = null;
 
-    mockListenToMessage = vi.fn((callback: (message: unknown) => void) => {
+    mockListenToMessage = vi.fn((callback: (message: UIMessage) => void) => {
       messageHandler = callback;
       return vi.fn();
     });
@@ -29,9 +31,11 @@ describe('CssTab', () => {
       listenToMessage: mockListenToMessage,
     });
 
-    vi.spyOn(useClipboard, 'useClipboard').mockReturnValue({
-      copyToClipboard: mockCopyToClipboard,
-      copied: mockCopied,
+    vi.spyOn(useOutputActions, 'useOutputActions').mockReturnValue({
+      handleCopy: mockHandleCopy,
+      handleDownload: mockHandleDownload,
+      status: { message: '', type: 'info' },
+      setStatus: mockSetStatus,
     });
   });
 
@@ -137,16 +141,10 @@ describe('CssTab', () => {
     const copyButton = screen.getByRole('button', { name: 'Copy to clipboard' });
     await userEvent.click(copyButton);
 
-    expect(mockCopyToClipboard).toHaveBeenCalledWith('body { color: red; }');
+    expect(mockHandleCopy).toHaveBeenCalledWith('body { color: red; }');
   });
 
   it('should download file when download button is clicked', async () => {
-    // Mock URL.createObjectURL and URL.revokeObjectURL for jsdom
-    const mockCreateObjectURL = vi.fn().mockReturnValue('blob:mock-url');
-    const mockRevokeObjectURL = vi.fn();
-    global.URL.createObjectURL = mockCreateObjectURL;
-    global.URL.revokeObjectURL = mockRevokeObjectURL;
-
     render(
       <CssTab prefix="" selectedCollections={[]} includeCollectionComments={true} />
     );
@@ -165,38 +163,9 @@ describe('CssTab', () => {
       expect(screen.getByDisplayValue('body { color: red; }')).toBeInTheDocument();
     });
 
-    // Create a mock anchor that won't trigger jsdom navigation
-    // Set up mocks AFTER render but BEFORE clicking download
-    const mockAnchor = {
-      href: '',
-      download: '',
-      click: vi.fn(),
-      style: {},
-    };
-
-    const originalCreateElement = document.createElement.bind(document);
-    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
-      if (tagName === 'a') {
-        return mockAnchor as unknown as HTMLAnchorElement;
-      }
-      return originalCreateElement(tagName);
-    });
-    const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
-    const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node);
-
     const downloadButton = screen.getByRole('button', { name: 'Download' });
     await userEvent.click(downloadButton);
 
-    expect(mockCreateObjectURL).toHaveBeenCalled();
-    expect(createElementSpy).toHaveBeenCalledWith('a');
-    expect(appendChildSpy).toHaveBeenCalled();
-    expect(mockAnchor.click).toHaveBeenCalled();
-    expect(removeChildSpy).toHaveBeenCalled();
-    expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
-
-    // Restore
-    createElementSpy.mockRestore();
-    appendChildSpy.mockRestore();
-    removeChildSpy.mockRestore();
+    expect(mockHandleDownload).toHaveBeenCalledWith('body { color: red; }');
   });
 });

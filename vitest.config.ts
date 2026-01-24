@@ -17,6 +17,7 @@ export default defineConfig({
   ...sharedConfig,
   test: {
     globals: true,
+    forceExit: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

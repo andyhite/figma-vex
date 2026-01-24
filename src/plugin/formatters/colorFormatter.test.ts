@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { rgbToHex, rgbToRgbString, rgbToHsl, rgbToOklch, formatColor } from './colorFormatter';
+import type { ColorFormat } from '@shared/types';
 
 // Test colors
 const RED = { r: 1, g: 0, b: 0, a: 1 };

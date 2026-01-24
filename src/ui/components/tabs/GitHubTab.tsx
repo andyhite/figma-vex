@@ -7,7 +7,7 @@ import { FormHelpText } from '../common/FormHelpText';
 import { Input } from '../common/Input';
 import { StatusMessage } from '../common/StatusMessage';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions, ExportType, GitHubDispatchOptions } from '@shared/types';
+import type { ExportOptions, ExportType, GitHubDispatchOptions, UIMessage } from '@shared/types';
 
 interface GitHubTabProps {
   prefix: string;
@@ -33,16 +33,16 @@ export function GitHubTab({
   const { sendMessage, listenToMessage } = usePluginMessage();
 
   // Listen for GitHub dispatch results
-  const handleMessage = useCallback((message: { type: string; message?: string }) => {
+  const handleMessage = useCallback((message: UIMessage) => {
     if (message.type === 'github-dispatch-success') {
-      setStatus({ message: message.message || 'Successfully sent to GitHub!', type: 'success' });
+      setStatus({ message: message.message, type: 'success' });
     } else if (message.type === 'error') {
-      setStatus({ message: message.message || 'An error occurred', type: 'error' });
+      setStatus({ message: message.message, type: 'error' });
     }
   }, []);
 
   useEffect(() => {
-    const cleanup = listenToMessage(handleMessage as (msg: unknown) => void);
+    const cleanup = listenToMessage(handleMessage);
     return cleanup;
   }, [listenToMessage, handleMessage]);
 

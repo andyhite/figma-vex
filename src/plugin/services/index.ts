@@ -5,3 +5,4 @@ export {
   parseGitHubError,
   sendGitHubDispatch,
 } from './githubService';
+export { generateExports } from './exportService';

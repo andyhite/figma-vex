@@ -6,6 +6,46 @@ import { resolveValue } from '@plugin/services/valueResolver';
 import { filterCollections, getCollectionVariables } from '@plugin/utils/collectionUtils';
 
 /**
+ * Converts CSS var() references to SCSS variable references.
+ * Handles edge cases like fallback values with nested parentheses:
+ * - var(--foo) -> $foo
+ * - var(--foo, red) -> $foo
+ * - var(--foo, rgb(0,0,0)) -> $foo
+ */
+function convertVarToScss(value: string): string {
+  let result = '';
+  let i = 0;
+
+  while (i < value.length) {
+    // Check for var( pattern
+    if (value.slice(i, i + 6) === 'var(--') {
+      // Extract variable name (letters, numbers, hyphens, underscores)
+      let j = i + 6;
+      while (j < value.length && /[a-zA-Z0-9_-]/.test(value[j])) {
+        j++;
+      }
+      const varName = value.slice(i + 6, j);
+
+      // Skip to the closing paren, accounting for nested parens
+      let depth = 1;
+      while (j < value.length && depth > 0) {
+        if (value[j] === '(') depth++;
+        else if (value[j] === ')') depth--;
+        j++;
+      }
+
+      result += `$${varName}`;
+      i = j;
+    } else {
+      result += value[i];
+      i++;
+    }
+  }
+
+  return result;
+}
+
+/**
  * Generates the SCSS file header comment.
  */
 export function generateScssHeader(fileName: string): string {
@@ -57,9 +97,8 @@ export async function exportToScss(
     );
 
     // Convert var() references to SCSS variable references
-    const scssValueFormatted = scssValue.replace(/var\(--([^)]+)\)/g, (_, varName) => {
-      return `$${varName}`;
-    });
+    // Only captures the variable name, ignoring any fallback values
+    const scssValueFormatted = convertVarToScss(scssValue);
 
     return `${prefixedName}: ${scssValueFormatted};`;
   };

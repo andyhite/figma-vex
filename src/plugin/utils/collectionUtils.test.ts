@@ -123,7 +123,7 @@ describe('edge cases', () => {
     it('should handle variables with missing collectionId', () => {
       const varsWithMissing = [
         { id: 'var-1', name: 'test', variableCollectionId: undefined },
-      ] as Variable[];
+      ] as unknown as Variable[];
       const result = getCollectionVariables(varsWithMissing, 'col-1');
       expect(result).toHaveLength(0);
     });
@@ -187,7 +187,7 @@ describe('edge cases', () => {
     it('should handle variables with missing collectionId', () => {
       const varsWithMissing = [
         { id: 'var-1', name: 'test', variableCollectionId: undefined },
-      ] as Variable[];
+      ] as unknown as Variable[];
       const result = getCollectionVariablesByName(varsWithMissing, 'col-1');
       expect(result).toHaveLength(0);
     });
