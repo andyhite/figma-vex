@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply m-0 bg-figma-bg p-0 font-sans text-xs text-figma-text antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    @apply h-2 w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-figma-bg;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded bg-figma-border-hover;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[#5c5c5c];
+  }
+}
+
+@layer components {
+  .btn {
+    @apply cursor-pointer rounded border-none px-3 py-1.5 text-xs font-medium transition-all;
+  }
+
+  .btn-primary {
+    @apply btn bg-figma-primary text-white hover:bg-figma-primary-hover active:bg-figma-primary-active;
+  }
+
+  .btn-secondary {
+    @apply btn border border-figma-border bg-figma-bg-secondary text-white hover:border-figma-border-hover hover:bg-figma-bg-tertiary active:bg-figma-bg;
+  }
+
+  .input {
+    @apply w-full rounded border border-figma-border bg-figma-bg-secondary px-2 py-1.5 font-mono text-xs text-figma-text transition-colors;
+    @apply focus:border-figma-primary focus:outline-none;
+    @apply placeholder:text-figma-text-tertiary;
+  }
+
+  .checkbox {
+    @apply h-3.5 w-3.5 cursor-pointer accent-figma-primary;
+  }
+}

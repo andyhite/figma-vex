@@ -3,15 +3,11 @@
   "id": "vex-flexible-variables-export",
   "api": "1.0.0",
   "main": "dist/main.js",
-  "ui": "ui.html",
+  "ui": "dist/index.html",
   "capabilities": [],
   "enableProposedApi": false,
-  "editorType": [
-    "figma"
-  ],
+  "editorType": ["figma"],
   "networkAccess": {
-    "allowedDomains": [
-      "https://api.github.com"
-    ]
+    "allowedDomains": ["https://api.github.com"]
   }
 }

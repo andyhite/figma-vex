@@ -94,7 +94,8 @@ When "Export modes as separate selectors" is enabled:
   --color-primary: #18a0fb;
 }
 
-:root[data-theme="dark"], .theme-dark {
+:root[data-theme='dark'],
+.theme-dark {
   --color-primary: #60c5ff;
 }
 ```
@@ -173,6 +174,7 @@ The plugin can send generated exports to GitHub via `repository_dispatch` events
 ### Payload Structure
 
 The plugin sends a `repository_dispatch` event with:
+
 - **Event type**: `figma-variables-update`
 - **Payload**:
   ```json
