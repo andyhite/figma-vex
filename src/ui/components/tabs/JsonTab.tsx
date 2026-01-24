@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '../common/Button';
+import { ButtonGroup } from '../common/ButtonGroup';
 import { OutputArea } from '../common/OutputArea';
 import { StatusMessage } from '../common/StatusMessage';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
@@ -79,23 +80,23 @@ export function JsonTab({ selectedCollections, includeCollectionComments }: Json
 
   return (
     <div>
-      <div className="button-row mb-4 mt-4 flex gap-2">
+      <ButtonGroup>
         <Button onClick={handleExport}>Generate JSON</Button>
-      </div>
+      </ButtonGroup>
       <OutputArea
         label="Output"
         value={output}
         readOnly
         placeholder="Click 'Generate JSON' to export variables..."
       />
-      <div className="button-row mb-4 mt-4 flex gap-2">
+      <ButtonGroup>
         <Button variant="secondary" onClick={handleCopy}>
           Copy to Clipboard
         </Button>
         <Button variant="secondary" onClick={handleDownload}>
           Download
         </Button>
-      </div>
+      </ButtonGroup>
       {status.message && <StatusMessage type={status.type}>{status.message}</StatusMessage>}
     </div>
   );

@@ -6,6 +6,9 @@ import { formatNumber } from '@plugin/formatters/numberFormatter';
 /**
  * Resolves a variable value to its string representation.
  * Handles variable aliases, colors, numbers, strings, and booleans.
+ *
+ * Note: modeId is currently unused but reserved for future mode-aware
+ * alias resolution (resolving to actual values instead of var() references).
  */
 export async function resolveValue(
   value: VariableValue,

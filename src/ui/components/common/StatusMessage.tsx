@@ -12,5 +12,5 @@ export function StatusMessage({ type = 'info', children }: StatusMessageProps) {
     info: 'text-figma-text-secondary',
   };
 
-  return <div className={`status mt-3 text-xs ${typeClasses[type]}`}>{children}</div>;
+  return <div className={`status mb-4 text-xs ${typeClasses[type]}`}>{children}</div>;
 }

@@ -1,28 +1,10 @@
 import type { ExportOptions } from '@shared/types';
 import { rgbToHex } from '@plugin/formatters/colorFormatter';
 import { parseDescription } from '@plugin/utils/descriptionParser';
-
-/**
- * Filters collections based on selected collection IDs.
- */
-function filterCollections(
-  collections: VariableCollection[],
-  selectedCollectionIds?: string[]
-): VariableCollection[] {
-  if (selectedCollectionIds && selectedCollectionIds.length > 0) {
-    return collections.filter((c) => selectedCollectionIds.includes(c.id));
-  }
-  return collections;
-}
-
-/**
- * Gets variables for a collection, sorted by name.
- */
-function getCollectionVariables(variables: Variable[], collectionId: string): Variable[] {
-  return variables
-    .filter((v) => v.variableCollectionId === collectionId)
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
+import {
+  filterCollections,
+  getCollectionVariablesByName,
+} from '@plugin/utils/collectionUtils';
 
 /**
  * Formats a raw value for JSON export (Style Dictionary compatible).
@@ -70,7 +52,7 @@ export async function exportToJson(
 
   for (const collection of filteredCollections) {
     const collectionData: Record<string, unknown> = {};
-    const collectionVars = getCollectionVariables(variables, collection.id);
+    const collectionVars = getCollectionVariablesByName(variables, collection.id);
 
     for (const variable of collectionVars) {
       const config = parseDescription(variable.description);

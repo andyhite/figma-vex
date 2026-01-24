@@ -11,5 +11,5 @@ export function TabPanel({ id, activeTab, children }: TabPanelProps) {
     return null;
   }
 
-  return <div className="tab-content px-4">{children}</div>;
+  return <div className="tab-content px-4 pb-4">{children}</div>;
 }

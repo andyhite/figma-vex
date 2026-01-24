@@ -3,6 +3,7 @@ import { DEFAULT_CONFIG } from '@shared/types';
 import { toCssName, toPrefixedName } from '@plugin/formatters/nameFormatter';
 import { parseDescription } from '@plugin/utils/descriptionParser';
 import { resolveValue } from '@plugin/services/valueResolver';
+import { filterCollections, getCollectionVariables } from '@plugin/utils/collectionUtils';
 
 /**
  * Generates the CSS file header comment.
@@ -16,28 +17,6 @@ export function generateCssHeader(fileName: string): string {
     ' */',
     '',
   ].join('\n');
-}
-
-/**
- * Filters collections based on selected collection IDs.
- */
-function filterCollections(
-  collections: VariableCollection[],
-  selectedCollectionIds?: string[]
-): VariableCollection[] {
-  if (selectedCollectionIds && selectedCollectionIds.length > 0) {
-    return collections.filter((c) => selectedCollectionIds.includes(c.id));
-  }
-  return collections;
-}
-
-/**
- * Gets variables for a collection, sorted alphabetically.
- */
-function getCollectionVariables(variables: Variable[], collectionId: string): Variable[] {
-  return variables
-    .filter((v) => v.variableCollectionId === collectionId)
-    .sort((a, b) => toCssName(a.name).localeCompare(toCssName(b.name)));
 }
 
 /**

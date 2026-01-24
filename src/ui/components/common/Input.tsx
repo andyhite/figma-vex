@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes } from 'react';
+import { FormField } from './FormField';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -6,13 +7,11 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export function Input({ label, className = '', ...props }: InputProps) {
   return (
-    <div className="form-group">
+    <FormField>
       {label && (
-        <label className="text-label mb-1.5 block text-xs font-medium text-figma-text">
-          {label}
-        </label>
+        <label className="mb-1.5 block text-xs font-medium text-figma-text">{label}</label>
       )}
       <input className={`input ${className}`} {...props} />
-    </div>
+    </FormField>
   );
 }

@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '../common/Button';
+import { ButtonGroup } from '../common/ButtonGroup';
 import { Checkbox } from '../common/Checkbox';
+import { FormField } from '../common/FormField';
+import { FormGroup } from '../common/FormGroup';
 import { Input } from '../common/Input';
 import { OutputArea } from '../common/OutputArea';
 import { StatusMessage } from '../common/StatusMessage';
@@ -92,37 +95,37 @@ export function CssTab({ prefix, selectedCollections, includeCollectionComments 
   return (
     <div>
       <Input label="CSS Selector" value={selector} onChange={(e) => setSelector(e.target.value)} />
-      <div className="form-group mb-3">
+      <FormField>
         <Checkbox
           label="Export modes as separate selectors"
           checked={useModesAsSelectors}
           onChange={(e) => setUseModesAsSelectors(e.target.checked)}
         />
-      </div>
-      <div className="form-group mb-3">
+      </FormField>
+      <FormField>
         <Checkbox
           label="Include mode comments"
           checked={includeModeComments}
           onChange={(e) => setIncludeModeComments(e.target.checked)}
         />
-      </div>
-      <div className="button-row mb-4 mt-4 flex gap-2">
+      </FormField>
+      <ButtonGroup>
         <Button onClick={handleExport}>Generate CSS</Button>
-      </div>
+      </ButtonGroup>
       <OutputArea
         label="Output"
         value={output}
         readOnly
         placeholder="Click 'Generate CSS' to export variables..."
       />
-      <div className="button-row mb-4 mt-4 flex gap-2">
+      <ButtonGroup>
         <Button variant="secondary" onClick={handleCopy}>
           Copy to Clipboard
         </Button>
         <Button variant="secondary" onClick={handleDownload}>
           Download
         </Button>
-      </div>
+      </ButtonGroup>
       {status.message && <StatusMessage type={status.type}>{status.message}</StatusMessage>}
     </div>
   );

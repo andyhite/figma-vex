@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), viteSingleFile()],
   root: 'src/ui',
   build: {
-    outDir: resolve(__dirname, 'dist'),
+    outDir: '../../dist',
     emptyDirOnBuildStart: false,
     target: 'esnext',
     assetsInlineLimit: 100000000,

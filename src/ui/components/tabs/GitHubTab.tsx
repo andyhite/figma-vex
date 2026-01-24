@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '../common/Button';
+import { ButtonGroup } from '../common/ButtonGroup';
 import { Checkbox } from '../common/Checkbox';
+import { FormGroup } from '../common/FormGroup';
+import { FormHelpText } from '../common/FormHelpText';
 import { Input } from '../common/Input';
 import { StatusMessage } from '../common/StatusMessage';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
@@ -122,7 +125,7 @@ export function GitHubTab({
         onChange={(e) => setRepository(e.target.value)}
         placeholder="owner/repo (e.g., octocat/Hello-World)"
       />
-      <p className="mt-1 text-[10px] text-figma-text-tertiary">Format: owner/repository-name</p>
+      <FormHelpText>Format: owner/repository-name</FormHelpText>
 
       <Input
         label="GitHub Personal Access Token"
@@ -130,8 +133,9 @@ export function GitHubTab({
         value={token}
         onChange={(e) => setToken(e.target.value)}
         placeholder="ghp_xxxxxxxxxxxx"
+        autoComplete="new-password"
       />
-      <p className="mt-1 text-[10px] text-figma-text-tertiary">
+      <FormHelpText>
         Token needs{' '}
         <code className="rounded border border-figma-border bg-figma-bg px-1 py-0.5">repo</code>{' '}
         scope. Create one at:{' '}
@@ -143,7 +147,7 @@ export function GitHubTab({
         >
           github.com/settings/tokens
         </a>
-      </p>
+      </FormHelpText>
 
       <Input
         label="Workflow File Name (optional)"
@@ -151,62 +155,52 @@ export function GitHubTab({
         onChange={(e) => setWorkflowFileName(e.target.value)}
         placeholder="update-variables.yml"
       />
-      <p className="mt-1 text-[10px] text-figma-text-tertiary">
+      <FormHelpText>
         Optional metadata included in the payload (does not need to match an actual workflow file)
-      </p>
+      </FormHelpText>
 
-      <div className="form-group mb-3">
-        <label className="text-label mb-2 block text-xs font-medium text-figma-text">
-          Export Types
-        </label>
-        <div className="mt-2 space-y-2">
-          <Checkbox
-            label="CSS"
-            checked={exportTypes.has('css')}
-            onChange={() => toggleExportType('css')}
-          />
-          <Checkbox
-            label="SCSS"
-            checked={exportTypes.has('scss')}
-            onChange={() => toggleExportType('scss')}
-          />
-          <Checkbox
-            label="JSON"
-            checked={exportTypes.has('json')}
-            onChange={() => toggleExportType('json')}
-          />
-          <Checkbox
-            label="TypeScript"
-            checked={exportTypes.has('typescript')}
-            onChange={() => toggleExportType('typescript')}
-          />
-        </div>
-      </div>
+      <FormGroup label="Export Types">
+        <Checkbox
+          label="CSS"
+          checked={exportTypes.has('css')}
+          onChange={() => toggleExportType('css')}
+        />
+        <Checkbox
+          label="SCSS"
+          checked={exportTypes.has('scss')}
+          onChange={() => toggleExportType('scss')}
+        />
+        <Checkbox
+          label="JSON"
+          checked={exportTypes.has('json')}
+          onChange={() => toggleExportType('json')}
+        />
+        <Checkbox
+          label="TypeScript"
+          checked={exportTypes.has('typescript')}
+          onChange={() => toggleExportType('typescript')}
+        />
+      </FormGroup>
 
       {exportTypes.has('css') && (
-        <div className="form-group mb-3">
-          <label className="text-label mb-2 block text-xs font-medium text-figma-text">
-            CSS Options
-          </label>
-          <div className="mt-2 space-y-2">
-            <Input
-              label="CSS Selector"
-              value={cssSelector}
-              onChange={(e) => setCssSelector(e.target.value)}
-              className="w-[200px]"
-            />
-            <Checkbox
-              label="Export modes as separate selectors"
-              checked={useModesAsSelectors}
-              onChange={(e) => setUseModesAsSelectors(e.target.checked)}
-            />
-          </div>
-        </div>
+        <FormGroup label="CSS Options">
+          <Input
+            label="CSS Selector"
+            value={cssSelector}
+            onChange={(e) => setCssSelector(e.target.value)}
+            className="w-[200px]"
+          />
+          <Checkbox
+            label="Export modes as separate selectors"
+            checked={useModesAsSelectors}
+            onChange={(e) => setUseModesAsSelectors(e.target.checked)}
+          />
+        </FormGroup>
       )}
 
-      <div className="button-row mb-4 mt-4 flex gap-2">
+      <ButtonGroup>
         <Button onClick={handleDispatch}>Send to GitHub</Button>
-      </div>
+      </ButtonGroup>
 
       {status.message && <StatusMessage type={status.type}>{status.message}</StatusMessage>}
 

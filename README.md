@@ -13,11 +13,11 @@ A Figma plugin that exports variables to CSS custom properties with configurable
 ### Option 2: Build from source
 
 ```bash
-npm install
-npm run build
+pnpm install
+pnpm build
 ```
 
-The TypeScript source files in `src/` will be compiled to ES5 JavaScript in `dist/`. Then import the manifest.json in Figma as above.
+The source files in `src/` will be compiled and bundled into `dist/`. Then import the manifest.json in Figma as above.
 
 ## Usage
 
@@ -128,30 +128,70 @@ When "Export modes as separate selectors" is enabled:
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Build once
-npm run build
+pnpm build
 
 # Watch mode (auto-rebuild on changes)
-npm run watch
+pnpm dev
+
+# Run tests
+pnpm test
+
+# Run tests with coverage
+pnpm test:coverage
+
+# Type check
+pnpm typecheck
+
+# Lint
+pnpm lint
+
+# Format code
+pnpm format
 
 # Clean build output
-npm run clean
+pnpm clean
 ```
 
 ### Project Structure
 
 ```
-figma-variables-export/
-├── src/           # TypeScript source files
-│   └── main.ts
-├── dist/          # Compiled JavaScript (generated)
-│   └── main.js
-├── manifest.json  # Figma plugin manifest
-├── ui.html        # Plugin UI
-└── package.json   # Dependencies and scripts
+figma-vex/
+├── src/
+│   ├── plugin/              # Backend (runs in Figma sandbox)
+│   │   ├── exporters/       # CSS, SCSS, JSON, TypeScript exporters
+│   │   ├── formatters/      # Color, name, number formatting
+│   │   ├── services/        # GitHub, value resolver
+│   │   ├── utils/           # Description parser, collection utils
+│   │   └── main.ts          # Plugin entry point
+│   ├── shared/              # Shared types between plugin and UI
+│   │   └── types/
+│   └── ui/                  # React UI (runs in iframe)
+│       ├── components/      # React components
+│       │   ├── common/      # Button, Input, Checkbox, etc.
+│       │   └── tabs/        # CssTab, ScssTab, JsonTab, etc.
+│       ├── hooks/           # usePluginMessage, useClipboard, etc.
+│       ├── services/        # Plugin bridge
+│       └── styles/          # Tailwind CSS
+├── dist/                    # Build output (generated)
+│   ├── main.js              # Plugin backend
+│   └── index.html           # React UI (inlined)
+├── manifest.json            # Figma plugin manifest
+├── vite.config.ts           # Plugin build config
+├── vite.config.ui.ts        # UI build config
+└── vitest.config.ts         # Test config
 ```
+
+### Tech Stack
+
+- **TypeScript** - Strict mode enabled
+- **React 19** - Component-based UI
+- **Tailwind CSS** - Styling with Figma design tokens
+- **Vite 6** - Dual build (plugin backend + React UI)
+- **Vitest** - Unit testing with coverage
+- **ESLint 9 + Prettier** - Code quality
 
 ## GitHub Integration
 

@@ -7,8 +7,10 @@ import { JsonTab } from './components/tabs/JsonTab';
 import { TypeScriptTab } from './components/tabs/TypeScriptTab';
 import { GitHubTab } from './components/tabs/GitHubTab';
 import { HelpTab } from './components/tabs/HelpTab';
-import { Input } from './components/common/Input';
 import { Checkbox } from './components/common/Checkbox';
+import { FormField } from './components/common/FormField';
+import { FormGroup } from './components/common/FormGroup';
+import { Input } from './components/common/Input';
 import { useCollections } from './hooks/useCollections';
 
 const TABS = [
@@ -43,11 +45,11 @@ export default function App() {
 
       {showCommonOptions && (
         <>
-          <div className="px-4 pb-3 text-xs text-figma-text-secondary">
+          <div className="px-4 pb-4 text-xs text-figma-text-secondary">
             {TAB_DESCRIPTIONS[activeTab]}
           </div>
 
-          <div className="border-b border-figma-bg-secondary px-4 pb-4">
+          <div className="px-4">
             <Input
               label="Variable Prefix (optional)"
               value={prefix}
@@ -55,35 +57,34 @@ export default function App() {
               placeholder="e.g., ds, theme"
             />
 
-            <div className="form-group mb-3">
-              <label className="text-label mb-2 block text-xs font-medium text-figma-text">
-                Collections
-              </label>
-              <div className="mt-2 max-h-[150px] overflow-y-auto rounded border border-figma-border bg-figma-bg-secondary p-2">
+            <FormGroup label="Collections">
+              <div className="max-h-[150px] overflow-y-auto rounded border border-figma-border bg-figma-bg-secondary p-2">
                 {loading ? (
                   <div className="text-xs text-figma-text-tertiary">Loading collections...</div>
                 ) : collections.length === 0 ? (
                   <div className="text-xs text-figma-text-tertiary">No collections found</div>
                 ) : (
-                  collections.map((collection) => (
-                    <Checkbox
-                      key={collection.id}
-                      label={collection.name}
-                      checked={selectedCollections.includes(collection.id)}
-                      onChange={() => toggleCollection(collection.id)}
-                    />
-                  ))
+                  <div className="space-y-2">
+                    {collections.map((collection) => (
+                      <Checkbox
+                        key={collection.id}
+                        label={collection.name}
+                        checked={selectedCollections.includes(collection.id)}
+                        onChange={() => toggleCollection(collection.id)}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
+            </FormGroup>
 
-            <div className="form-group mb-0">
+            <FormField>
               <Checkbox
                 label="Include collection comments"
                 checked={includeCollectionComments}
                 onChange={(e) => setIncludeCollectionComments(e.target.checked)}
               />
-            </div>
+            </FormField>
           </div>
         </>
       )}
