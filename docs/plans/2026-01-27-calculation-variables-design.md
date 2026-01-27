@@ -63,7 +63,7 @@ calc: max(var(--min-height), var(--content-height)); unit: px
    - If alias, resolve fully to concrete value
    - If not a number, mark as error
 4. Build evaluation context: `{ "var(--spacing-base)": 16, "var(--font-lg)": 24 }`
-5. Evaluate expression with expr-eval library
+5. Evaluate expression with mathjs library
 6. Apply unit formatting to result (defaults to source variable's unit if not specified)
 
 ### Mode Handling
@@ -137,12 +137,12 @@ calc: max(var(--min-height), var(--content-height)); unit: px
 
 | File | Purpose |
 |------|---------|
-| `apps/plugin/src/services/expressionEvaluator.ts` | Core evaluation logic using expr-eval |
+| `apps/plugin/src/services/expressionEvaluator.ts` | Core evaluation logic using mathjs |
 | `apps/plugin/src/utils/variableLookup.ts` | Resolve CSS var names to Figma variables |
 
 ### Dependencies
 
-- Add `expr-eval` to `apps/plugin/package.json`
+- Add `mathjs` to `apps/plugin/package.json`
 
 ### UI Changes (apps/ui)
 
@@ -159,7 +159,7 @@ calc: max(var(--min-height), var(--content-height)); unit: px
 | Mode handling | Evaluate per mode | Respects mode-specific design decisions |
 | Error handling | Fallback + warnings | Non-blocking, allows partial progress |
 | Write-back trigger | Button + export checkbox | Flexible, no surprise side effects |
-| Expression library | expr-eval | Lightweight, supports custom functions |
+| Expression library | mathjs | Robust, well-maintained, comprehensive math support |
 | Directive separator | Semicolon | Unambiguous, won't conflict with expressions |
 | Unit default | Source variable's unit | Intuitive behavior for scaling operations |
 | Cross-collection refs | Allowed | CSS namespace is flat, enables flexibility |
