@@ -25,7 +25,9 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   remBaseVariableId: undefined,
   cssExportAsCalcExpressions: false,
   scssExportAsCalcExpressions: false,
-  nameFormatRules: [],
+  nameFormatRules: [], // Custom rules only (default is computed from prefix + casing)
+  nameFormatCasing: 'kebab',
+  nameFormatAdvanced: false,
   syncCodeSyntax: true,
 };
 
@@ -58,7 +60,12 @@ export function useSettings(): UseSettingsReturn {
       if (message.type === 'settings-loaded') {
         if (message.settings) {
           // Merge with defaults to handle any new settings fields
-          setSettings({ ...DEFAULT_SETTINGS, ...message.settings });
+          const mergedSettings = { ...DEFAULT_SETTINGS, ...message.settings };
+          // Filter out any old default rules that may have been stored
+          mergedSettings.nameFormatRules = (mergedSettings.nameFormatRules || []).filter(
+            (r) => r.id !== '__default__'
+          );
+          setSettings(mergedSettings);
         } else {
           // No saved settings, use defaults
           setSettings(DEFAULT_SETTINGS);
@@ -97,6 +104,10 @@ export function useSettings(): UseSettingsReturn {
       setSettings((prev) => {
         if (!prev) return prev;
         const newSettings = { ...prev, ...updates };
+        // Filter out any default rules from custom rules (default is computed)
+        if (updates.nameFormatRules !== undefined) {
+          newSettings.nameFormatRules = updates.nameFormatRules.filter((r) => r.id !== '__default__');
+        }
         saveSettings(newSettings);
         return newSettings;
       });

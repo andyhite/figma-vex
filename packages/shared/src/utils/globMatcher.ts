@@ -143,12 +143,17 @@ export function toCustomCssName(figmaName: string, rules: NameFormatRule[]): str
   for (const rule of rules) {
     if (!rule.enabled) continue;
 
-    const regex = globToRegex(rule.pattern);
-    const match = figmaName.match(regex);
+    try {
+      const regex = globToRegex(rule.pattern);
+      const match = figmaName.match(regex);
 
-    if (match) {
-      const captures = match.slice(1); // Remove full match, keep captures
-      return applyReplacement(rule.replacement, captures);
+      if (match) {
+        const captures = match.slice(1); // Remove full match, keep captures
+        return applyReplacement(rule.replacement, captures);
+      }
+    } catch {
+      // Skip rules with invalid patterns
+      continue;
     }
   }
 

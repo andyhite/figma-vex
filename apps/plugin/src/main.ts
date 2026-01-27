@@ -143,6 +143,18 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       break;
     }
 
+    case 'get-variable-names': {
+      const variableNames = variables.map((v) => {
+        const collection = collections.find((c) => c.id === v.variableCollectionId);
+        return collection ? `${collection.name}/${v.name}` : v.name;
+      });
+      postToUI({
+        type: 'variable-names-list',
+        names: variableNames,
+      });
+      break;
+    }
+
     case 'get-styles': {
       const styles = await fetchAllStyles();
       postToUI({

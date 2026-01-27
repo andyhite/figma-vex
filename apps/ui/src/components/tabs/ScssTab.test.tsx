@@ -39,7 +39,18 @@ describe('ScssTab', () => {
 
   it('should send export-scss message when generate is clicked', async () => {
     render(
-      <ScssTab prefix="ds" selectedCollections={['1']} includeCollectionComments={true} />
+      <ScssTab
+        prefix="ds"
+        selectedCollections={['1']}
+        includeCollectionComments={true}
+        syncCalculations={false}
+        includeStyles={false}
+        styleOutputMode="variables"
+        styleTypes={[]}
+        remBaseVariableId={null}
+        nameFormatRules={[]}
+        syncCodeSyntax={true}
+      />
     );
 
     const button = screen.getByRole('button', { name: 'Generate SCSS' });
@@ -47,20 +58,32 @@ describe('ScssTab', () => {
 
     expect(mockSendMessage).toHaveBeenCalledWith({
       type: 'export-scss',
-      options: {
+      options: expect.objectContaining({
         selector: ':root',
         prefix: 'ds',
         useModesAsSelectors: false,
         includeCollectionComments: true,
         includeModeComments: false,
         selectedCollections: ['1'],
-      },
+        exportAsCalcExpressions: false,
+      }),
     });
   });
 
   it('should display output when scss-result message is received', async () => {
     render(
-      <ScssTab prefix="" selectedCollections={[]} includeCollectionComments={true} />
+      <ScssTab
+        prefix=""
+        selectedCollections={[]}
+        includeCollectionComments={true}
+        syncCalculations={false}
+        includeStyles={false}
+        styleOutputMode="variables"
+        styleTypes={[]}
+        remBaseVariableId={null}
+        nameFormatRules={[]}
+        syncCodeSyntax={true}
+      />
     );
 
     act(() => {

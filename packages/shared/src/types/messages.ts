@@ -17,6 +17,51 @@ export interface NameFormatRule {
 }
 
 /**
+ * Casing options for variable name formatting
+ */
+export type CasingOption = 'kebab' | 'snake' | 'camel' | 'pascal' | 'lower' | 'upper';
+
+/**
+ * Computes the default rule replacement from prefix and casing.
+ * @param prefix - Optional prefix to prepend
+ * @param casing - Casing option
+ * @returns Replacement string for the default ** rule
+ */
+export function computeDefaultReplacement(prefix: string, casing: CasingOption): string {
+  return prefix ? `${prefix}-\${1:${casing}}` : `\${1:${casing}}`;
+}
+
+/**
+ * Creates the default rule based on prefix and casing settings.
+ * The default rule always has pattern ** and is always enabled.
+ */
+export function createDefaultRule(prefix: string, casing: CasingOption): NameFormatRule {
+  return {
+    id: '__default__',
+    pattern: '**',
+    replacement: computeDefaultReplacement(prefix, casing),
+    enabled: true,
+  };
+}
+
+/**
+ * Gets all rules including the computed default rule at the end.
+ * @param customRules - User-defined custom rules
+ * @param prefix - Prefix for default rule
+ * @param casing - Casing for default rule
+ * @returns All rules with default rule appended
+ */
+export function getAllRulesWithDefault(
+  customRules: NameFormatRule[],
+  prefix: string,
+  casing: CasingOption
+): NameFormatRule[] {
+  // Filter out any accidentally stored default rules
+  const filteredRules = customRules.filter((r) => r.id !== '__default__');
+  return [...filteredRules, createDefaultRule(prefix, casing)];
+}
+
+/**
  * Plugin settings that get persisted to the document.
  * Note: GitHub token is intentionally excluded for security.
  */
@@ -56,8 +101,10 @@ export interface PluginSettings {
   // SCSS tab settings
   scssExportAsCalcExpressions: boolean;
 
-  // Name format override settings (global)
-  nameFormatRules: NameFormatRule[];
+  // Name format settings (global)
+  nameFormatRules: NameFormatRule[]; // Custom rules only (default rule is computed)
+  nameFormatCasing: CasingOption;
+  nameFormatAdvanced: boolean; // Whether to show advanced rules UI
   syncCodeSyntax: boolean;
 }
 
@@ -119,6 +166,7 @@ export type PluginMessage =
   | { type: 'get-collections' }
   | { type: 'get-styles' }
   | { type: 'get-numeric-variables' }
+  | { type: 'get-variable-names' }
   | { type: 'export-css'; options: ExportOptions }
   | { type: 'export-scss'; options: ExportOptions }
   | { type: 'export-json'; options: ExportOptions }
@@ -144,6 +192,7 @@ export type UIMessage =
   | { type: 'collections-list'; collections: CollectionInfo[] }
   | { type: 'styles-list'; styles: StyleSummary }
   | { type: 'numeric-variables-list'; variables: NumericVariableInfo[] }
+  | { type: 'variable-names-list'; names: string[] }
   | { type: 'css-result'; css: string }
   | { type: 'scss-result'; scss: string }
   | { type: 'json-result'; json: string }

@@ -18,6 +18,7 @@ import { useSettings, DEFAULT_SETTINGS } from './hooks/useSettings';
 import { useNumericVariables } from './hooks/useNumericVariables';
 import { useSettingsExport } from './hooks/useSettingsExport';
 import type { StyleType, StyleOutputMode, PluginSettings } from '@figma-vex/shared';
+import { getAllRulesWithDefault } from '@figma-vex/shared';
 
 const TABS = [
   { id: 'css', label: 'CSS' },
@@ -59,7 +60,12 @@ export default function App() {
   const scssExportAsCalcExpressions =
     settings?.scssExportAsCalcExpressions ?? DEFAULT_SETTINGS.scssExportAsCalcExpressions;
   const nameFormatRules = settings?.nameFormatRules ?? DEFAULT_SETTINGS.nameFormatRules;
+  const nameFormatCasing = settings?.nameFormatCasing ?? DEFAULT_SETTINGS.nameFormatCasing;
+  const nameFormatAdvanced = settings?.nameFormatAdvanced ?? DEFAULT_SETTINGS.nameFormatAdvanced;
   const syncCodeSyntax = settings?.syncCodeSyntax ?? DEFAULT_SETTINGS.syncCodeSyntax;
+
+  // Compute full rules including the default rule (for exports)
+  const allNameFormatRules = getAllRulesWithDefault(nameFormatRules, prefix, nameFormatCasing);
 
   // Collections with restored selections
   const {
@@ -114,6 +120,10 @@ export default function App() {
     updateSettings({ remBaseVariableId: id || undefined });
   const handleNameFormatRulesChange = (rules: import('@figma-vex/shared').NameFormatRule[]) =>
     updateSettings({ nameFormatRules: rules });
+  const handleNameFormatCasingChange = (casing: import('@figma-vex/shared').CasingOption) =>
+    updateSettings({ nameFormatCasing: casing });
+  const handleNameFormatAdvancedChange = (enabled: boolean) =>
+    updateSettings({ nameFormatAdvanced: enabled });
   const handleSyncCodeSyntaxChange = (enabled: boolean) =>
     updateSettings({ syncCodeSyntax: enabled });
 
@@ -256,7 +266,7 @@ export default function App() {
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
             remBaseVariableId={remBaseVariableId}
-            nameFormatRules={nameFormatRules}
+            nameFormatRules={allNameFormatRules}
             syncCodeSyntax={syncCodeSyntax}
             initialSelector={settings?.cssSelector}
             initialUseModesAsSelectors={settings?.cssUseModesAsSelectors}
@@ -278,7 +288,7 @@ export default function App() {
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
             remBaseVariableId={remBaseVariableId}
-            nameFormatRules={nameFormatRules}
+            nameFormatRules={allNameFormatRules}
             syncCodeSyntax={syncCodeSyntax}
             initialExportAsCalcExpressions={scssExportAsCalcExpressions}
             onSettingsChange={(scssSettings) => updateSettings(scssSettings)}
@@ -355,6 +365,10 @@ export default function App() {
             stylesLoading={stylesLoading}
             nameFormatRules={nameFormatRules}
             onNameFormatRulesChange={handleNameFormatRulesChange}
+            nameFormatCasing={nameFormatCasing}
+            onNameFormatCasingChange={handleNameFormatCasingChange}
+            nameFormatAdvanced={nameFormatAdvanced}
+            onNameFormatAdvancedChange={handleNameFormatAdvancedChange}
             syncCodeSyntax={syncCodeSyntax}
             onSyncCodeSyntaxChange={handleSyncCodeSyntaxChange}
             onExportSettings={handleExportSettings}

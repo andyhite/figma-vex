@@ -97,7 +97,7 @@ export function ScssTab({
       syncCalculations,
       exportAsCalcExpressions,
       remBaseVariableId: remBaseVariableId || undefined,
-      nameFormatRules: nameFormatRules.length > 0 ? nameFormatRules : undefined,
+      nameFormatRules: nameFormatRules && nameFormatRules.length > 0 ? nameFormatRules : undefined,
       syncCodeSyntax,
     };
 

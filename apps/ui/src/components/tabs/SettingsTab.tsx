@@ -6,6 +6,7 @@ import { StyleOptions } from '../common/StyleOptions';
 import { NameFormatRules } from '../settings/NameFormatRules';
 import { Button } from '../common/Button';
 import { useNumericVariables } from '../../hooks/useNumericVariables';
+import { useVariableNames } from '../../hooks/useVariableNames';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
 import { useCallback, useEffect, useState } from 'react';
 import type {
@@ -13,8 +14,10 @@ import type {
   StyleOutputMode,
   StyleSummary,
   NameFormatRule,
+  CasingOption,
   UIMessage,
 } from '@figma-vex/shared';
+import { getAllRulesWithDefault } from '@figma-vex/shared';
 
 interface Collection {
   id: string;
@@ -50,9 +53,13 @@ interface SettingsTabProps {
   styleCounts: StyleSummary | null;
   stylesLoading: boolean;
 
-  // Name format rules
+  // Name format settings
   nameFormatRules: NameFormatRule[];
   onNameFormatRulesChange: (rules: NameFormatRule[]) => void;
+  nameFormatCasing: CasingOption;
+  onNameFormatCasingChange: (casing: CasingOption) => void;
+  nameFormatAdvanced: boolean;
+  onNameFormatAdvancedChange: (enabled: boolean) => void;
   syncCodeSyntax: boolean;
   onSyncCodeSyntaxChange: (enabled: boolean) => void;
 
@@ -83,6 +90,10 @@ export function SettingsTab({
   stylesLoading,
   nameFormatRules,
   onNameFormatRulesChange,
+  nameFormatCasing,
+  onNameFormatCasingChange,
+  nameFormatAdvanced,
+  onNameFormatAdvancedChange,
   syncCodeSyntax,
   onSyncCodeSyntaxChange,
   onExportSettings,
@@ -90,6 +101,7 @@ export function SettingsTab({
   onResetSettings,
 }: SettingsTabProps) {
   const { variables: numericVariables, loading: numericVariablesLoading } = useNumericVariables();
+  const { variableNames } = useVariableNames();
   const { sendMessage, listenToMessage } = usePluginMessage();
   const [syncStatus, setSyncStatus] = useState<{ synced: number; skipped: number } | null>(null);
 
@@ -106,15 +118,17 @@ export function SettingsTab({
   }, [listenToMessage]);
 
   const handleSyncNow = useCallback(() => {
+    // Get all rules including computed default
+    const allRules = getAllRulesWithDefault(nameFormatRules, prefix, nameFormatCasing);
     sendMessage({
       type: 'sync-code-syntax',
       options: {
-        nameFormatRules: nameFormatRules.filter((r) => r.enabled),
+        nameFormatRules: allRules.filter((r) => r.enabled),
         prefix: prefix || undefined,
       },
     });
     setSyncStatus(null); // Clear previous status
-  }, [sendMessage, nameFormatRules, prefix]);
+  }, [sendMessage, nameFormatRules, prefix, nameFormatCasing]);
 
   // Group numeric variables by collection name for the dropdown
   const groupedVariables = numericVariables.reduce(
@@ -131,13 +145,6 @@ export function SettingsTab({
   );
   return (
     <div>
-      <Input
-        label="Variable Prefix (optional)"
-        value={prefix}
-        onChange={(e) => onPrefixChange(e.target.value)}
-        placeholder="e.g., ds, theme"
-      />
-
       <FormGroup label="Collections">
         <div className="border-figma-border bg-figma-bg-secondary max-h-[150px] overflow-y-auto rounded border p-2">
           {collectionsLoading ? (
@@ -204,11 +211,18 @@ export function SettingsTab({
 
       <NameFormatRules
         rules={nameFormatRules}
-        syncCodeSyntax={syncCodeSyntax}
         onRulesChange={onNameFormatRulesChange}
+        prefix={prefix}
+        onPrefixChange={onPrefixChange}
+        casing={nameFormatCasing}
+        onCasingChange={onNameFormatCasingChange}
+        advancedMode={nameFormatAdvanced}
+        onAdvancedModeChange={onNameFormatAdvancedChange}
+        syncCodeSyntax={syncCodeSyntax}
         onSyncCodeSyntaxChange={onSyncCodeSyntaxChange}
         onSyncNow={handleSyncNow}
-        prefix={prefix}
+        variableNames={variableNames}
+        selectedCollections={selectedCollections}
       />
 
       {syncStatus && (
