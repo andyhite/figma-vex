@@ -19,6 +19,12 @@ on:
           - dry-run
           - integration
 
+# Permissions needed for dispatch and workflow monitoring
+permissions:
+  contents: write
+  actions: read
+  pull-requests: write
+
 concurrency:
   group: test-action-${{ github.ref }}
   cancel-in-progress: true
