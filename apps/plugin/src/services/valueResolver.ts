@@ -3,13 +3,21 @@ import { RESOLUTION_CONFIG } from '@figma-vex/shared';
 import { toCssName, toPrefixedName } from '@plugin/formatters/nameFormatter';
 import { formatColor } from '@plugin/formatters/colorFormatter';
 import { formatNumber } from '@plugin/formatters/numberFormatter';
+import { resolveExpression } from './expressionResolver';
 
 /**
  * Resolves a variable value to its string representation.
- * Handles variable aliases, colors, numbers, strings, and booleans.
+ * Handles variable aliases, colors, numbers, strings, booleans, and expressions.
  *
- * Note: modeId is currently unused but reserved for future mode-aware
- * alias resolution (resolving to actual values instead of var() references).
+ * @param value - The raw value from Figma
+ * @param modeId - Current mode ID
+ * @param variables - All available variables
+ * @param resolvedType - The variable's resolved data type
+ * @param config - Token configuration including optional expression
+ * @param prefix - CSS variable prefix
+ * @param depth - Current resolution depth (for circular reference detection)
+ * @param visited - Set of visited variable IDs
+ * @param collections - All available collections (required for expression evaluation)
  */
 export async function resolveValue(
   value: VariableValue,
@@ -19,10 +27,30 @@ export async function resolveValue(
   config: TokenConfig,
   prefix = '',
   depth = 0,
-  visited = new Set<string>()
+  visited = new Set<string>(),
+  collections?: VariableCollection[]
 ): Promise<string> {
   // Prevent infinite recursion
   if (depth > RESOLUTION_CONFIG.MAX_ALIAS_DEPTH) return '/* circular reference */';
+
+  // Handle expression evaluation if present
+  if (config.expression && collections && resolvedType === 'FLOAT') {
+    const result = await resolveExpression(config, _modeId, variables, collections, prefix);
+
+    if (result.value !== null && result.warnings.length === 0) {
+      // Apply the configured unit/remBase to the evaluated result
+      const effectiveConfig = { ...config, unit: result.unit };
+      return formatNumber(result.value, effectiveConfig);
+    }
+    // Fall through to normal resolution if expression failed
+    // Warnings are logged but we use the fallback value
+    if (result.warnings.length > 0) {
+      console.warn(
+        `Expression evaluation warnings for "${config.expression}":`,
+        result.warnings
+      );
+    }
+  }
 
   // Handle variable alias - output as CSS var() reference
   if (

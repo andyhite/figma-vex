@@ -73,7 +73,8 @@ export type PluginMessage =
   | { type: 'resize-window'; width?: number; height: number }
   | { type: 'cancel' }
   | { type: 'save-settings'; settings: PluginSettings }
-  | { type: 'load-settings' };
+  | { type: 'load-settings' }
+  | { type: 'sync-calculations'; options: ExportOptions };
 
 // Messages from Plugin to UI
 export type UIMessage =
@@ -85,4 +86,5 @@ export type UIMessage =
   | { type: 'typescript-result'; typescript: string }
   | { type: 'github-dispatch-success'; message: string }
   | { type: 'error'; message: string }
-  | { type: 'settings-loaded'; settings: PluginSettings | null };
+  | { type: 'settings-loaded'; settings: PluginSettings | null }
+  | { type: 'sync-result'; synced: number; failed: number; warnings: string[] };

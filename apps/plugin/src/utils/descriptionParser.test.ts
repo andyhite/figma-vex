@@ -208,3 +208,85 @@ describe('edge cases', () => {
     expect(result).toEqual({});
   });
 });
+
+describe('semicolon-separated directives', () => {
+  it('should parse unit and format separated by semicolon', () => {
+    const result = parseDescription('unit: rem; format: hex');
+    expect(result.unit).toBe('rem');
+    expect(result.colorFormat).toBe('hex');
+  });
+
+  it('should parse unit with remBase separated by semicolon', () => {
+    const result = parseDescription('unit: rem:20; format: oklch');
+    expect(result.unit).toBe('rem');
+    expect(result.remBase).toBe(20);
+    expect(result.colorFormat).toBe('oklch');
+  });
+
+  it('should handle whitespace around semicolons', () => {
+    const result = parseDescription('unit: px ; format: rgb');
+    expect(result.unit).toBe('px');
+    expect(result.colorFormat).toBe('rgb');
+  });
+
+  it('should handle multiple semicolons', () => {
+    const result = parseDescription('unit: em; ; format: hsl');
+    expect(result.unit).toBe('em');
+    expect(result.colorFormat).toBe('hsl');
+  });
+});
+
+describe('calc expression parsing', () => {
+  it('should parse simple calc expression', () => {
+    const result = parseDescription('calc: var(--spacing-base) * 2');
+    expect(result.expression).toBe('var(--spacing-base) * 2');
+  });
+
+  it('should parse calc with unit directive', () => {
+    const result = parseDescription('calc: var(--font-lg) * 1.5; unit: rem');
+    expect(result.expression).toBe('var(--font-lg) * 1.5');
+    expect(result.unit).toBe('rem');
+  });
+
+  it('should parse calc with function calls', () => {
+    const result = parseDescription('calc: round(var(--spacing-base) * 1.5)');
+    expect(result.expression).toBe('round(var(--spacing-base) * 1.5)');
+  });
+
+  it('should parse calc with min/max functions', () => {
+    const result = parseDescription('calc: max(var(--min-size), var(--preferred-size))');
+    expect(result.expression).toBe('max(var(--min-size), var(--preferred-size))');
+  });
+
+  it('should parse calc with complex arithmetic', () => {
+    const result = parseDescription('calc: (var(--a) + var(--b)) / 2');
+    expect(result.expression).toBe('(var(--a) + var(--b)) / 2');
+  });
+
+  it('should be case insensitive for calc keyword', () => {
+    const result = parseDescription('CALC: var(--x) * 2');
+    expect(result.expression).toBe('var(--x) * 2');
+  });
+
+  it('should handle calc at different positions', () => {
+    const result = parseDescription('unit: px; calc: var(--x) * 2; format: hex');
+    expect(result.expression).toBe('var(--x) * 2');
+    expect(result.unit).toBe('px');
+    expect(result.colorFormat).toBe('hex');
+  });
+
+  it('should return undefined expression for non-calc descriptions', () => {
+    const result = parseDescription('unit: px; format: hex');
+    expect(result.expression).toBeUndefined();
+  });
+
+  it('should handle calc with negative numbers', () => {
+    const result = parseDescription('calc: var(--x) * -1');
+    expect(result.expression).toBe('var(--x) * -1');
+  });
+
+  it('should handle calc with decimal numbers', () => {
+    const result = parseDescription('calc: var(--x) * 1.618');
+    expect(result.expression).toBe('var(--x) * 1.618');
+  });
+});

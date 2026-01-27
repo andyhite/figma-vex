@@ -60,7 +60,10 @@ export async function exportToCss(
       variables,
       variable.resolvedType,
       config,
-      options.prefix
+      options.prefix,
+      0,
+      new Set(),
+      collections
     );
 
     return `${indent}--${prefixedName}: ${cssValue};`;

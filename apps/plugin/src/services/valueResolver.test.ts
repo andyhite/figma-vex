@@ -366,4 +366,118 @@ describe('resolveValue', () => {
       expect(result).toBe('[object Object]');
     });
   });
+
+  describe('expression evaluation', () => {
+    const mockVariablesWithValues = [
+      {
+        id: 'var-1',
+        name: 'spacing/base',
+        resolvedType: 'FLOAT',
+        variableCollectionId: 'col-1',
+        valuesByMode: { 'mode-1': 8 },
+      },
+    ] as unknown as Variable[];
+
+    const mockCollectionsForExpr = [
+      {
+        id: 'col-1',
+        name: 'primitives',
+        modes: [{ modeId: 'mode-1', name: 'default' }],
+      },
+    ] as unknown as VariableCollection[];
+
+    it('should evaluate expression when provided in config', async () => {
+      const config = {
+        ...DEFAULT_CONFIG,
+        expression: 'var(--primitives-spacing-base) * 2',
+      };
+      const result = await resolveValue(
+        8, // fallback value
+        'mode-1',
+        mockVariablesWithValues,
+        'FLOAT',
+        config,
+        '',
+        0,
+        new Set(),
+        mockCollectionsForExpr
+      );
+      expect(result).toBe('16px');
+    });
+
+    it('should use fallback value when expression fails', async () => {
+      const config = {
+        ...DEFAULT_CONFIG,
+        expression: 'var(--nonexistent) * 2',
+      };
+      const result = await resolveValue(
+        42,
+        'mode-1',
+        mockVariablesWithValues,
+        'FLOAT',
+        config,
+        '',
+        0,
+        new Set(),
+        mockCollectionsForExpr
+      );
+      // Falls back to original value
+      expect(result).toBe('42px');
+    });
+
+    it('should apply unit from config to expression result', async () => {
+      const config = {
+        ...DEFAULT_CONFIG,
+        unit: 'rem' as const,
+        expression: 'var(--primitives-spacing-base) * 2',
+      };
+      const result = await resolveValue(
+        8,
+        'mode-1',
+        mockVariablesWithValues,
+        'FLOAT',
+        config,
+        '',
+        0,
+        new Set(),
+        mockCollectionsForExpr
+      );
+      expect(result).toBe('1rem'); // 16 / 16 (default remBase)
+    });
+
+    it('should not evaluate expression for non-FLOAT types', async () => {
+      const config = {
+        ...DEFAULT_CONFIG,
+        expression: 'var(--primitives-spacing-base) * 2',
+      };
+      const result = await resolveValue(
+        'hello',
+        'mode-1',
+        mockVariablesWithValues,
+        'STRING',
+        config,
+        '',
+        0,
+        new Set(),
+        mockCollectionsForExpr
+      );
+      expect(result).toBe('"hello"'); // Normal string handling
+    });
+
+    it('should not evaluate expression when collections not provided', async () => {
+      const config = {
+        ...DEFAULT_CONFIG,
+        expression: 'var(--primitives-spacing-base) * 2',
+      };
+      const result = await resolveValue(
+        8,
+        'mode-1',
+        mockVariablesWithValues,
+        'FLOAT',
+        config
+        // No collections parameter
+      );
+      expect(result).toBe('8px'); // Falls back to normal resolution
+    });
+  });
 });

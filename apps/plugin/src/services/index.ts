@@ -16,3 +16,9 @@ export {
   hasFilter,
   hasBackdropFilter,
 } from './styleValueResolver';
+export {
+  evaluateExpression,
+  type EvaluationContext,
+  type EvaluationResult,
+} from './expressionEvaluator';
+export { resolveExpression } from './expressionResolver';

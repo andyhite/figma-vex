@@ -9,6 +9,8 @@ export interface TokenConfig {
   unit: Unit;
   remBase: number;
   colorFormat: ColorFormat;
+  /** Optional calculation expression (e.g., "var(--spacing-base) * 2") */
+  expression?: string;
 }
 
 export const DEFAULT_CONFIG: TokenConfig = {
