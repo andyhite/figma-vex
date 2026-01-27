@@ -47,6 +47,7 @@ describe('TypeScriptTab', () => {
         includeStyles={false}
         styleOutputMode="variables"
         styleTypes={[]}
+        numberPrecision={4}
       />
     );
 
@@ -66,6 +67,7 @@ describe('TypeScriptTab', () => {
         styleOutputMode: 'variables',
         styleTypes: [],
         syncCalculations: false,
+        numberPrecision: 4,
       },
     });
   });
@@ -80,6 +82,7 @@ describe('TypeScriptTab', () => {
         includeStyles={false}
         styleOutputMode="variables"
         styleTypes={[]}
+        numberPrecision={4}
       />
     );
 

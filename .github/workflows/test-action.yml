@@ -69,37 +69,32 @@ jobs:
                 ref: ref,
                 triggered_by: context.runId.toString(),
                 document: {
-                  collections: [
-                    {
-                      name: "Test Collection",
-                      modes: [
-                        {
-                          name: "Default",
-                          variables: [
-                            {
-                              name: "primary-color",
-                              type: "COLOR",
-                              value: { r: 0.2, g: 0.4, b: 0.8, a: 1 }
-                            },
-                            {
-                              name: "spacing-sm",
-                              type: "FLOAT",
-                              value: 8
-                            },
-                            {
-                              name: "font-size-base",
-                              type: "FLOAT",
-                              value: 16
-                            }
-                          ]
-                        }
-                      ]
+                  $schema: "https://design-tokens.github.io/format/",
+                  collections: {
+                    "Test Collection": {
+                      "primary-color": {
+                        $type: "color",
+                        $value: "#3366cc"
+                      },
+                      "spacing-sm": {
+                        $type: "number",
+                        $value: 8
+                      },
+                      "font-size-base": {
+                        $type: "number",
+                        $value: 16
+                      }
                     }
-                  ]
+                  },
+                  $metadata: {
+                    figmaFile: "Test Design File",
+                    generatedAt: new Date().toISOString()
+                  }
                 },
                 settings: {
                   colorFormat: "hex",
-                  unitFormat: "px"
+                  defaultUnit: "px",
+                  remBase: 16
                 },
                 export_types: ["css", "scss", "json", "typescript"],
                 figma_file: "Test Design File",

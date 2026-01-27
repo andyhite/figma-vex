@@ -7,12 +7,15 @@ export default defineConfig({
       '@figma-vex/shared': resolve(__dirname, '../../packages/shared/src')
     }
   },
+  ssr: {
+    // Bundle all dependencies for GitHub Actions (no node_modules at runtime)
+    noExternal: true
+  },
   build: {
     outDir: '../../dist',
     emptyOutDir: false,
     ssr: 'src/index.ts',
     rollupOptions: {
-      external: [/^@actions\//],
       output: {
         entryFileNames: 'action.js'
       }

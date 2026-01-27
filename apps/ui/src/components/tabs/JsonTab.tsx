@@ -17,6 +17,7 @@ interface JsonTabProps {
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
+  numberPrecision: number;
 }
 
 export function JsonTab({
@@ -27,6 +28,7 @@ export function JsonTab({
   includeStyles,
   styleOutputMode,
   styleTypes,
+  numberPrecision,
 }: JsonTabProps) {
   const [output, setOutput] = useState('');
   const { sendMessage, listenToMessage } = usePluginMessage();
@@ -65,6 +67,7 @@ export function JsonTab({
       styleOutputMode,
       styleTypes,
       syncCalculations,
+      numberPrecision,
     };
 
     sendMessage({ type: 'export-json', options });
@@ -77,6 +80,7 @@ export function JsonTab({
     styleOutputMode,
     styleTypes,
     syncCalculations,
+    numberPrecision,
     sendMessage,
     setStatus,
   ]);

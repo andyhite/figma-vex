@@ -50,6 +50,7 @@ export async function exportToCss(
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
       ...parseDescription(variable.description),
+      ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
 
     const value = variable.valuesByMode[modeId];
@@ -68,7 +69,8 @@ export async function exportToCss(
       collections,
       options.exportAsCalcExpressions ?? false,
       options.remBaseVariableId,
-      'css'
+      'css',
+      options.nameFormatRules
     );
 
     return `${indent}--${cssName}: ${cssValue};`;

@@ -44,16 +44,17 @@ export function getVariableCssName(
 ): string {
   // 1. Check for codeSyntax.WEB first (set by our sync or manually by user)
   if (variable.codeSyntax?.WEB) {
-    // Already includes -- prefix, so remove it if present
+    // Already includes -- prefix and user prefix, so just strip the --
     const name = variable.codeSyntax.WEB.replace(/^--/, '');
-    return prefix ? `${prefix}-${name}` : name;
+    return name;
   }
 
   // 2. Check for matching rule (fallback if not synced yet)
+  // Rules already include the prefix in their replacement template
   if (rules?.length) {
     const customName = toCustomCssName(variable.name, rules);
     if (customName) {
-      return prefix ? `${prefix}-${customName}` : customName;
+      return customName;
     }
   }
 

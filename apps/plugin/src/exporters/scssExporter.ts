@@ -91,6 +91,7 @@ export async function exportToScss(
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
       ...parseDescription(variable.description),
+      ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
 
     const value = variable.valuesByMode[modeId];
@@ -110,7 +111,8 @@ export async function exportToScss(
       collections,
       options.exportAsCalcExpressions ?? false,
       options.remBaseVariableId,
-      'scss'
+      'scss',
+      options.nameFormatRules
     );
 
     // Convert var() references to SCSS variable references
@@ -170,7 +172,7 @@ function exportStylesToScssVariables(
   if (styleTypes.includes('paint') && styles.paint.length > 0) {
     lines.push('// Paint Styles');
     for (const style of styles.paint) {
-      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }) };
       const scssName = toStyleCssName(style.name);
       const prefixedName = options.prefix ? `$${options.prefix}-${scssName}` : `$${scssName}`;
       const value = resolvePaintValue(style, config);
@@ -181,7 +183,7 @@ function exportStylesToScssVariables(
   if (styleTypes.includes('text') && styles.text.length > 0) {
     lines.push('// Text Styles');
     for (const style of styles.text) {
-      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }) };
       const scssName = toStyleCssName(style.name);
       const baseName = options.prefix ? `$${options.prefix}-${scssName}` : `$${scssName}`;
       const props = resolveTextProperties(style, config);
@@ -194,7 +196,7 @@ function exportStylesToScssVariables(
   if (styleTypes.includes('effect') && styles.effect.length > 0) {
     lines.push('// Effect Styles');
     for (const style of styles.effect) {
-      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }) };
       const scssName = toStyleCssName(style.name);
       const prefixedName = options.prefix ? `$${options.prefix}-${scssName}` : `$${scssName}`;
       const value = resolveEffectValue(style, config);
@@ -228,7 +230,7 @@ function exportStylesToScssMixins(
   if (styleTypes.includes('paint') && styles.paint.length > 0) {
     lines.push('// Paint Style Mixins');
     for (const style of styles.paint) {
-      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }) };
       const mixinName = toStyleClassName(style.name, options.prefix);
       const value = resolvePaintValue(style, config);
       lines.push(`@mixin ${mixinName}($property: color) {`);
@@ -241,7 +243,7 @@ function exportStylesToScssMixins(
   if (styleTypes.includes('text') && styles.text.length > 0) {
     lines.push('// Text Style Mixins');
     for (const style of styles.text) {
-      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }) };
       const mixinName = toStyleClassName(style.name, options.prefix);
       const props = resolveTextProperties(style, config);
       lines.push(`@mixin ${mixinName} {`);
@@ -256,7 +258,7 @@ function exportStylesToScssMixins(
   if (styleTypes.includes('effect') && styles.effect.length > 0) {
     lines.push('// Effect Style Mixins');
     for (const style of styles.effect) {
-      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }) };
       const mixinName = toStyleClassName(style.name, options.prefix);
       const value = resolveEffectValue(style, config);
       lines.push(`@mixin ${mixinName} {`);

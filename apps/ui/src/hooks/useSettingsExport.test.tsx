@@ -35,6 +35,8 @@ const mockSettings: PluginSettings = {
   nameFormatCasing: 'kebab',
   nameFormatAdvanced: false,
   syncCodeSyntax: false,
+  debugMode: false,
+  numberPrecision: 4,
 };
 
 describe('useSettingsExport', () => {

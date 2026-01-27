@@ -17,6 +17,23 @@ describe('CssTab', () => {
   const mockHandleDownload = vi.fn();
   const mockSetStatus = vi.fn();
 
+  const defaultProps = {
+    prefix: '',
+    selectedCollections: [] as string[],
+    includeCollectionComments: true,
+    includeModeComments: false,
+    syncCalculations: false,
+    includeStyles: false,
+    styleOutputMode: 'variables' as const,
+    styleTypes: [] as never[],
+    remBaseVariableId: null,
+    nameFormatRules: [] as never[],
+    syncCodeSyntax: true,
+    numberPrecision: 4,
+    useModesAsSelectors: false,
+    exportAsCalcExpressions: false,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     messageHandler = null;
@@ -40,62 +57,20 @@ describe('CssTab', () => {
   });
 
   it('should render generate button', () => {
-    render(
-      <CssTab
-        prefix=""
-        selectedCollections={[]}
-        includeCollectionComments={true}
-        includeModeComments={false}
-        syncCalculations={false}
-        includeStyles={false}
-        styleOutputMode="variables"
-        styleTypes={[]}
-        remBaseVariableId={null}
-        nameFormatRules={[]}
-        syncCodeSyntax={true}
-      />
-    );
+    render(<CssTab {...defaultProps} />);
 
     expect(screen.getByRole('button', { name: 'Generate CSS' })).toBeInTheDocument();
   });
 
   it('should render CSS selector input', () => {
-    render(
-      <CssTab
-        prefix=""
-        selectedCollections={[]}
-        includeCollectionComments={true}
-        includeModeComments={false}
-        syncCalculations={false}
-        includeStyles={false}
-        styleOutputMode="variables"
-        styleTypes={[]}
-        remBaseVariableId={null}
-        nameFormatRules={[]}
-        syncCodeSyntax={true}
-      />
-    );
+    render(<CssTab {...defaultProps} />);
 
     expect(screen.getByText('CSS Selector')).toBeInTheDocument();
     expect(screen.getByDisplayValue(':root')).toBeInTheDocument();
   });
 
   it('should send export-css message when generate is clicked', async () => {
-    render(
-      <CssTab
-        prefix="ds"
-        selectedCollections={['1']}
-        includeCollectionComments={true}
-        includeModeComments={false}
-        syncCalculations={false}
-        includeStyles={false}
-        styleOutputMode="variables"
-        styleTypes={[]}
-        remBaseVariableId={null}
-        nameFormatRules={[]}
-        syncCodeSyntax={true}
-      />
-    );
+    render(<CssTab {...defaultProps} prefix="ds" selectedCollections={['1']} />);
 
     const button = screen.getByRole('button', { name: 'Generate CSS' });
     await userEvent.click(button);
@@ -120,21 +95,7 @@ describe('CssTab', () => {
   });
 
   it('should display output when css-result message is received', async () => {
-    render(
-      <CssTab
-        prefix=""
-        selectedCollections={[]}
-        includeCollectionComments={true}
-        includeModeComments={false}
-        syncCalculations={false}
-        includeStyles={false}
-        styleOutputMode="variables"
-        styleTypes={[]}
-        remBaseVariableId={null}
-        nameFormatRules={[]}
-        syncCodeSyntax={true}
-      />
-    );
+    render(<CssTab {...defaultProps} />);
 
     act(() => {
       if (messageHandler) {
@@ -151,21 +112,7 @@ describe('CssTab', () => {
   });
 
   it('should display error when error message is received', async () => {
-    render(
-      <CssTab
-        prefix=""
-        selectedCollections={[]}
-        includeCollectionComments={true}
-        includeModeComments={false}
-        syncCalculations={false}
-        includeStyles={false}
-        styleOutputMode="variables"
-        styleTypes={[]}
-        remBaseVariableId={null}
-        nameFormatRules={[]}
-        syncCodeSyntax={true}
-      />
-    );
+    render(<CssTab {...defaultProps} />);
 
     act(() => {
       if (messageHandler) {
@@ -186,21 +133,7 @@ describe('CssTab', () => {
   });
 
   it('should copy output to clipboard when copy button is clicked', async () => {
-    render(
-      <CssTab
-        prefix=""
-        selectedCollections={[]}
-        includeCollectionComments={true}
-        includeModeComments={false}
-        syncCalculations={false}
-        includeStyles={false}
-        styleOutputMode="variables"
-        styleTypes={[]}
-        remBaseVariableId={null}
-        nameFormatRules={[]}
-        syncCodeSyntax={true}
-      />
-    );
+    render(<CssTab {...defaultProps} />);
 
     // First generate output
     act(() => {
@@ -223,21 +156,7 @@ describe('CssTab', () => {
   });
 
   it('should download file when download button is clicked', async () => {
-    render(
-      <CssTab
-        prefix=""
-        selectedCollections={[]}
-        includeCollectionComments={true}
-        includeModeComments={false}
-        syncCalculations={false}
-        includeStyles={false}
-        styleOutputMode="variables"
-        styleTypes={[]}
-        remBaseVariableId={null}
-        nameFormatRules={[]}
-        syncCodeSyntax={true}
-      />
-    );
+    render(<CssTab {...defaultProps} />);
 
     // Generate output
     act(() => {

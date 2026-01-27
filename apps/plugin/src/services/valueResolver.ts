@@ -1,6 +1,6 @@
-import type { TokenConfig } from '@figma-vex/shared';
+import type { TokenConfig, NameFormatRule } from '@figma-vex/shared';
 import { RESOLUTION_CONFIG } from '@figma-vex/shared';
-import { toCssName, toPrefixedName } from '@plugin/formatters/nameFormatter';
+import { toCssName, toPrefixedName, getVariableCssName } from '@plugin/formatters/nameFormatter';
 import { formatColor } from '@plugin/formatters/colorFormatter';
 import { formatNumber } from '@plugin/formatters/numberFormatter';
 import { resolveExpression } from './expressionResolver';
@@ -15,13 +15,14 @@ import { formatForCss, formatForScss } from './expressionFormatter';
  * @param variables - All available variables
  * @param resolvedType - The variable's resolved data type
  * @param config - Token configuration including optional expression
- * @param prefix - CSS variable prefix
+ * @param prefix - CSS variable prefix (deprecated, use nameFormatRules instead)
  * @param depth - Current resolution depth (for circular reference detection)
  * @param visited - Set of visited variable IDs
  * @param collections - All available collections (required for expression evaluation)
  * @param exportAsCalcExpressions - If true, output expressions as calc() instead of resolved values
  * @param remBaseVariableId - Optional rem base variable ID for unit conversion
  * @param outputFormat - Output format: 'css' for CSS calc(), 'scss' for SCSS math, undefined for resolved
+ * @param nameFormatRules - Name format rules including default rule with prefix
  */
 export async function resolveValue(
   value: VariableValue,
@@ -35,7 +36,8 @@ export async function resolveValue(
   collections?: VariableCollection[],
   exportAsCalcExpressions = false,
   remBaseVariableId?: string | null,
-  outputFormat?: 'css' | 'scss'
+  outputFormat?: 'css' | 'scss',
+  nameFormatRules?: NameFormatRule[]
 ): Promise<string> {
   // Prevent infinite recursion
   if (depth > RESOLUTION_CONFIG.MAX_ALIAS_DEPTH) return '/* circular reference */';
@@ -43,13 +45,13 @@ export async function resolveValue(
   // Handle expression formatting/evaluation if present
   if (config.expression && collections && resolvedType === 'FLOAT') {
     // If calc mode is enabled, format the expression instead of evaluating
-    if (exportAsCalcExpressions && outputFormat) {
+    if (exportAsCalcExpressions && outputFormat && nameFormatRules) {
       if (outputFormat === 'css') {
         const formatted = formatForCss(
           config.expression,
           variables,
           collections,
-          prefix,
+          nameFormatRules,
           remBaseVariableId,
           config.unit
         );
@@ -59,7 +61,7 @@ export async function resolveValue(
           config.expression,
           variables,
           collections,
-          prefix,
+          nameFormatRules,
           remBaseVariableId,
           config.unit
         );
@@ -103,9 +105,11 @@ export async function resolveValue(
     const aliasedVar = variables.find((v) => v.id === aliasId);
 
     if (aliasedVar) {
-      const aliasedCssName = toCssName(aliasedVar.name);
-      const prefixedName = toPrefixedName(aliasedCssName, prefix);
-      return `var(--${prefixedName})`;
+      // Use rules if available, otherwise fall back to prefix-based naming
+      const cssName = nameFormatRules
+        ? getVariableCssName(aliasedVar, undefined, nameFormatRules)
+        : toPrefixedName(toCssName(aliasedVar.name), prefix);
+      return `var(--${cssName})`;
     }
 
     return '/* unresolved alias */';

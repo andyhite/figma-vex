@@ -30,6 +30,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   nameFormatCasing: 'kebab',
   nameFormatAdvanced: false,
   syncCodeSyntax: true,
+  numberPrecision: 4,
+  debugMode: false,
 };
 
 interface UseSettingsReturn {

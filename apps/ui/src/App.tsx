@@ -66,6 +66,8 @@ export default function App() {
   const nameFormatCasing = settings?.nameFormatCasing ?? DEFAULT_SETTINGS.nameFormatCasing;
   const nameFormatAdvanced = settings?.nameFormatAdvanced ?? DEFAULT_SETTINGS.nameFormatAdvanced;
   const syncCodeSyntax = settings?.syncCodeSyntax ?? DEFAULT_SETTINGS.syncCodeSyntax;
+  const numberPrecision = settings?.numberPrecision ?? DEFAULT_SETTINGS.numberPrecision;
+  const debugMode = settings?.debugMode ?? DEFAULT_SETTINGS.debugMode;
 
   // Local UI state for settings sub-tab (not persisted)
   const [activeSettingsTab, setActiveSettingsTab] = useState('general');
@@ -134,6 +136,15 @@ export default function App() {
     updateSettings({ nameFormatAdvanced: enabled });
   const handleSyncCodeSyntaxChange = (enabled: boolean) =>
     updateSettings({ syncCodeSyntax: enabled });
+  const handleNumberPrecisionChange = (precision: number) =>
+    updateSettings({ numberPrecision: precision });
+  const handleCssExportAsCalcExpressionsChange = (value: boolean) =>
+    updateSettings({ cssExportAsCalcExpressions: value });
+  const handleCssUseModesAsSelectorsChange = (value: boolean) =>
+    updateSettings({ cssUseModesAsSelectors: value });
+  const handleScssExportAsCalcExpressionsChange = (value: boolean) =>
+    updateSettings({ scssExportAsCalcExpressions: value });
+  const handleDebugModeChange = (enabled: boolean) => updateSettings({ debugMode: enabled });
   const handleActiveSettingsTabChange = (tab: string) => setActiveSettingsTab(tab);
 
   // Handle collection toggle and persist
@@ -279,10 +290,11 @@ export default function App() {
             remBaseVariableId={remBaseVariableId}
             nameFormatRules={allNameFormatRules}
             syncCodeSyntax={syncCodeSyntax}
+            numberPrecision={numberPrecision}
+            useModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
+            exportAsCalcExpressions={cssExportAsCalcExpressions}
             initialSelector={settings?.cssSelector}
-            initialUseModesAsSelectors={settings?.cssUseModesAsSelectors}
-            initialExportAsCalcExpressions={cssExportAsCalcExpressions}
-            onSettingsChange={(cssSettings) => updateSettings(cssSettings)}
+            onSelectorChange={(selector) => updateSettings({ cssSelector: selector })}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -302,8 +314,8 @@ export default function App() {
             remBaseVariableId={remBaseVariableId}
             nameFormatRules={allNameFormatRules}
             syncCodeSyntax={syncCodeSyntax}
-            initialExportAsCalcExpressions={scssExportAsCalcExpressions}
-            onSettingsChange={(scssSettings) => updateSettings(scssSettings)}
+            numberPrecision={numberPrecision}
+            exportAsCalcExpressions={scssExportAsCalcExpressions}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -318,6 +330,7 @@ export default function App() {
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
+            numberPrecision={numberPrecision}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -332,6 +345,7 @@ export default function App() {
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
+            numberPrecision={numberPrecision}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -347,6 +361,7 @@ export default function App() {
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
+            numberPrecision={numberPrecision}
             initialRepository={settings?.githubRepository}
             initialWorkflowFileName={settings?.githubWorkflowFileName}
             initialExportTypes={settings?.githubExportTypes}
@@ -374,6 +389,14 @@ export default function App() {
             onHeaderBannerChange={handleHeaderBannerChange}
             remBaseVariableId={remBaseVariableId}
             onRemBaseVariableChange={handleRemBaseVariableChange}
+            numberPrecision={numberPrecision}
+            onNumberPrecisionChange={handleNumberPrecisionChange}
+            cssExportAsCalcExpressions={cssExportAsCalcExpressions}
+            onCssExportAsCalcExpressionsChange={handleCssExportAsCalcExpressionsChange}
+            cssUseModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
+            onCssUseModesAsSelectorsChange={handleCssUseModesAsSelectorsChange}
+            scssExportAsCalcExpressions={scssExportAsCalcExpressions}
+            onScssExportAsCalcExpressionsChange={handleScssExportAsCalcExpressionsChange}
             includeStyles={includeStyles}
             onIncludeStylesChange={handleIncludeStylesChange}
             styleOutputMode={styleOutputMode}
@@ -390,6 +413,8 @@ export default function App() {
             onNameFormatAdvancedChange={handleNameFormatAdvancedChange}
             syncCodeSyntax={syncCodeSyntax}
             onSyncCodeSyntaxChange={handleSyncCodeSyntaxChange}
+            debugMode={debugMode}
+            onDebugModeChange={handleDebugModeChange}
             onExportSettings={handleExportSettings}
             onImportSettings={handleImportSettings}
             onResetSettings={handleResetSettings}

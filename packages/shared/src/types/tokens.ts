@@ -13,10 +13,13 @@ export interface TokenConfig {
   colorFormat: ColorFormat;
   /** Optional calculation expression (e.g., "'Spacing/base' * 2") */
   expression?: string;
+  /** Number of decimal places for float values (default: 4) */
+  precision: number;
 }
 
 export const DEFAULT_CONFIG: TokenConfig = {
   unit: 'px',
   remBase: 16,
   colorFormat: 'hex',
+  precision: 4,
 };

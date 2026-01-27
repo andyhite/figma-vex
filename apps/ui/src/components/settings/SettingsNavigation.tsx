@@ -8,7 +8,7 @@ const TABS = [
   { id: 'variables', label: 'Variables' },
   { id: 'calc', label: 'Calc' },
   { id: 'styles', label: 'Styles' },
-  { id: 'backup', label: 'Backup' },
+  { id: 'backup', label: 'Data' },
 ];
 
 export function SettingsNavigation({ activeTab, onTabChange }: SettingsNavigationProps) {

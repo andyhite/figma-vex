@@ -47,6 +47,7 @@ describe('JsonTab', () => {
         includeStyles={false}
         styleOutputMode="variables"
         styleTypes={[]}
+        numberPrecision={4}
       />
     );
 
@@ -65,6 +66,7 @@ describe('JsonTab', () => {
         styleOutputMode: 'variables',
         styleTypes: [],
         syncCalculations: false,
+        numberPrecision: 4,
       },
     });
   });
@@ -79,6 +81,7 @@ describe('JsonTab', () => {
         includeStyles={false}
         styleOutputMode="variables"
         styleTypes={[]}
+        numberPrecision={4}
       />
     );
 

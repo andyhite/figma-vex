@@ -38,6 +38,7 @@ export function exportPaintStylesToCss(
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
       ...parseDescription(style.description),
+      ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
 
     const value = resolvePaintValue(style, config);
@@ -66,6 +67,7 @@ export function exportTextStylesToCss(
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
       ...parseDescription(style.description),
+      ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
 
     const props = resolveTextProperties(style, config);
@@ -97,6 +99,7 @@ export function exportEffectStylesToCss(
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
       ...parseDescription(style.description),
+      ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
 
     const value = resolveEffectValue(style, config);
@@ -148,6 +151,7 @@ export function exportStylesAsCssClasses(
       const config: TokenConfig = {
         ...DEFAULT_CONFIG,
         ...parseDescription(style.description),
+        ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
       };
       const className = toStyleClassName(style.name, options.prefix);
       const value = resolvePaintValue(style, config);
@@ -173,6 +177,7 @@ export function exportStylesAsCssClasses(
       const config: TokenConfig = {
         ...DEFAULT_CONFIG,
         ...parseDescription(style.description),
+        ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
       };
       const className = toStyleClassName(style.name, options.prefix);
       const props = resolveTextProperties(style, config);
@@ -194,6 +199,7 @@ export function exportStylesAsCssClasses(
       const config: TokenConfig = {
         ...DEFAULT_CONFIG,
         ...parseDescription(style.description),
+        ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
       };
       const className = toStyleClassName(style.name, options.prefix);
       const value = resolveEffectValue(style, config);

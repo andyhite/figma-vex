@@ -44,6 +44,20 @@ interface SettingsTabProps {
   remBaseVariableId: string | null;
   onRemBaseVariableChange: (id: string | null) => void;
 
+  // Number precision
+  numberPrecision: number;
+  onNumberPrecisionChange: (precision: number) => void;
+
+  // CSS export options
+  cssExportAsCalcExpressions: boolean;
+  onCssExportAsCalcExpressionsChange: (value: boolean) => void;
+  cssUseModesAsSelectors: boolean;
+  onCssUseModesAsSelectorsChange: (value: boolean) => void;
+
+  // SCSS export options
+  scssExportAsCalcExpressions: boolean;
+  onScssExportAsCalcExpressionsChange: (value: boolean) => void;
+
   // Style options
   includeStyles: boolean;
   onIncludeStylesChange: (value: boolean) => void;
@@ -63,6 +77,10 @@ interface SettingsTabProps {
   onNameFormatAdvancedChange: (enabled: boolean) => void;
   syncCodeSyntax: boolean;
   onSyncCodeSyntaxChange: (enabled: boolean) => void;
+
+  // Debug mode
+  debugMode: boolean;
+  onDebugModeChange: (enabled: boolean) => void;
 
   // Import/Export/Reset
   onExportSettings: () => void;
@@ -89,6 +107,14 @@ export function SettingsTab({
   onHeaderBannerChange,
   remBaseVariableId,
   onRemBaseVariableChange,
+  numberPrecision,
+  onNumberPrecisionChange,
+  cssExportAsCalcExpressions,
+  onCssExportAsCalcExpressionsChange,
+  cssUseModesAsSelectors,
+  onCssUseModesAsSelectorsChange,
+  scssExportAsCalcExpressions,
+  onScssExportAsCalcExpressionsChange,
   includeStyles,
   onIncludeStylesChange,
   styleOutputMode,
@@ -105,6 +131,8 @@ export function SettingsTab({
   onNameFormatAdvancedChange,
   syncCodeSyntax,
   onSyncCodeSyntaxChange,
+  debugMode,
+  onDebugModeChange,
   onExportSettings,
   onImportSettings,
   onResetSettings,
@@ -143,12 +171,21 @@ export function SettingsTab({
             onPrefixChange={onPrefixChange}
             collections={collections}
             selectedCollections={selectedCollections}
+            debugMode={debugMode}
           />
         )}
         {activeSettingsTab === 'calc' && (
           <CalculationsSettings
             remBaseVariableId={remBaseVariableId}
             onRemBaseVariableChange={onRemBaseVariableChange}
+            numberPrecision={numberPrecision}
+            onNumberPrecisionChange={onNumberPrecisionChange}
+            cssExportAsCalcExpressions={cssExportAsCalcExpressions}
+            onCssExportAsCalcExpressionsChange={onCssExportAsCalcExpressionsChange}
+            cssUseModesAsSelectors={cssUseModesAsSelectors}
+            onCssUseModesAsSelectorsChange={onCssUseModesAsSelectorsChange}
+            scssExportAsCalcExpressions={scssExportAsCalcExpressions}
+            onScssExportAsCalcExpressionsChange={onScssExportAsCalcExpressionsChange}
           />
         )}
         {activeSettingsTab === 'styles' && (
@@ -168,6 +205,8 @@ export function SettingsTab({
             onExportSettings={onExportSettings}
             onImportSettings={onImportSettings}
             onResetSettings={onResetSettings}
+            debugMode={debugMode}
+            onDebugModeChange={onDebugModeChange}
           />
         )}
       </div>

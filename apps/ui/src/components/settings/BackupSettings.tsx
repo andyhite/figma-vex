@@ -1,14 +1,23 @@
 import { Button } from '../common/Button';
 import { FormHelpText } from '../common/FormHelpText';
 import { FormGroup } from '../common/FormGroup';
+import { Checkbox } from '../common/Checkbox';
 
 interface BackupSettingsProps {
   onExportSettings: () => void;
   onImportSettings: () => void;
   onResetSettings: () => void;
+  debugMode: boolean;
+  onDebugModeChange: (enabled: boolean) => void;
 }
 
-export function BackupSettings({ onExportSettings, onImportSettings, onResetSettings }: BackupSettingsProps) {
+export function BackupSettings({
+  onExportSettings,
+  onImportSettings,
+  onResetSettings,
+  debugMode,
+  onDebugModeChange,
+}: BackupSettingsProps) {
   return (
     <div>
       <FormGroup label="Backup & Restore">
@@ -41,6 +50,17 @@ export function BackupSettings({ onExportSettings, onImportSettings, onResetSett
             Reset Settings
           </Button>
         </div>
+      </FormGroup>
+
+      <FormGroup label="Debug Mode" className="mt-6">
+        <Checkbox
+          label="Enable debug mode"
+          checked={debugMode}
+          onChange={(e) => onDebugModeChange(e.target.checked)}
+        />
+        <FormHelpText className="mt-1">
+          Shows additional options for debugging and resetting plugin data.
+        </FormHelpText>
       </FormGroup>
     </div>
   );

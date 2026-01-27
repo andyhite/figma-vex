@@ -14,14 +14,15 @@ export function cleanNumber(value: number, decimals = 4): string {
  * Formats a number with the appropriate unit based on config.
  */
 export function formatNumber(value: number, config: TokenConfig): string {
+  const precision = config.precision;
   const formatters: Record<TokenConfig['unit'], () => string> = {
-    none: () => cleanNumber(value),
-    px: () => `${value}px`,
-    rem: () => `${cleanNumber(value / config.remBase)}rem`,
-    em: () => `${cleanNumber(value)}em`,
-    '%': () => `${value}%`,
-    ms: () => `${value}ms`,
-    s: () => `${value}s`,
+    none: () => cleanNumber(value, precision),
+    px: () => `${cleanNumber(value, precision)}px`,
+    rem: () => `${cleanNumber(value / config.remBase, precision)}rem`,
+    em: () => `${cleanNumber(value, precision)}em`,
+    '%': () => `${cleanNumber(value, precision)}%`,
+    ms: () => `${cleanNumber(value, precision)}ms`,
+    s: () => `${cleanNumber(value, precision)}s`,
   };
 
   return formatters[config.unit]();

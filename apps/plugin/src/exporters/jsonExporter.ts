@@ -114,15 +114,15 @@ export async function exportToJson(
     const stylesData: Record<string, unknown> = {};
 
     if (styleTypes.includes('paint') && styles.paint.length > 0) {
-      stylesData.paint = buildStyleTokens(styles.paint, 'color');
+      stylesData.paint = buildStyleTokens(styles.paint, 'color', options);
     }
 
     if (styleTypes.includes('text') && styles.text.length > 0) {
-      stylesData.text = buildTextStyleTokens(styles.text);
+      stylesData.text = buildTextStyleTokens(styles.text, options);
     }
 
     if (styleTypes.includes('effect') && styles.effect.length > 0) {
-      stylesData.effect = buildEffectStyleTokens(styles.effect);
+      stylesData.effect = buildEffectStyleTokens(styles.effect, options);
     }
 
     if (styleTypes.includes('grid') && styles.grid.length > 0) {
@@ -142,12 +142,13 @@ export async function exportToJson(
  */
 function buildStyleTokens(
   styles: StyleCollection['paint'],
-  type: string
+  type: string,
+  options?: ExportOptions
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+    const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options?.numberPrecision !== undefined && { precision: options.numberPrecision }) };
     const pathParts = style.name.split('/');
     const value = resolvePaintValue(style, config);
 
@@ -174,11 +175,11 @@ function buildStyleTokens(
 /**
  * Builds DTCG tokens for text styles
  */
-function buildTextStyleTokens(styles: StyleCollection['text']): Record<string, unknown> {
+function buildTextStyleTokens(styles: StyleCollection['text'], options?: ExportOptions): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+    const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options?.numberPrecision !== undefined && { precision: options.numberPrecision }) };
     const pathParts = style.name.split('/');
     const props = resolveTextProperties(style, config);
 
@@ -214,11 +215,11 @@ function buildTextStyleTokens(styles: StyleCollection['text']): Record<string, u
 /**
  * Builds DTCG tokens for effect styles
  */
-function buildEffectStyleTokens(styles: StyleCollection['effect']): Record<string, unknown> {
+function buildEffectStyleTokens(styles: StyleCollection['effect'], options?: ExportOptions): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+    const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options?.numberPrecision !== undefined && { precision: options.numberPrecision }) };
     const pathParts = style.name.split('/');
     const value = resolveEffectValue(style, config);
 

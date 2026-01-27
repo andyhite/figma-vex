@@ -85,7 +85,7 @@ function formatGradientStops(stops: readonly ColorStop[], config: TokenConfig): 
         },
         config.colorFormat
       );
-      return `${color} ${(stop.position * 100).toFixed(1)}%`;
+      return `${color} ${cleanNumber(stop.position * 100, config.precision)}%`;
     })
     .join(', ');
 }
@@ -123,7 +123,7 @@ export function resolveTextProperties(
     if (style.lineHeight.unit === 'PIXELS') {
       props['line-height'] = formatNumber(style.lineHeight.value, config);
     } else if (style.lineHeight.unit === 'PERCENT') {
-      props['line-height'] = `${style.lineHeight.value}%`;
+      props['line-height'] = `${cleanNumber(style.lineHeight.value, config.precision)}%`;
     }
   }
 
@@ -132,7 +132,7 @@ export function resolveTextProperties(
     props['letter-spacing'] = formatNumber(style.letterSpacing.value, config);
   } else if (style.letterSpacing.unit === 'PERCENT') {
     // Convert percentage to em (CSS letter-spacing is relative to font-size)
-    props['letter-spacing'] = `${cleanNumber(style.letterSpacing.value / 100)}em`;
+    props['letter-spacing'] = `${cleanNumber(style.letterSpacing.value / 100, config.precision)}em`;
   }
 
   // Text decoration

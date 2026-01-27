@@ -25,6 +25,7 @@ interface GitHubTabProps {
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
+  numberPrecision: number;
   // Persisted settings (token excluded for security)
   initialRepository?: string;
   initialWorkflowFileName?: string;
@@ -49,6 +50,7 @@ export function GitHubTab({
   includeStyles,
   styleOutputMode,
   styleTypes,
+  numberPrecision,
   initialRepository = '',
   initialWorkflowFileName = 'update-variables.yml',
   initialExportTypes = ['css', 'json'],
@@ -186,6 +188,7 @@ export function GitHubTab({
       styleOutputMode,
       styleTypes,
       syncCalculations,
+      numberPrecision,
     };
 
     const githubOptions: GitHubDispatchOptions = {
@@ -213,6 +216,7 @@ export function GitHubTab({
     styleOutputMode,
     styleTypes,
     syncCalculations,
+    numberPrecision,
     sendMessage,
   ]);
 

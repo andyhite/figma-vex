@@ -1,10 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '../common/Button';
 import { ButtonGroup } from '../common/ButtonGroup';
-import { Checkbox } from '../common/Checkbox';
 import { CopyIcon } from '../common/CopyIcon';
 import { DownloadIcon } from '../common/DownloadIcon';
-import { FormField } from '../common/FormField';
 import { IconButton } from '../common/IconButton';
 import { Input } from '../common/Input';
 import { OutputArea } from '../common/OutputArea';
@@ -22,8 +20,8 @@ interface CssTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
-  includeModeComments: boolean; // Global setting from Settings tab
-  headerBanner?: string; // Global setting from Settings tab
+  includeModeComments: boolean;
+  headerBanner?: string;
   syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
@@ -31,15 +29,11 @@ interface CssTabProps {
   remBaseVariableId: string | null;
   nameFormatRules: NameFormatRule[];
   syncCodeSyntax: boolean;
-  // Persisted settings
+  numberPrecision: number;
+  useModesAsSelectors: boolean;
+  exportAsCalcExpressions: boolean;
   initialSelector?: string;
-  initialUseModesAsSelectors?: boolean;
-  initialExportAsCalcExpressions?: boolean;
-  onSettingsChange?: (settings: {
-    cssSelector: string;
-    cssUseModesAsSelectors: boolean;
-    cssExportAsCalcExpressions: boolean;
-  }) => void;
+  onSelectorChange?: (selector: string) => void;
 }
 
 export function CssTab({
@@ -55,44 +49,18 @@ export function CssTab({
   remBaseVariableId,
   nameFormatRules,
   syncCodeSyntax,
+  numberPrecision,
+  useModesAsSelectors,
+  exportAsCalcExpressions,
   initialSelector = ':root',
-  initialUseModesAsSelectors = false,
-  initialExportAsCalcExpressions = false,
-  onSettingsChange,
+  onSelectorChange,
 }: CssTabProps) {
   const [selector, setSelector] = useState(initialSelector);
-  const [useModesAsSelectors, setUseModesAsSelectors] = useState(initialUseModesAsSelectors);
-  const [exportAsCalcExpressions, setExportAsCalcExpressions] = useState(
-    initialExportAsCalcExpressions
-  );
   const [output, setOutput] = useState('');
 
-  // Persist settings changes
   const handleSelectorChange = (value: string) => {
     setSelector(value);
-    onSettingsChange?.({
-      cssSelector: value,
-      cssUseModesAsSelectors: useModesAsSelectors,
-      cssExportAsCalcExpressions: exportAsCalcExpressions,
-    });
-  };
-
-  const handleUseModesAsSelectorChange = (value: boolean) => {
-    setUseModesAsSelectors(value);
-    onSettingsChange?.({
-      cssSelector: selector,
-      cssUseModesAsSelectors: value,
-      cssExportAsCalcExpressions: exportAsCalcExpressions,
-    });
-  };
-
-  const handleExportAsCalcExpressionsChange = (value: boolean) => {
-    setExportAsCalcExpressions(value);
-    onSettingsChange?.({
-      cssSelector: selector,
-      cssUseModesAsSelectors: useModesAsSelectors,
-      cssExportAsCalcExpressions: value,
-    });
+    onSelectorChange?.(value);
   };
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
@@ -136,6 +104,7 @@ export function CssTab({
       nameFormatRules: nameFormatRules && nameFormatRules.length > 0 ? nameFormatRules : undefined,
       syncCodeSyntax,
       headerBanner: headerBanner,
+      numberPrecision,
     };
 
     sendMessage({ type: 'export-css', options });
@@ -156,6 +125,7 @@ export function CssTab({
     nameFormatRules,
     syncCodeSyntax,
     headerBanner,
+    numberPrecision,
     sendMessage,
     setStatus,
   ]);
@@ -167,20 +137,6 @@ export function CssTab({
         value={selector}
         onChange={(e) => handleSelectorChange(e.target.value)}
       />
-      <FormField>
-        <Checkbox
-          label="Export modes as separate selectors"
-          checked={useModesAsSelectors}
-          onChange={(e) => handleUseModesAsSelectorChange(e.target.checked)}
-        />
-      </FormField>
-      <FormField>
-        <Checkbox
-          label="Export as calc() expressions"
-          checked={exportAsCalcExpressions}
-          onChange={(e) => handleExportAsCalcExpressionsChange(e.target.checked)}
-        />
-      </FormField>
       <ButtonGroup>
         <Button onClick={handleExport}>Generate CSS</Button>
       </ButtonGroup>

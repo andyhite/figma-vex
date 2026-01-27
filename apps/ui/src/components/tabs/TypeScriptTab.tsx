@@ -17,6 +17,7 @@ interface TypeScriptTabProps {
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
+  numberPrecision: number;
 }
 
 export function TypeScriptTab({
@@ -27,6 +28,7 @@ export function TypeScriptTab({
   includeStyles,
   styleOutputMode,
   styleTypes,
+  numberPrecision,
 }: TypeScriptTabProps) {
   const [output, setOutput] = useState('');
   const { sendMessage, listenToMessage } = usePluginMessage();
@@ -66,11 +68,12 @@ export function TypeScriptTab({
       styleOutputMode,
       styleTypes,
       syncCalculations,
+      numberPrecision,
     };
 
     sendMessage({ type: 'export-typescript', options });
     setStatus({ message: 'Generating...', type: 'info' });
-  }, [prefix, selectedCollections, includeModeComments, includeStyles, styleOutputMode, styleTypes, syncCalculations, sendMessage, setStatus]);
+  }, [prefix, selectedCollections, includeModeComments, includeStyles, styleOutputMode, styleTypes, syncCalculations, numberPrecision, sendMessage, setStatus]);
 
   return (
     <div>

@@ -1,4 +1,5 @@
 import { NameFormatRules } from './NameFormatRules';
+import { Button } from '../common/Button';
 import { useVariableNames } from '../../hooks/useVariableNames';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
 import { useCallback, useEffect, useState } from 'react';
@@ -8,6 +9,11 @@ import type {
   UIMessage,
 } from '@figma-vex/shared';
 import { getAllRulesWithDefault } from '@figma-vex/shared';
+
+interface ResetStatus {
+  reset: number;
+  skipped: number;
+}
 
 interface Collection {
   id: string;
@@ -28,6 +34,8 @@ interface VariablesSettingsProps {
   onPrefixChange: (value: string) => void;
   collections: Collection[];
   selectedCollections: string[];
+  // Debug mode
+  debugMode?: boolean;
 }
 
 export function VariablesSettings({
@@ -43,18 +51,24 @@ export function VariablesSettings({
   onPrefixChange,
   collections,
   selectedCollections,
+  debugMode = false,
 }: VariablesSettingsProps) {
   const { variableNames } = useVariableNames();
   const { sendMessage, listenToMessage } = usePluginMessage();
   const [syncStatus, setSyncStatus] = useState<{ synced: number; skipped: number } | null>(null);
+  const [resetStatus, setResetStatus] = useState<ResetStatus | null>(null);
 
-  // Handle sync result messages
+  // Handle sync and reset result messages
   useEffect(() => {
     const cleanup = listenToMessage((message: UIMessage) => {
       if (message.type === 'sync-code-syntax-result') {
         setSyncStatus({ synced: message.synced, skipped: message.skipped });
         // Clear status after 3 seconds
         setTimeout(() => setSyncStatus(null), 3000);
+      } else if (message.type === 'reset-code-syntax-result') {
+        setResetStatus({ reset: message.reset, skipped: message.skipped });
+        // Clear status after 3 seconds
+        setTimeout(() => setResetStatus(null), 3000);
       }
     });
     return cleanup;
@@ -72,6 +86,11 @@ export function VariablesSettings({
     });
     setSyncStatus(null); // Clear previous status
   }, [sendMessage, nameFormatRules, prefix, nameFormatCasing]);
+
+  const handleResetCodeSyntax = useCallback(() => {
+    sendMessage({ type: 'reset-code-syntax' });
+    setResetStatus(null); // Clear previous status
+  }, [sendMessage]);
 
   return (
     <div>
@@ -96,6 +115,21 @@ export function VariablesSettings({
         <div className="text-figma-text-secondary mt-2 text-xs">
           Synced {syncStatus.synced} variable{syncStatus.synced !== 1 ? 's' : ''}
           {syncStatus.skipped > 0 && `, skipped ${syncStatus.skipped}`}
+        </div>
+      )}
+
+      {debugMode && (
+        <div className="border-figma-border mt-4 border-t pt-4">
+          <div className="text-figma-text-secondary mb-2 text-xs font-medium">Debug</div>
+          <Button variant="danger" onClick={handleResetCodeSyntax}>
+            Reset Code Syntax
+          </Button>
+          {resetStatus && (
+            <div className="text-figma-text-secondary mt-2 text-xs">
+              Reset {resetStatus.reset} variable{resetStatus.reset !== 1 ? 's' : ''}
+              {resetStatus.skipped > 0 && `, skipped ${resetStatus.skipped}`}
+            </div>
+          )}
         </div>
       )}
     </div>

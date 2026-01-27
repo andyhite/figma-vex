@@ -73,14 +73,12 @@ async function syncCalculatedValues(
  * Transforms variable names using matching rules and writes them to Figma.
  *
  * @param variables - All variables to sync
- * @param rules - Name format rules to apply
- * @param prefix - Optional CSS variable prefix
+ * @param rules - Name format rules to apply (rules include prefix in their replacement template)
  * @returns Counts of synced and skipped variables
  */
 async function syncVariableCodeSyntax(
   variables: Variable[],
-  rules: NameFormatRule[],
-  prefix?: string
+  rules: NameFormatRule[]
 ): Promise<{ synced: number; skipped: number }> {
   let synced = 0;
   let skipped = 0;
@@ -89,8 +87,8 @@ async function syncVariableCodeSyntax(
     const customName = toCustomCssName(variable.name, rules);
 
     if (customName) {
-      // Apply prefix if set, add -- for CSS custom property
-      const cssVarName = prefix ? `--${prefix}-${customName}` : `--${customName}`;
+      // Rules already include the prefix in their replacement template, just add --
+      const cssVarName = `--${customName}`;
 
       try {
         variable.setVariableCodeSyntax('WEB', cssVarName);
@@ -105,6 +103,35 @@ async function syncVariableCodeSyntax(
   }
 
   return { synced, skipped };
+}
+
+/**
+ * Resets (clears) the codeSyntax.WEB field from all variables.
+ * This is a debug function to allow users to start fresh with code syntax.
+ *
+ * @param variables - All variables to reset
+ * @returns Counts of reset and skipped variables
+ */
+async function resetVariableCodeSyntax(
+  variables: Variable[]
+): Promise<{ reset: number; skipped: number }> {
+  let reset = 0;
+  let skipped = 0;
+
+  for (const variable of variables) {
+    // Only reset if codeSyntax.WEB is set
+    if (variable.codeSyntax?.WEB) {
+      try {
+        variable.removeVariableCodeSyntax('WEB');
+        reset++;
+      } catch {
+        // Silently skip on error (e.g., variable is read-only)
+        skipped++;
+      }
+    }
+  }
+
+  return { reset, skipped };
 }
 
 /**
@@ -177,7 +204,7 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       }
       // Sync code syntax to Figma if enabled
       if (options.syncCodeSyntax && options.nameFormatRules?.length) {
-        await syncVariableCodeSyntax(variables, options.nameFormatRules, options.prefix);
+        await syncVariableCodeSyntax(variables, options.nameFormatRules);
       }
       let styles: StyleCollection | undefined;
       if (options.includeStyles) {
@@ -196,7 +223,7 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       }
       // Sync code syntax to Figma if enabled
       if (options.syncCodeSyntax && options.nameFormatRules?.length) {
-        await syncVariableCodeSyntax(variables, options.nameFormatRules, options.prefix);
+        await syncVariableCodeSyntax(variables, options.nameFormatRules);
       }
       let styles: StyleCollection | undefined;
       if (options.includeStyles) {
@@ -348,12 +375,21 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
     case 'sync-code-syntax': {
       const result = await syncVariableCodeSyntax(
         variables,
-        msg.options.nameFormatRules,
-        msg.options.prefix
+        msg.options.nameFormatRules
       );
       postToUI({
         type: 'sync-code-syntax-result',
         synced: result.synced,
+        skipped: result.skipped,
+      });
+      break;
+    }
+
+    case 'reset-code-syntax': {
+      const result = await resetVariableCodeSyntax(variables);
+      postToUI({
+        type: 'reset-code-syntax-result',
+        reset: result.reset,
         skipped: result.skipped,
       });
       break;

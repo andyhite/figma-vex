@@ -1,10 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '../common/Button';
 import { ButtonGroup } from '../common/ButtonGroup';
-import { Checkbox } from '../common/Checkbox';
 import { CopyIcon } from '../common/CopyIcon';
 import { DownloadIcon } from '../common/DownloadIcon';
-import { FormField } from '../common/FormField';
 import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
 import { useOutputActions } from '../../hooks/useOutputActions';
@@ -21,8 +19,8 @@ interface ScssTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
-  includeModeComments: boolean; // Global setting from Settings tab
-  headerBanner?: string; // Global setting from Settings tab
+  includeModeComments: boolean;
+  headerBanner?: string;
   syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
@@ -30,9 +28,8 @@ interface ScssTabProps {
   remBaseVariableId: string | null;
   nameFormatRules: NameFormatRule[];
   syncCodeSyntax: boolean;
-  // Persisted settings
-  initialExportAsCalcExpressions?: boolean;
-  onSettingsChange?: (settings: { scssExportAsCalcExpressions: boolean }) => void;
+  numberPrecision: number;
+  exportAsCalcExpressions: boolean;
 }
 
 export function ScssTab({
@@ -48,12 +45,9 @@ export function ScssTab({
   remBaseVariableId,
   nameFormatRules,
   syncCodeSyntax,
-  initialExportAsCalcExpressions = false,
-  onSettingsChange,
+  numberPrecision,
+  exportAsCalcExpressions,
 }: ScssTabProps) {
-  const [exportAsCalcExpressions, setExportAsCalcExpressions] = useState(
-    initialExportAsCalcExpressions
-  );
   const [output, setOutput] = useState('');
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
@@ -80,13 +74,6 @@ export function ScssTab({
     return cleanup;
   }, [listenToMessage, handleMessage]);
 
-  const handleExportAsCalcExpressionsChange = (value: boolean) => {
-    setExportAsCalcExpressions(value);
-    onSettingsChange?.({
-      scssExportAsCalcExpressions: value,
-    });
-  };
-
   const handleExport = useCallback(() => {
     const options: ExportOptions = {
       selector: ':root',
@@ -104,6 +91,7 @@ export function ScssTab({
       nameFormatRules: nameFormatRules && nameFormatRules.length > 0 ? nameFormatRules : undefined,
       syncCodeSyntax,
       headerBanner: headerBanner,
+      numberPrecision,
     };
 
     sendMessage({ type: 'export-scss', options });
@@ -122,19 +110,13 @@ export function ScssTab({
     nameFormatRules,
     syncCodeSyntax,
     headerBanner,
+    numberPrecision,
     sendMessage,
     setStatus,
   ]);
 
   return (
     <div>
-      <FormField>
-        <Checkbox
-          label="Export as calc() expressions"
-          checked={exportAsCalcExpressions}
-          onChange={(e) => handleExportAsCalcExpressionsChange(e.target.checked)}
-        />
-      </FormField>
       <ButtonGroup>
         <Button onClick={handleExport}>Generate SCSS</Button>
       </ButtonGroup>

@@ -15,6 +15,22 @@ describe('ScssTab', () => {
   let messageHandler: ((message: UIMessage) => void) | null = null;
   const mockSetStatus = vi.fn();
 
+  const defaultProps = {
+    prefix: '',
+    selectedCollections: [] as string[],
+    includeCollectionComments: true,
+    includeModeComments: false,
+    syncCalculations: false,
+    includeStyles: false,
+    styleOutputMode: 'variables' as const,
+    styleTypes: [] as never[],
+    remBaseVariableId: null,
+    nameFormatRules: [] as never[],
+    syncCodeSyntax: true,
+    numberPrecision: 4,
+    exportAsCalcExpressions: false,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     messageHandler = null;
@@ -38,21 +54,7 @@ describe('ScssTab', () => {
   });
 
   it('should send export-scss message when generate is clicked', async () => {
-    render(
-      <ScssTab
-        prefix="ds"
-        selectedCollections={['1']}
-        includeCollectionComments={true}
-        includeModeComments={false}
-        syncCalculations={false}
-        includeStyles={false}
-        styleOutputMode="variables"
-        styleTypes={[]}
-        remBaseVariableId={null}
-        nameFormatRules={[]}
-        syncCodeSyntax={true}
-      />
-    );
+    render(<ScssTab {...defaultProps} prefix="ds" selectedCollections={['1']} />);
 
     const button = screen.getByRole('button', { name: 'Generate SCSS' });
     await userEvent.click(button);
@@ -72,21 +74,7 @@ describe('ScssTab', () => {
   });
 
   it('should display output when scss-result message is received', async () => {
-    render(
-      <ScssTab
-        prefix=""
-        selectedCollections={[]}
-        includeCollectionComments={true}
-        includeModeComments={false}
-        syncCalculations={false}
-        includeStyles={false}
-        styleOutputMode="variables"
-        styleTypes={[]}
-        remBaseVariableId={null}
-        nameFormatRules={[]}
-        syncCodeSyntax={true}
-      />
-    );
+    render(<ScssTab {...defaultProps} />);
 
     act(() => {
       if (messageHandler) {

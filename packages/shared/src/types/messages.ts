@@ -141,6 +141,12 @@ export interface PluginSettings {
   nameFormatCasing: CasingOption;
   nameFormatAdvanced: boolean; // Whether to show advanced rules UI
   syncCodeSyntax: boolean;
+
+  // Number formatting
+  numberPrecision: number;
+
+  // Debug settings
+  debugMode: boolean;
 }
 
 export interface ExportOptions {
@@ -169,6 +175,8 @@ export interface ExportOptions {
   colorFormat?: ColorFormat;
   // Base value for rem calculations (default: 16)
   remBase?: number;
+  // Number of decimal places for float values (default: 4)
+  numberPrecision?: number;
 }
 
 export interface GitHubDispatchOptions {
@@ -219,6 +227,7 @@ export type PluginMessage =
   | { type: 'load-settings' }
   | { type: 'sync-calculations'; options: ExportOptions }
   | { type: 'sync-code-syntax'; options: { nameFormatRules: NameFormatRule[]; prefix?: string } }
+  | { type: 'reset-code-syntax' }
   | { type: 'resolve-collection-names'; names: string[] }
   | { type: 'resolve-variable-path'; path: string };
 
@@ -243,5 +252,6 @@ export type UIMessage =
   | { type: 'settings-loaded'; settings: PluginSettings | null }
   | { type: 'sync-result'; synced: number; failed: number; warnings: string[] }
   | { type: 'sync-code-syntax-result'; synced: number; skipped: number }
+  | { type: 'reset-code-syntax-result'; reset: number; skipped: number }
   | { type: 'collection-names-resolved'; results: Array<{ name: string; id: string | null }> }
   | { type: 'variable-path-resolved'; path: string; id: string | null };
