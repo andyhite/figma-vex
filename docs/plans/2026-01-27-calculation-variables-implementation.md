@@ -1,86 +1,130 @@
-# Calculation-Based Variables Implementation Plan
-
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+# Calculation-Based Variables - Detailed Implementation Plan
 
 **Goal:** Enable expression-based calculations in Figma variable descriptions (e.g., `calc: var(--font-lg) * 1.5`) with evaluation at export time and optional write-back to Figma.
 
-**Architecture:** Extend the existing description parsing system to extract `calc:` expressions. Create a new expression evaluator service using `expr-eval` library. Integrate evaluation into the value resolution pipeline. Add sync functionality via new message types.
-
-**Tech Stack:** TypeScript, Vitest, mathjs library
+**Design Document:** See `docs/plans/2026-01-27-calculation-variables-design.md` for the full design rationale.
 
 ---
 
-## Task 1: Add mathjs Dependency
+## Codebase Context
 
-**Files:**
-- Modify: `apps/plugin/package.json`
-
-**Step 1: Add the dependency**
-
-```bash
-cd apps/plugin && npm install mathjs
+### Project Structure
+```
+figma-vex/
+├── apps/
+│   ├── plugin/          # Figma plugin backend (TypeScript)
+│   │   ├── src/
+│   │   │   ├── exporters/    # CSS, SCSS, JSON, TypeScript exporters
+│   │   │   ├── formatters/   # Color, number, name formatting
+│   │   │   ├── services/     # Value resolution, GitHub, styles
+│   │   │   ├── utils/        # Description parser, collection utils
+│   │   │   └── main.ts       # Plugin entry point
+│   │   └── package.json
+│   └── ui/              # React UI (separate package)
+└── packages/
+    └── shared/          # Shared types and config
+        └── src/
+            ├── types/
+            │   ├── tokens.ts    # TokenConfig, Unit, ColorFormat
+            │   ├── messages.ts  # Plugin <-> UI message types
+            │   └── styles.ts    # Style types
+            └── config.ts        # Shared configuration
 ```
 
-**Step 2: Verify installation**
+### Key Existing Files
 
-```bash
-cd apps/plugin && npm ls mathjs
+**`packages/shared/src/types/tokens.ts`** - Token configuration types:
+```typescript
+export type Unit = 'none' | 'px' | 'rem' | 'em' | '%' | 'ms' | 's';
+export type ColorFormat = 'hex' | 'rgb' | 'rgba' | 'hsl' | 'oklch';
+
+export interface TokenConfig {
+  unit: Unit;
+  remBase: number;
+  colorFormat: ColorFormat;
+}
+
+export const DEFAULT_CONFIG: TokenConfig = {
+  unit: 'px',
+  remBase: 16,
+  colorFormat: 'hex',
+};
 ```
 
-Expected: Shows `mathjs@x.x.x`
+**`apps/plugin/src/utils/descriptionParser.ts`** - Parses variable descriptions:
+```typescript
+import type { TokenConfig } from '@figma-vex/shared';
 
-**Step 3: Commit**
+export const UNIT_REGEX = /unit:\s*(none|px|rem|em|%|ms|s)(?::(\d+))?/i;
+export const FORMAT_REGEX = /format:\s*(rgba|rgb|hex|hsl|oklch)/i;
 
+export function parseDescription(description: string): Partial<TokenConfig> {
+  if (!description) return {};
+  const config: Partial<TokenConfig> = {};
+  // ... parses unit: and format: directives
+  return config;
+}
+```
+
+**`apps/plugin/src/services/valueResolver.ts`** - Resolves variable values:
+```typescript
+export async function resolveValue(
+  value: VariableValue,
+  _modeId: string,
+  variables: Variable[],
+  resolvedType: VariableResolvedDataType,
+  config: TokenConfig,
+  prefix = '',
+  depth = 0,
+  visited = new Set<string>()
+): Promise<string>
+```
+
+### Test Framework
+- Uses **Vitest** for testing
+- Tests are co-located with source files (e.g., `descriptionParser.test.ts`)
+- Run tests: `cd apps/plugin && npm test -- --run`
+
+### Path Aliases
+The plugin uses TypeScript path aliases:
+- `@plugin/` → `apps/plugin/src/`
+- `@figma-vex/shared` → `packages/shared/src/`
+
+---
+
+## Implementation Tasks
+
+### Task 1: Add mathjs Dependency
+
+**Purpose:** Install the math expression evaluation library.
+
+**Commands:**
 ```bash
-git add apps/plugin/package.json apps/plugin/package-lock.json
+cd /Users/user/Code/andyhite/figma-vex/apps/plugin
+npm install mathjs
+```
+
+**Verification:**
+```bash
+npm ls mathjs
+# Should show: mathjs@x.x.x
+```
+
+**Commit:**
+```bash
+git add package.json package-lock.json
 git commit -m "chore: add mathjs dependency for expression evaluation"
 ```
 
 ---
 
-## Task 2: Extend TokenConfig Type
+### Task 2: Extend TokenConfig Type
 
-**Files:**
-- Modify: `packages/shared/src/types/tokens.ts`
-- Test: `packages/shared/src/types/tokens.test.ts` (create)
+**Purpose:** Add `expression` field to store calc expressions.
 
-**Step 1: Write the type test**
+**File:** `packages/shared/src/types/tokens.ts`
 
-Create `packages/shared/src/types/tokens.test.ts`:
-
-```typescript
-import { describe, it, expect } from 'vitest';
-import type { TokenConfig } from './tokens';
-import { DEFAULT_CONFIG } from './tokens';
-
-describe('TokenConfig', () => {
-  it('should have expression as optional field', () => {
-    const config: TokenConfig = {
-      ...DEFAULT_CONFIG,
-      expression: 'var(--spacing-base) * 2',
-    };
-    expect(config.expression).toBe('var(--spacing-base) * 2');
-  });
-
-  it('should allow TokenConfig without expression', () => {
-    const config: TokenConfig = { ...DEFAULT_CONFIG };
-    expect(config.expression).toBeUndefined();
-  });
-});
-```
-
-**Step 2: Run test to verify it fails**
-
-```bash
-cd packages/shared && npm test -- --run
-```
-
-Expected: FAIL - `expression` property doesn't exist on type
-
-**Step 3: Add expression field to TokenConfig**
-
-Modify `packages/shared/src/types/tokens.ts`:
-
+**Replace entire file with:**
 ```typescript
 /**
  * Token configuration types for variable export formatting
@@ -93,6 +137,7 @@ export interface TokenConfig {
   unit: Unit;
   remBase: number;
   colorFormat: ColorFormat;
+  /** Optional calculation expression (e.g., "var(--spacing-base) * 2") */
   expression?: string;
 }
 
@@ -103,33 +148,21 @@ export const DEFAULT_CONFIG: TokenConfig = {
 };
 ```
 
-**Step 4: Run test to verify it passes**
-
+**Commit:**
 ```bash
-cd packages/shared && npm test -- --run
-```
-
-Expected: PASS
-
-**Step 5: Commit**
-
-```bash
-git add packages/shared/src/types/tokens.ts packages/shared/src/types/tokens.test.ts
+git add packages/shared/src/types/tokens.ts
 git commit -m "feat: add expression field to TokenConfig type"
 ```
 
 ---
 
-## Task 3: Update Description Parser - Semicolon Splitting
+### Task 3: Add Semicolon-Separated Directive Tests
 
-**Files:**
-- Modify: `apps/plugin/src/utils/descriptionParser.ts`
-- Modify: `apps/plugin/src/utils/descriptionParser.test.ts`
+**Purpose:** Verify existing parser handles semicolon-separated directives (it should already work).
 
-**Step 1: Write failing tests for semicolon separation**
+**File:** `apps/plugin/src/utils/descriptionParser.test.ts`
 
-Add to `apps/plugin/src/utils/descriptionParser.test.ts`:
-
+**Add this test suite at the end of the file (before the final closing brace if any):**
 ```typescript
 describe('semicolon-separated directives', () => {
   it('should parse unit and format separated by semicolon', () => {
@@ -159,33 +192,31 @@ describe('semicolon-separated directives', () => {
 });
 ```
 
-**Step 2: Run tests to verify they pass (existing implementation handles this)**
-
+**Run tests:**
 ```bash
-cd apps/plugin && npm test -- --run descriptionParser
+cd /Users/user/Code/andyhite/figma-vex/apps/plugin
+npm test -- --run descriptionParser
 ```
 
-Expected: PASS (the regex already matches anywhere in the string)
+**Expected:** All tests pass (existing regex handles semicolons).
 
-**Step 3: Commit test additions**
-
+**Commit:**
 ```bash
-git add apps/plugin/src/utils/descriptionParser.test.ts
+git add src/utils/descriptionParser.test.ts
 git commit -m "test: add semicolon-separated directive tests"
 ```
 
 ---
 
-## Task 4: Add calc Expression Parsing
+### Task 4: Add calc Expression Parsing
 
-**Files:**
-- Modify: `apps/plugin/src/utils/descriptionParser.ts`
-- Modify: `apps/plugin/src/utils/descriptionParser.test.ts`
+**Purpose:** Parse `calc:` expressions from variable descriptions.
 
-**Step 1: Write failing tests for calc parsing**
+#### Step 4.1: Add tests
 
-Add to `apps/plugin/src/utils/descriptionParser.test.ts`:
+**File:** `apps/plugin/src/utils/descriptionParser.test.ts`
 
+**Add this test suite:**
 ```typescript
 describe('calc expression parsing', () => {
   it('should parse simple calc expression', () => {
@@ -243,18 +274,18 @@ describe('calc expression parsing', () => {
 });
 ```
 
-**Step 2: Run tests to verify they fail**
-
+**Run tests to see them fail:**
 ```bash
-cd apps/plugin && npm test -- --run descriptionParser
+npm test -- --run descriptionParser
 ```
 
-Expected: FAIL - `expression` property doesn't exist
+**Expected:** Tests fail because `expression` property doesn't exist.
 
-**Step 3: Add calc parsing to descriptionParser.ts**
+#### Step 4.2: Implement calc parsing
 
-Replace `apps/plugin/src/utils/descriptionParser.ts`:
+**File:** `apps/plugin/src/utils/descriptionParser.ts`
 
+**Replace entire file with:**
 ```typescript
 import type { TokenConfig } from '@figma-vex/shared';
 
@@ -266,6 +297,12 @@ export const CALC_REGEX = /calc:\s*(.+?)(?:;|$)/i;
  * Parses a variable's description field to extract token configuration.
  * Supports unit, color format, and calc expression specifications.
  * Directives can be separated by semicolons on a single line.
+ *
+ * Examples:
+ * - "unit: rem:16"
+ * - "format: oklch"
+ * - "calc: var(--spacing-base) * 2"
+ * - "calc: var(--font-lg) * 1.5; unit: rem"
  */
 export function parseDescription(description: string): Partial<TokenConfig> {
   if (!description) return {};
@@ -294,33 +331,30 @@ export function parseDescription(description: string): Partial<TokenConfig> {
 }
 ```
 
-**Step 4: Run tests to verify they pass**
-
+**Run tests:**
 ```bash
-cd apps/plugin && npm test -- --run descriptionParser
+npm test -- --run descriptionParser
 ```
 
-Expected: PASS
+**Expected:** All tests pass.
 
-**Step 5: Commit**
-
+**Commit:**
 ```bash
-git add apps/plugin/src/utils/descriptionParser.ts apps/plugin/src/utils/descriptionParser.test.ts
+git add src/utils/descriptionParser.ts src/utils/descriptionParser.test.ts
 git commit -m "feat: add calc expression parsing to description parser"
 ```
 
 ---
 
-## Task 5: Create Variable Lookup Utility
+### Task 5: Create Variable Lookup Utility
 
-**Files:**
-- Create: `apps/plugin/src/utils/variableLookup.ts`
-- Create: `apps/plugin/src/utils/variableLookup.test.ts`
+**Purpose:** Map CSS variable names (like `--primitives-spacing-base`) back to Figma variables.
 
-**Step 1: Write tests for variable lookup**
+#### Step 5.1: Create test file
 
-Create `apps/plugin/src/utils/variableLookup.test.ts`:
+**File:** `apps/plugin/src/utils/variableLookup.test.ts`
 
+**Create with content:**
 ```typescript
 import { describe, it, expect } from 'vitest';
 import { buildVariableLookup, lookupVariable, extractVarReferences } from './variableLookup';
@@ -363,13 +397,22 @@ describe('buildVariableLookup', () => {
     const lookup = buildVariableLookup(mockVariables, mockCollections, 'ds');
     expect(lookup.has('--ds-primitives-spacing-base')).toBe(true);
   });
+
+  it('should skip variables with missing collections', () => {
+    const varsWithMissingCollection = [
+      ...mockVariables,
+      { id: 'var-orphan', name: 'orphan', variableCollectionId: 'nonexistent' },
+    ] as unknown as Variable[];
+    const lookup = buildVariableLookup(varsWithMissingCollection, mockCollections, '');
+    expect(lookup.size).toBe(3); // Only the 3 valid ones
+  });
 });
 
 describe('lookupVariable', () => {
-  it('should find variable by CSS name', () => {
+  it('should find variable by CSS var() reference', () => {
     const lookup = buildVariableLookup(mockVariables, mockCollections, '');
     const result = lookupVariable('var(--primitives-spacing-base)', lookup);
-    expect(result?.id).toBe('var-1');
+    expect(result?.variable.id).toBe('var-1');
   });
 
   it('should return undefined for non-existent variable', () => {
@@ -378,10 +421,17 @@ describe('lookupVariable', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should handle var() syntax', () => {
+  it('should handle var() syntax correctly', () => {
     const lookup = buildVariableLookup(mockVariables, mockCollections, '');
     const result = lookupVariable('var(--tokens-typography-font-size-lg)', lookup);
-    expect(result?.id).toBe('var-2');
+    expect(result?.variable.id).toBe('var-2');
+  });
+
+  it('should return undefined for invalid var() syntax', () => {
+    const lookup = buildVariableLookup(mockVariables, mockCollections, '');
+    expect(lookupVariable('--spacing-base', lookup)).toBeUndefined();
+    expect(lookupVariable('var(spacing-base)', lookup)).toBeUndefined();
+    expect(lookupVariable('', lookup)).toBeUndefined();
   });
 });
 
@@ -410,21 +460,23 @@ describe('extractVarReferences', () => {
     const refs = extractVarReferences('round((var(--a) + var(--b)) / var(--c))');
     expect(refs).toEqual(['var(--a)', 'var(--b)', 'var(--c)']);
   });
+
+  it('should handle empty string', () => {
+    expect(extractVarReferences('')).toEqual([]);
+  });
+
+  it('should handle duplicate references', () => {
+    const refs = extractVarReferences('var(--x) + var(--x)');
+    expect(refs).toEqual(['var(--x)', 'var(--x)']);
+  });
 });
 ```
 
-**Step 2: Run tests to verify they fail**
+#### Step 5.2: Create implementation
 
-```bash
-cd apps/plugin && npm test -- --run variableLookup
-```
+**File:** `apps/plugin/src/utils/variableLookup.ts`
 
-Expected: FAIL - module not found
-
-**Step 3: Implement variable lookup utility**
-
-Create `apps/plugin/src/utils/variableLookup.ts`:
-
+**Create with content:**
 ```typescript
 import { toCssName, toPrefixedName } from '@plugin/formatters/nameFormatter';
 
@@ -439,6 +491,11 @@ export interface VariableLookupEntry {
 /**
  * Builds a lookup map from CSS variable names to Figma variables.
  * Keys are in the format "--[prefix-]collection-name-variable-name".
+ *
+ * @param variables - All Figma variables
+ * @param collections - All variable collections
+ * @param prefix - Optional CSS variable prefix
+ * @returns Map from CSS variable name to variable entry
  */
 export function buildVariableLookup(
   variables: Variable[],
@@ -465,6 +522,7 @@ export function buildVariableLookup(
 
 /**
  * Looks up a variable by its CSS var() reference.
+ *
  * @param varRef - The var() reference, e.g., "var(--spacing-base)"
  * @param lookup - The lookup map from buildVariableLookup
  * @returns The variable entry or undefined if not found
@@ -482,8 +540,9 @@ export function lookupVariable(
 
 /**
  * Extracts all var() references from an expression.
+ *
  * @param expression - The expression string
- * @returns Array of var() references found
+ * @returns Array of var() references found (may contain duplicates)
  */
 export function extractVarReferences(expression: string): string[] {
   const regex = /var\(--[^)]+\)/g;
@@ -491,33 +550,30 @@ export function extractVarReferences(expression: string): string[] {
 }
 ```
 
-**Step 4: Run tests to verify they pass**
-
+**Run tests:**
 ```bash
-cd apps/plugin && npm test -- --run variableLookup
+npm test -- --run variableLookup
 ```
 
-Expected: PASS
+**Expected:** All tests pass.
 
-**Step 5: Commit**
-
+**Commit:**
 ```bash
-git add apps/plugin/src/utils/variableLookup.ts apps/plugin/src/utils/variableLookup.test.ts
+git add src/utils/variableLookup.ts src/utils/variableLookup.test.ts
 git commit -m "feat: add variable lookup utility for CSS name resolution"
 ```
 
 ---
 
-## Task 6: Create Expression Evaluator Service
+### Task 6: Create Expression Evaluator Service
 
-**Files:**
-- Create: `apps/plugin/src/services/expressionEvaluator.ts`
-- Create: `apps/plugin/src/services/expressionEvaluator.test.ts`
+**Purpose:** Evaluate mathematical expressions using mathjs.
 
-**Step 1: Write tests for expression evaluator**
+#### Step 6.1: Create test file
 
-Create `apps/plugin/src/services/expressionEvaluator.test.ts`:
+**File:** `apps/plugin/src/services/expressionEvaluator.test.ts`
 
+**Create with content:**
 ```typescript
 import { describe, it, expect } from 'vitest';
 import { evaluateExpression, type EvaluationContext } from './expressionEvaluator';
@@ -621,6 +677,14 @@ describe('evaluateExpression', () => {
       const result = evaluateExpression('max(var(--a), var(--b))', context);
       expect(result.value).toBe(20);
     });
+
+    it('should evaluate abs()', () => {
+      const context: EvaluationContext = {
+        'var(--x)': { value: -10, unit: 'px' },
+      };
+      const result = evaluateExpression('abs(var(--x))', context);
+      expect(result.value).toBe(10);
+    });
   });
 
   describe('unit inference', () => {
@@ -630,6 +694,15 @@ describe('evaluateExpression', () => {
       };
       const result = evaluateExpression('var(--rem-value) * 2', context);
       expect(result.unit).toBe('rem');
+    });
+
+    it('should use first non-px unit', () => {
+      const context: EvaluationContext = {
+        'var(--a)': { value: 10, unit: 'px' },
+        'var(--b)': { value: 20, unit: 'em' },
+      };
+      const result = evaluateExpression('var(--a) + var(--b)', context);
+      expect(result.unit).toBe('em');
     });
 
     it('should default to px when no variables', () => {
@@ -642,6 +715,7 @@ describe('evaluateExpression', () => {
   describe('error handling', () => {
     it('should return warning for missing variable', () => {
       const result = evaluateExpression('var(--missing) * 2', {});
+      expect(result.value).toBeNull();
       expect(result.warnings).toContain("Variable 'var(--missing)' not found");
     });
 
@@ -650,7 +724,7 @@ describe('evaluateExpression', () => {
         'var(--x)': { value: 10, unit: 'px' },
       });
       expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings[0]).toContain('syntax');
+      expect(result.warnings[0]).toMatch(/syntax/i);
     });
 
     it('should return warning for division by zero', () => {
@@ -684,22 +758,31 @@ describe('evaluateExpression', () => {
       const result = evaluateExpression('42', {});
       expect(result.value).toBe(42);
     });
+
+    it('should handle zero values', () => {
+      const context: EvaluationContext = {
+        'var(--x)': { value: 0, unit: 'px' },
+      };
+      const result = evaluateExpression('var(--x) + 5', context);
+      expect(result.value).toBe(5);
+    });
+
+    it('should handle negative source values', () => {
+      const context: EvaluationContext = {
+        'var(--x)': { value: -10, unit: 'px' },
+      };
+      const result = evaluateExpression('var(--x) * 2', context);
+      expect(result.value).toBe(-20);
+    });
   });
 });
 ```
 
-**Step 2: Run tests to verify they fail**
+#### Step 6.2: Create implementation
 
-```bash
-cd apps/plugin && npm test -- --run expressionEvaluator
-```
+**File:** `apps/plugin/src/services/expressionEvaluator.ts`
 
-Expected: FAIL - module not found
-
-**Step 3: Implement expression evaluator**
-
-Create `apps/plugin/src/services/expressionEvaluator.ts`:
-
+**Create with content:**
 ```typescript
 import { create, all, type MathJsInstance } from 'mathjs';
 import type { Unit } from '@figma-vex/shared';
@@ -724,7 +807,7 @@ export interface EvaluationResult {
   warnings: string[];
 }
 
-// Create a mathjs instance with only the functions we need
+// Create a mathjs instance with all functions
 const math: MathJsInstance = create(all);
 
 /**
@@ -752,16 +835,18 @@ export function evaluateExpression(
   // Build evaluation variables and check for missing refs
   const evalVars: Record<string, number> = {};
   let processedExpression = expression;
+  let hasAllVariables = true;
 
   for (const varRef of varRefs) {
     const contextEntry = context[varRef];
 
     if (!contextEntry) {
       warnings.push(`Variable '${varRef}' not found`);
+      hasAllVariables = false;
       continue;
     }
 
-    // Use first variable's unit as the inferred unit
+    // Use first non-px unit as the inferred unit
     if (inferredUnit === 'px' && contextEntry.unit !== 'px') {
       inferredUnit = contextEntry.unit;
     }
@@ -769,11 +854,11 @@ export function evaluateExpression(
     // Create a safe variable name for mathjs (replace special chars)
     const safeVarName = varRef.replace(/[^a-zA-Z0-9]/g, '_');
     evalVars[safeVarName] = contextEntry.value;
-    processedExpression = processedExpression.replace(varRef, safeVarName);
+    processedExpression = processedExpression.split(varRef).join(safeVarName);
   }
 
-  // If any variables were missing, return null value
-  if (warnings.length > 0 && varRefs.length > 0 && Object.keys(evalVars).length === 0) {
+  // If any required variables were missing, return null value
+  if (!hasAllVariables && varRefs.length > 0) {
     return { value: null, unit: inferredUnit, warnings };
   }
 
@@ -804,41 +889,43 @@ export function evaluateExpression(
 }
 ```
 
-**Step 4: Run tests to verify they pass**
-
+**Run tests:**
 ```bash
-cd apps/plugin && npm test -- --run expressionEvaluator
+npm test -- --run expressionEvaluator
 ```
 
-Expected: PASS
+**Expected:** All tests pass.
 
-**Step 5: Export from services index**
+#### Step 6.3: Export from services index
 
-Add to `apps/plugin/src/services/index.ts`:
+**File:** `apps/plugin/src/services/index.ts`
 
+**Add these exports:**
 ```typescript
-export { evaluateExpression, type EvaluationContext, type EvaluationResult } from './expressionEvaluator';
+export {
+  evaluateExpression,
+  type EvaluationContext,
+  type EvaluationResult,
+} from './expressionEvaluator';
 ```
 
-**Step 6: Commit**
-
+**Commit:**
 ```bash
-git add apps/plugin/src/services/expressionEvaluator.ts apps/plugin/src/services/expressionEvaluator.test.ts apps/plugin/src/services/index.ts
+git add src/services/expressionEvaluator.ts src/services/expressionEvaluator.test.ts src/services/index.ts
 git commit -m "feat: add expression evaluator service with math functions"
 ```
 
 ---
 
-## Task 7: Create Expression Resolution Service
+### Task 7: Create Expression Resolution Service
 
-**Files:**
-- Create: `apps/plugin/src/services/expressionResolver.ts`
-- Create: `apps/plugin/src/services/expressionResolver.test.ts`
+**Purpose:** Combine variable lookup with expression evaluation.
 
-**Step 1: Write tests for expression resolver**
+#### Step 7.1: Create test file
 
-Create `apps/plugin/src/services/expressionResolver.test.ts`:
+**File:** `apps/plugin/src/services/expressionResolver.test.ts`
 
+**Create with content:**
 ```typescript
 import { describe, it, expect } from 'vitest';
 import { resolveExpression } from './expressionResolver';
@@ -867,80 +954,193 @@ const mockVariables = [
     variableCollectionId: 'col-1',
     valuesByMode: { 'mode-1': { type: 'VARIABLE_ALIAS', id: 'var-1' } },
   },
+  {
+    id: 'var-4',
+    name: 'colors/primary',
+    resolvedType: 'COLOR',
+    variableCollectionId: 'col-1',
+    valuesByMode: { 'mode-1': { r: 1, g: 0, b: 0, a: 1 } },
+  },
 ] as unknown as Variable[];
 
 const mockCollections = [
-  { id: 'col-1', name: 'primitives', modes: [{ modeId: 'mode-1', name: 'default' }, { modeId: 'mode-2', name: 'compact' }] },
-  { id: 'col-2', name: 'tokens', modes: [{ modeId: 'mode-1', name: 'default' }] },
+  {
+    id: 'col-1',
+    name: 'primitives',
+    modes: [
+      { modeId: 'mode-1', name: 'default' },
+      { modeId: 'mode-2', name: 'compact' },
+    ],
+  },
+  {
+    id: 'col-2',
+    name: 'tokens',
+    modes: [{ modeId: 'mode-1', name: 'default' }],
+  },
 ] as unknown as VariableCollection[];
 
 describe('resolveExpression', () => {
   it('should resolve simple expression', async () => {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, expression: 'var(--primitives-spacing-base) * 2' };
-    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
+    const config: TokenConfig = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--primitives-spacing-base) * 2',
+    };
+    const result = await resolveExpression(
+      config,
+      'mode-1',
+      mockVariables,
+      mockCollections,
+      ''
+    );
 
     expect(result.value).toBe(16);
     expect(result.unit).toBe('px');
+    expect(result.warnings).toEqual([]);
   });
 
   it('should resolve expression with different mode values', async () => {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, expression: 'var(--primitives-spacing-base) * 2' };
+    const config: TokenConfig = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--primitives-spacing-base) * 2',
+    };
 
-    const result1 = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
-    const result2 = await resolveExpression(config, 'mode-2', mockVariables, mockCollections, '');
+    const result1 = await resolveExpression(
+      config,
+      'mode-1',
+      mockVariables,
+      mockCollections,
+      ''
+    );
+    const result2 = await resolveExpression(
+      config,
+      'mode-2',
+      mockVariables,
+      mockCollections,
+      ''
+    );
 
     expect(result1.value).toBe(16); // 8 * 2
     expect(result2.value).toBe(12); // 6 * 2
   });
 
   it('should resolve aliases fully', async () => {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, expression: 'var(--primitives-alias-spacing) * 2' };
-    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
+    const config: TokenConfig = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--primitives-alias-spacing) * 2',
+    };
+    const result = await resolveExpression(
+      config,
+      'mode-1',
+      mockVariables,
+      mockCollections,
+      ''
+    );
 
     expect(result.value).toBe(16); // alias resolves to 8, 8 * 2 = 16
   });
 
   it('should respect unit override in config', async () => {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, unit: 'rem', expression: 'var(--primitives-spacing-base) * 2' };
-    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
+    const config: TokenConfig = {
+      ...DEFAULT_CONFIG,
+      unit: 'rem',
+      expression: 'var(--primitives-spacing-base) * 2',
+    };
+    const result = await resolveExpression(
+      config,
+      'mode-1',
+      mockVariables,
+      mockCollections,
+      ''
+    );
 
     expect(result.value).toBe(16);
     expect(result.unit).toBe('rem');
   });
 
   it('should return warning for non-existent variable', async () => {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, expression: 'var(--nonexistent) * 2' };
-    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
+    const config: TokenConfig = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--nonexistent) * 2',
+    };
+    const result = await resolveExpression(
+      config,
+      'mode-1',
+      mockVariables,
+      mockCollections,
+      ''
+    );
 
     expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings[0]).toContain('not found');
+  });
+
+  it('should return warning for non-numeric variable', async () => {
+    const config: TokenConfig = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--primitives-colors-primary) * 2',
+    };
+    const result = await resolveExpression(
+      config,
+      'mode-1',
+      mockVariables,
+      mockCollections,
+      ''
+    );
+
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings[0]).toContain('not numeric');
   });
 
   it('should handle prefix', async () => {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, expression: 'var(--ds-primitives-spacing-base) * 2' };
-    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, 'ds');
+    const config: TokenConfig = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--ds-primitives-spacing-base) * 2',
+    };
+    const result = await resolveExpression(
+      config,
+      'mode-1',
+      mockVariables,
+      mockCollections,
+      'ds'
+    );
 
     expect(result.value).toBe(16);
+  });
+
+  it('should return warning when no expression provided', async () => {
+    const config: TokenConfig = { ...DEFAULT_CONFIG };
+    const result = await resolveExpression(
+      config,
+      'mode-1',
+      mockVariables,
+      mockCollections,
+      ''
+    );
+
+    expect(result.value).toBeNull();
+    expect(result.warnings).toContain('No expression provided');
   });
 });
 ```
 
-**Step 2: Run tests to verify they fail**
+#### Step 7.2: Create implementation
 
-```bash
-cd apps/plugin && npm test -- --run expressionResolver
-```
+**File:** `apps/plugin/src/services/expressionResolver.ts`
 
-Expected: FAIL - module not found
-
-**Step 3: Implement expression resolver**
-
-Create `apps/plugin/src/services/expressionResolver.ts`:
-
+**Create with content:**
 ```typescript
 import type { TokenConfig, Unit } from '@figma-vex/shared';
 import { RESOLUTION_CONFIG } from '@figma-vex/shared';
-import { buildVariableLookup, extractVarReferences, lookupVariable } from '@plugin/utils/variableLookup';
-import { evaluateExpression, type EvaluationContext, type EvaluationResult } from './expressionEvaluator';
+import {
+  buildVariableLookup,
+  extractVarReferences,
+  lookupVariable,
+} from '@plugin/utils/variableLookup';
+import {
+  evaluateExpression,
+  type EvaluationContext,
+  type EvaluationResult,
+} from './expressionEvaluator';
 
 /**
  * Resolves a variable value to a number, following aliases if needed.
@@ -964,7 +1164,12 @@ async function resolveToNumber(
   const value = variable.valuesByMode[modeId];
 
   // Handle alias - resolve to actual value
-  if (typeof value === 'object' && value !== null && 'type' in value && value.type === 'VARIABLE_ALIAS') {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'type' in value &&
+    value.type === 'VARIABLE_ALIAS'
+  ) {
     const aliasedVar = variables.find((v) => v.id === value.id);
     if (!aliasedVar) {
       return { value: null, unit: 'px' };
@@ -1020,7 +1225,9 @@ export async function resolveExpression(
 
     // Check if variable is numeric
     if (variable.resolvedType !== 'FLOAT') {
-      warnings.push(`Variable '${varRef}' is not numeric (type: ${variable.resolvedType})`);
+      warnings.push(
+        `Variable '${varRef}' is not numeric (type: ${variable.resolvedType})`
+      );
       continue;
     }
 
@@ -1049,41 +1256,39 @@ export async function resolveExpression(
 }
 ```
 
-**Step 4: Run tests to verify they pass**
-
+**Run tests:**
 ```bash
-cd apps/plugin && npm test -- --run expressionResolver
+npm test -- --run expressionResolver
 ```
 
-Expected: PASS
+**Expected:** All tests pass.
 
-**Step 5: Export from services index**
+#### Step 7.3: Export from services index
 
-Add to `apps/plugin/src/services/index.ts`:
+**File:** `apps/plugin/src/services/index.ts`
 
+**Add this export:**
 ```typescript
 export { resolveExpression } from './expressionResolver';
 ```
 
-**Step 6: Commit**
-
+**Commit:**
 ```bash
-git add apps/plugin/src/services/expressionResolver.ts apps/plugin/src/services/expressionResolver.test.ts apps/plugin/src/services/index.ts
+git add src/services/expressionResolver.ts src/services/expressionResolver.test.ts src/services/index.ts
 git commit -m "feat: add expression resolver for full variable lookup and evaluation"
 ```
 
 ---
 
-## Task 8: Integrate Expression Evaluation into Value Resolver
+### Task 8: Integrate Expression Evaluation into Value Resolver
 
-**Files:**
-- Modify: `apps/plugin/src/services/valueResolver.ts`
-- Modify: `apps/plugin/src/services/valueResolver.test.ts`
+**Purpose:** Make the existing value resolver use expression evaluation when `expression` is present in config.
 
-**Step 1: Write tests for expression-aware value resolution**
+#### Step 8.1: Add tests to valueResolver.test.ts
 
-Add to `apps/plugin/src/services/valueResolver.test.ts`:
+**File:** `apps/plugin/src/services/valueResolver.test.ts`
 
+**Add this test suite:**
 ```typescript
 describe('expression evaluation', () => {
   const mockVariablesWithValues = [
@@ -1096,12 +1301,19 @@ describe('expression evaluation', () => {
     },
   ] as unknown as Variable[];
 
-  const mockCollections = [
-    { id: 'col-1', name: 'primitives', modes: [{ modeId: 'mode-1', name: 'default' }] },
+  const mockCollectionsForExpr = [
+    {
+      id: 'col-1',
+      name: 'primitives',
+      modes: [{ modeId: 'mode-1', name: 'default' }],
+    },
   ] as unknown as VariableCollection[];
 
   it('should evaluate expression when provided in config', async () => {
-    const config = { ...DEFAULT_CONFIG, expression: 'var(--primitives-spacing-base) * 2' };
+    const config = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--primitives-spacing-base) * 2',
+    };
     const result = await resolveValue(
       8, // fallback value
       'mode-1',
@@ -1111,13 +1323,16 @@ describe('expression evaluation', () => {
       '',
       0,
       new Set(),
-      mockCollections
+      mockCollectionsForExpr
     );
     expect(result).toBe('16px');
   });
 
   it('should use fallback value when expression fails', async () => {
-    const config = { ...DEFAULT_CONFIG, expression: 'var(--nonexistent) * 2' };
+    const config = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--nonexistent) * 2',
+    };
     const result = await resolveValue(
       42,
       'mode-1',
@@ -1127,14 +1342,18 @@ describe('expression evaluation', () => {
       '',
       0,
       new Set(),
-      mockCollections
+      mockCollectionsForExpr
     );
     // Falls back to original value
     expect(result).toBe('42px');
   });
 
   it('should apply unit from config to expression result', async () => {
-    const config = { ...DEFAULT_CONFIG, unit: 'rem' as const, expression: 'var(--primitives-spacing-base) * 2' };
+    const config = {
+      ...DEFAULT_CONFIG,
+      unit: 'rem' as const,
+      expression: 'var(--primitives-spacing-base) * 2',
+    };
     const result = await resolveValue(
       8,
       'mode-1',
@@ -1144,25 +1363,54 @@ describe('expression evaluation', () => {
       '',
       0,
       new Set(),
-      mockCollections
+      mockCollectionsForExpr
     );
     expect(result).toBe('1rem'); // 16 / 16 (default remBase)
+  });
+
+  it('should not evaluate expression for non-FLOAT types', async () => {
+    const config = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--primitives-spacing-base) * 2',
+    };
+    const result = await resolveValue(
+      'hello',
+      'mode-1',
+      mockVariablesWithValues,
+      'STRING',
+      config,
+      '',
+      0,
+      new Set(),
+      mockCollectionsForExpr
+    );
+    expect(result).toBe('"hello"'); // Normal string handling
+  });
+
+  it('should not evaluate expression when collections not provided', async () => {
+    const config = {
+      ...DEFAULT_CONFIG,
+      expression: 'var(--primitives-spacing-base) * 2',
+    };
+    const result = await resolveValue(
+      8,
+      'mode-1',
+      mockVariablesWithValues,
+      'FLOAT',
+      config,
+      ''
+      // No collections parameter
+    );
+    expect(result).toBe('8px'); // Falls back to normal resolution
   });
 });
 ```
 
-**Step 2: Run tests to verify they fail**
+#### Step 8.2: Update valueResolver.ts
 
-```bash
-cd apps/plugin && npm test -- --run valueResolver
-```
+**File:** `apps/plugin/src/services/valueResolver.ts`
 
-Expected: FAIL - signature doesn't include collections parameter
-
-**Step 3: Update resolveValue to support expressions**
-
-Replace `apps/plugin/src/services/valueResolver.ts`:
-
+**Replace entire file with:**
 ```typescript
 import type { TokenConfig } from '@figma-vex/shared';
 import { RESOLUTION_CONFIG } from '@figma-vex/shared';
@@ -1211,7 +1459,10 @@ export async function resolveValue(
     // Fall through to normal resolution if expression failed
     // Warnings are logged but we use the fallback value
     if (result.warnings.length > 0) {
-      console.warn(`Expression evaluation warnings for "${config.expression}":`, result.warnings);
+      console.warn(
+        `Expression evaluation warnings for "${config.expression}":`,
+        result.warnings
+      );
     }
   }
 
@@ -1273,92 +1524,92 @@ export async function resolveValue(
 }
 ```
 
-**Step 4: Run tests to verify they pass**
-
+**Run tests:**
 ```bash
-cd apps/plugin && npm test -- --run valueResolver
+npm test -- --run valueResolver
 ```
 
-Expected: PASS
+**Expected:** All tests pass.
 
-**Step 5: Commit**
-
+**Commit:**
 ```bash
-git add apps/plugin/src/services/valueResolver.ts apps/plugin/src/services/valueResolver.test.ts
+git add src/services/valueResolver.ts src/services/valueResolver.test.ts
 git commit -m "feat: integrate expression evaluation into value resolver"
 ```
 
 ---
 
-## Task 9: Update Exporters to Pass Collections
+### Task 9: Update Exporters to Pass Collections
 
-**Files:**
-- Modify: `apps/plugin/src/exporters/cssExporter.ts`
-- Modify: `apps/plugin/src/exporters/scssExporter.ts`
-- Modify: `apps/plugin/src/exporters/jsonExporter.ts`
-- Modify: `apps/plugin/src/exporters/typescriptExporter.ts`
+**Purpose:** Each exporter needs to pass `collections` to `resolveValue` for expression support.
 
-**Step 1: Update CSS exporter**
+#### Step 9.1: Update CSS Exporter
 
-In `apps/plugin/src/exporters/cssExporter.ts`, find all calls to `resolveValue` and add the `collections` parameter as the last argument.
+**File:** `apps/plugin/src/exporters/cssExporter.ts`
 
-The pattern is:
+Find all calls to `resolveValue` and add the `collections` parameter. The function signature changed from:
+
 ```typescript
-// Before
-await resolveValue(value, modeId, variables, variable.resolvedType, config, prefix)
-
-// After
-await resolveValue(value, modeId, variables, variable.resolvedType, config, prefix, 0, new Set(), collections)
+resolveValue(value, modeId, variables, type, config, prefix)
 ```
 
-**Step 2: Update SCSS exporter**
-
-Same pattern in `apps/plugin/src/exporters/scssExporter.ts`.
-
-**Step 3: Update JSON exporter**
-
-Same pattern in `apps/plugin/src/exporters/jsonExporter.ts`.
-
-**Step 4: Update TypeScript exporter**
-
-Same pattern in `apps/plugin/src/exporters/typescriptExporter.ts`.
-
-**Step 5: Run all tests**
-
-```bash
-cd apps/plugin && npm test -- --run
+To:
+```typescript
+resolveValue(value, modeId, variables, type, config, prefix, 0, new Set(), collections)
 ```
 
-Expected: PASS
+You need to ensure `collections` is passed through from the export function parameters.
 
-**Step 6: Commit**
+#### Step 9.2: Update SCSS Exporter
 
+**File:** `apps/plugin/src/exporters/scssExporter.ts`
+
+Same pattern as CSS exporter.
+
+#### Step 9.3: Update JSON Exporter
+
+**File:** `apps/plugin/src/exporters/jsonExporter.ts`
+
+Same pattern.
+
+#### Step 9.4: Update TypeScript Exporter
+
+**File:** `apps/plugin/src/exporters/typescriptExporter.ts`
+
+Same pattern.
+
+**Run all exporter tests:**
 ```bash
-git add apps/plugin/src/exporters/*.ts
+npm test -- --run
+```
+
+**Expected:** All tests pass.
+
+**Commit:**
+```bash
+git add src/exporters/*.ts
 git commit -m "feat: pass collections to resolveValue for expression support"
 ```
 
 ---
 
-## Task 10: Add Sync Message Types
+### Task 10: Add Sync Message Types
 
-**Files:**
-- Modify: `packages/shared/src/types/messages.ts`
+**Purpose:** Define message types for syncing calculated values back to Figma.
 
-**Step 1: Add sync message types**
+**File:** `packages/shared/src/types/messages.ts`
 
-Add to `packages/shared/src/types/messages.ts`:
-
+**Add to `PluginMessage` union type:**
 ```typescript
-// Add to PluginMessage union type:
 | { type: 'sync-calculations'; options: ExportOptions }
+```
 
-// Add to UIMessage union type:
+**Add to `UIMessage` union type:**
+```typescript
 | { type: 'sync-result'; synced: number; failed: number; warnings: string[] }
 ```
 
-**Step 2: Commit**
-
+**Commit:**
 ```bash
 git add packages/shared/src/types/messages.ts
 git commit -m "feat: add sync-calculations message types"
@@ -1366,15 +1617,20 @@ git commit -m "feat: add sync-calculations message types"
 
 ---
 
-## Task 11: Implement Sync Handler in Main
+### Task 11: Implement Sync Handler in Main
 
-**Files:**
-- Modify: `apps/plugin/src/main.ts`
+**Purpose:** Handle sync-calculations message to write evaluated values back to Figma.
 
-**Step 1: Add sync handler**
+**File:** `apps/plugin/src/main.ts`
 
-Add a new case to the switch statement in `handleMessage`:
+**Add imports at top:**
+```typescript
+import { parseDescription } from './utils/descriptionParser';
+import { resolveExpression } from './services';
+import { DEFAULT_CONFIG } from '@figma-vex/shared';
+```
 
+**Add new case to switch statement in `handleMessage`:**
 ```typescript
 case 'sync-calculations': {
   const options = mergeWithDefaults('css', msg.options);
@@ -1410,11 +1666,14 @@ case 'sync-calculations': {
             synced++;
           } catch (error) {
             failed++;
-            warnings.push(`Failed to update ${variable.name}: ${error}`);
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            warnings.push(`Failed to update ${variable.name}: ${errorMsg}`);
           }
         } else {
           failed++;
-          warnings.push(...result.warnings.map((w) => `${variable.name}: ${w}`));
+          warnings.push(
+            ...result.warnings.map((w) => `${variable.name}: ${w}`)
+          );
         }
       }
     }
@@ -1425,87 +1684,80 @@ case 'sync-calculations': {
 }
 ```
 
-**Step 2: Add imports**
-
-Add to imports in `main.ts`:
-
-```typescript
-import { parseDescription } from './utils/descriptionParser';
-import { resolveExpression } from './services';
-import { DEFAULT_CONFIG } from '@figma-vex/shared';
+**Verify build:**
+```bash
+npm run build
 ```
 
-**Step 3: Run build to verify**
+**Expected:** Build succeeds.
 
+**Commit:**
 ```bash
-cd apps/plugin && npm run build
-```
-
-Expected: BUILD SUCCESS
-
-**Step 4: Commit**
-
-```bash
-git add apps/plugin/src/main.ts
+git add src/main.ts
 git commit -m "feat: implement sync-calculations handler to write back evaluated values"
 ```
 
 ---
 
-## Task 12: Export Utils Index
+### Task 12: Create Utils Index (Optional)
 
-**Files:**
-- Modify: `apps/plugin/src/utils/index.ts` (create if needed)
+**Purpose:** Clean export of all utilities.
 
-**Step 1: Create or update utils index**
+**File:** `apps/plugin/src/utils/index.ts`
 
-Create `apps/plugin/src/utils/index.ts` if it doesn't exist:
-
+**Create or update with:**
 ```typescript
-export { parseDescription, UNIT_REGEX, FORMAT_REGEX, CALC_REGEX } from './descriptionParser';
+export {
+  parseDescription,
+  UNIT_REGEX,
+  FORMAT_REGEX,
+  CALC_REGEX,
+} from './descriptionParser';
 export {
   buildVariableLookup,
   lookupVariable,
   extractVarReferences,
   type VariableLookupEntry,
 } from './variableLookup';
-export { filterCollections, getCollectionVariables, getCollectionVariablesByName } from './collectionUtils';
+export {
+  filterCollections,
+  getCollectionVariables,
+  getCollectionVariablesByName,
+} from './collectionUtils';
 export { mergeWithDefaults } from './optionDefaults';
 ```
 
-**Step 2: Commit**
-
+**Commit:**
 ```bash
-git add apps/plugin/src/utils/index.ts
+git add src/utils/index.ts
 git commit -m "chore: export new utilities from utils index"
 ```
 
 ---
 
-## Summary
+## Final Verification
 
-This plan covers the core backend implementation:
+After all tasks are complete:
 
-1. **Tasks 1-2**: Dependencies and types
-2. **Tasks 3-4**: Description parser updates
-3. **Tasks 5-7**: Expression evaluation services
-4. **Tasks 8-9**: Integration into existing pipeline
-5. **Tasks 10-12**: Sync functionality
+```bash
+# Run all tests
+cd /Users/user/Code/andyhite/figma-vex/apps/plugin
+npm test -- --run
 
-**Not covered in this plan (future tasks):**
+# Build plugin
+npm run build
+
+# Type check
+npm run typecheck
+```
+
+All should pass without errors.
+
+---
+
+## Not Covered (Future Work)
+
 - UI components (sync button, checkbox, warnings display)
 - Integration tests with real Figma plugin environment
 - Documentation updates
-
-**Test commands:**
-```bash
-# Run all plugin tests
-cd apps/plugin && npm test -- --run
-
-# Run specific test file
-cd apps/plugin && npm test -- --run descriptionParser
-cd apps/plugin && npm test -- --run expressionEvaluator
-
-# Run tests in watch mode
-cd apps/plugin && npm test
-```
+- E2E tests
