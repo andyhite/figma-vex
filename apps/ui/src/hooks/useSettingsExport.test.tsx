@@ -12,7 +12,6 @@ const mockCollections: CollectionInfo[] = [
 ];
 
 const mockSettings: PluginSettings = {
-  activeTab: 'css',
   prefix: 'ds',
   selectedCollections: ['col-1', 'col-2'],
   includeCollectionComments: true,
@@ -142,23 +141,6 @@ describe('useSettingsExport', () => {
       const parsed = JSON.parse(capturedBlobContent!);
       expect(parsed.version).toBe(1);
       expect(parsed.exportedAt).toBeDefined();
-    });
-
-    it('should exclude activeTab from export', () => {
-      const { result } = renderHook(() =>
-        useSettingsExport({
-          collections: mockCollections,
-          remBaseVariablePath: undefined,
-        })
-      );
-
-      act(() => {
-        result.current.exportSettings(mockSettings);
-      });
-
-      expect(capturedBlobContent).not.toBeNull();
-      const parsed = JSON.parse(capturedBlobContent!);
-      expect(parsed.settings.activeTab).toBeUndefined();
     });
 
     it('should use variable path instead of ID in export', () => {

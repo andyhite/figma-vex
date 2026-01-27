@@ -141,14 +141,28 @@ describe('githubService', () => {
 
   describe('buildDispatchPayload', () => {
     it('should build correct payload structure', () => {
-      const exports = { css: 'body { color: red; }', json: '{"color": "red"}' };
+      const dtcgPayload = {
+        document: {
+          $schema: 'https://design-tokens.github.io/format/',
+          collections: {},
+          $metadata: { figmaFile: 'test.figma', generatedAt: '2024-01-01T00:00:00.000Z' },
+        },
+        settings: {
+          colorFormat: 'hex' as const,
+          defaultUnit: 'px' as const,
+          remBase: 16,
+        },
+        export_types: ['css', 'json'],
+      };
       const figmaFile = 'test.figma';
       const workflowFile = 'workflow.yml';
 
-      const payload = buildDispatchPayload(exports, figmaFile, workflowFile);
+      const payload = buildDispatchPayload(dtcgPayload, figmaFile, workflowFile);
 
       expect(payload.event_type).toBe('figma-variables-update');
-      expect(payload.client_payload.exports).toEqual(exports);
+      expect(payload.client_payload.document).toEqual(dtcgPayload.document);
+      expect(payload.client_payload.settings).toEqual(dtcgPayload.settings);
+      expect(payload.client_payload.export_types).toEqual(dtcgPayload.export_types);
       expect(payload.client_payload.figma_file).toBe(figmaFile);
       expect(payload.client_payload.workflow_file).toBe(workflowFile);
       expect(payload.client_payload.generated_at).toBeDefined();
@@ -236,22 +250,31 @@ describe('githubService', () => {
   });
 
   describe('sendGitHubDispatch', () => {
-  const mockOptions: GitHubDispatchOptions = {
-    repository: 'owner/repo',
-    token: 'test-token',
-    exportTypes: ['css', 'json'],
-    exportOptions: {
-      selector: ':root',
-      includeCollectionComments: true,
-      includeModeComments: false,
-      useModesAsSelectors: false,
-    },
-    workflowFileName: 'workflow.yml',
-  };
+    const mockOptions: GitHubDispatchOptions = {
+      repository: 'owner/repo',
+      token: 'test-token',
+      exportTypes: ['css', 'json'],
+      exportOptions: {
+        selector: ':root',
+        includeCollectionComments: true,
+        includeModeComments: false,
+        useModesAsSelectors: false,
+      },
+      workflowFileName: 'workflow.yml',
+    };
 
-    const mockExports = {
-      css: 'body { color: red; }',
-      json: '{"color": "red"}',
+    const mockDtcgPayload = {
+      document: {
+        $schema: 'https://design-tokens.github.io/format/',
+        collections: {},
+        $metadata: { figmaFile: 'test.figma', generatedAt: '2024-01-01T00:00:00.000Z' },
+      },
+      settings: {
+        colorFormat: 'hex' as const,
+        defaultUnit: 'px' as const,
+        remBase: 16,
+      },
+      export_types: ['css', 'json'],
     };
 
     it('should send dispatch request successfully', async () => {
@@ -262,7 +285,7 @@ describe('githubService', () => {
 
       global.fetch = mockFetch;
 
-      await sendGitHubDispatch(mockOptions, mockExports, 'test.figma');
+      await sendGitHubDispatch(mockOptions, mockDtcgPayload, 'test.figma');
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.github.com/repos/owner/repo/dispatches',
@@ -285,7 +308,7 @@ describe('githubService', () => {
       global.fetch = mockFetch;
 
       await expect(
-        sendGitHubDispatch(mockOptions, mockExports, 'test.figma')
+        sendGitHubDispatch(mockOptions, mockDtcgPayload, 'test.figma')
       ).rejects.toThrow('Network error: Network error');
     });
 
@@ -299,7 +322,7 @@ describe('githubService', () => {
       global.fetch = mockFetch;
 
       await expect(
-        sendGitHubDispatch(mockOptions, mockExports, 'test.figma')
+        sendGitHubDispatch(mockOptions, mockDtcgPayload, 'test.figma')
       ).rejects.toThrow('Authentication failed. Please check your GitHub token.');
     });
 
@@ -323,7 +346,7 @@ describe('githubService', () => {
 
       global.fetch = mockFetch;
 
-      await sendGitHubDispatch(optionsWithoutWorkflow, mockExports, 'test.figma');
+      await sendGitHubDispatch(optionsWithoutWorkflow, mockDtcgPayload, 'test.figma');
 
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(callBody.client_payload.workflow_file).toBe('update-variables.yml');
@@ -349,7 +372,7 @@ describe('githubService', () => {
 
       global.fetch = mockFetch;
 
-      await sendGitHubDispatch(optionsWithSpecialChars, mockExports, 'test.figma');
+      await sendGitHubDispatch(optionsWithSpecialChars, mockDtcgPayload, 'test.figma');
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.github.com/repos/owner-name/repo.name/dispatches',
@@ -372,7 +395,7 @@ describe('githubService', () => {
       };
 
       await expect(
-        sendGitHubDispatch(invalidOptions, mockExports, 'test.figma')
+        sendGitHubDispatch(invalidOptions, mockDtcgPayload, 'test.figma')
       ).rejects.toThrow('Invalid repository format');
     });
   });

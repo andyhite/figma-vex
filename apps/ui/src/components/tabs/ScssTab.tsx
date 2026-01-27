@@ -121,6 +121,7 @@ export function ScssTab({
     remBaseVariableId,
     nameFormatRules,
     syncCodeSyntax,
+    headerBanner,
     sendMessage,
     setStatus,
   ]);

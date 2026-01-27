@@ -6,7 +6,6 @@ import type { PluginSettings } from '@figma-vex/shared';
  * Default settings used when no saved settings exist.
  */
 export const DEFAULT_SETTINGS: PluginSettings = {
-  activeTab: 'css',
   prefix: '',
   selectedCollections: [],
   includeCollectionComments: true,
@@ -31,7 +30,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   nameFormatCasing: 'kebab',
   nameFormatAdvanced: false,
   syncCodeSyntax: true,
-  activeSettingsTab: 'general',
 };
 
 interface UseSettingsReturn {

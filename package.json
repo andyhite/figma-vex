@@ -1,6 +1,7 @@
 {
   "name": "figma-vex",
   "version": "2.0.0",
+  "type": "module",
   "packageManager": "pnpm@10.7.1",
   "description": "Figma Variables Export Plugin - Export design tokens to CSS, SCSS, JSON, and TypeScript",
   "private": true,

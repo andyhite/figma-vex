@@ -4,14 +4,16 @@
 
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import { convertToCss, convertToScss, convertToTypeScript } from '@figma-vex/shared';
 import { writeFiles } from './files.js';
 import { handleBranchAndPR } from './github.js';
+import { createPRBody } from './pr/body.js';
 import type { ActionInputs, FileWrite, RepositoryDispatchPayload } from './types.js';
 
 /**
  * Validates that at least one path input is provided
  */
-function validateInputs(inputs: ActionInputs): void {
+export function validateInputs(inputs: ActionInputs): void {
   const hasPath = inputs.cssPath || inputs.scssPath || inputs.jsonPath || inputs.typescriptPath;
 
   if (!hasPath) {
@@ -24,7 +26,7 @@ function validateInputs(inputs: ActionInputs): void {
 /**
  * Validates the repository dispatch event payload
  */
-function validatePayload(payload: unknown): payload is RepositoryDispatchPayload {
+export function validatePayload(payload: unknown): payload is RepositoryDispatchPayload {
   if (!payload || typeof payload !== 'object') {
     throw new Error('Invalid event payload: payload is not an object');
   }
@@ -37,8 +39,16 @@ function validatePayload(payload: unknown): payload is RepositoryDispatchPayload
 
   const cp = p.client_payload as Record<string, unknown>;
 
-  if (!cp.exports || typeof cp.exports !== 'object') {
-    throw new Error('Invalid event payload: client_payload.exports is missing or invalid');
+  if (!cp.document || typeof cp.document !== 'object') {
+    throw new Error('Invalid event payload: client_payload.document is missing or invalid');
+  }
+
+  if (!cp.settings || typeof cp.settings !== 'object') {
+    throw new Error('Invalid event payload: client_payload.settings is missing or invalid');
+  }
+
+  if (!Array.isArray(cp.export_types)) {
+    throw new Error('Invalid event payload: client_payload.export_types is missing or invalid');
   }
 
   if (!cp.figma_file || typeof cp.figma_file !== 'string') {
@@ -55,37 +65,38 @@ function validatePayload(payload: unknown): payload is RepositoryDispatchPayload
 /**
  * Collects files to write based on inputs and payload
  */
-function collectFilesToWrite(
+export function collectFilesToWrite(
   inputs: ActionInputs,
   payload: RepositoryDispatchPayload
 ): FileWrite[] {
   const files: FileWrite[] = [];
+  const { document, settings, export_types } = payload.client_payload;
 
-  if (inputs.cssPath && payload.client_payload.exports.css) {
+  if (inputs.cssPath && export_types.includes('css')) {
     files.push({
       path: inputs.cssPath,
-      content: payload.client_payload.exports.css,
+      content: convertToCss(document, settings),
     });
   }
 
-  if (inputs.scssPath && payload.client_payload.exports.scss) {
+  if (inputs.scssPath && export_types.includes('scss')) {
     files.push({
       path: inputs.scssPath,
-      content: payload.client_payload.exports.scss,
+      content: convertToScss(document, settings),
     });
   }
 
-  if (inputs.jsonPath && payload.client_payload.exports.json) {
+  if (inputs.jsonPath && export_types.includes('json')) {
     files.push({
       path: inputs.jsonPath,
-      content: payload.client_payload.exports.json,
+      content: JSON.stringify(document, null, 2),
     });
   }
 
-  if (inputs.typescriptPath && payload.client_payload.exports.typescript) {
+  if (inputs.typescriptPath && export_types.includes('typescript')) {
     files.push({
       path: inputs.typescriptPath,
-      content: payload.client_payload.exports.typescript,
+      content: convertToTypeScript(document, settings),
     });
   }
 
@@ -99,6 +110,7 @@ async function run(): Promise<void> {
   try {
     // Read inputs
     const inputs: ActionInputs = {
+      dryRun: core.getInput('dry-run') === 'true',
       token: core.getInput('token') || process.env.GITHUB_TOKEN || '',
       baseBranch: core.getInput('base-branch') || undefined,
       prTitle: core.getInput('pr-title') || 'chore: update design tokens from figma',
@@ -130,14 +142,51 @@ async function run(): Promise<void> {
     // Collect files to write
     const filesToWrite = collectFilesToWrite(inputs, typedPayload);
     if (filesToWrite.length === 0) {
-      throw new Error('No files to write: exports do not match provided paths');
+      throw new Error('No files to write: export types do not match provided paths');
+    }
+
+    // Get file paths for PR body
+    const filePaths = filesToWrite.map((f) => f.path);
+
+    // Handle dry-run mode
+    if (inputs.dryRun) {
+      core.info('🔍 Dry-run mode enabled - previewing changes without writing files or creating PR');
+      core.info('');
+
+      // Output PR title
+      core.info(`📝 PR Title: ${inputs.prTitle}`);
+      core.info('');
+
+      // Output PR body
+      const prBody = createPRBody(typedPayload, filePaths);
+      core.info('📄 PR Description:');
+      core.info('---');
+      core.info(prBody);
+      core.info('---');
+      core.info('');
+
+      // Output file contents
+      core.info(`📁 Files to be written (${filesToWrite.length}):`);
+      for (const file of filesToWrite) {
+        core.info('');
+        core.info(`=== ${file.path} ===`);
+        core.info(file.content);
+      }
+
+      // Set dry-run outputs
+      core.setOutput('pr-url', '');
+      core.setOutput('pr-number', '0');
+      core.setOutput('branch', '');
+      core.setOutput('updated', 'false');
+      core.setOutput('dry-run', 'true');
+
+      core.info('');
+      core.info('✅ Dry-run complete - no changes were made');
+      return;
     }
 
     core.info(`Writing ${filesToWrite.length} file(s)...`);
     writeFiles(filesToWrite);
-
-    // Get file paths for PR body
-    const filePaths = filesToWrite.map((f) => f.path);
 
     // Handle branch and PR
     core.info('Handling branch and PR...');
@@ -148,6 +197,7 @@ async function run(): Promise<void> {
     core.setOutput('pr-number', result.prNumber.toString());
     core.setOutput('branch', result.branch);
     core.setOutput('updated', result.updated.toString());
+    core.setOutput('dry-run', 'false');
 
     core.info(`✅ Success! PR ${result.updated ? 'updated' : 'created'}: ${result.prUrl}`);
   } catch (error) {
@@ -157,5 +207,8 @@ async function run(): Promise<void> {
   }
 }
 
-// Run the action
-run();
+// Run the action only when executed directly (not imported for testing)
+// In GitHub Actions, NODE_ENV is typically not set to 'test'
+if (process.env.NODE_ENV !== 'test') {
+  run();
+}

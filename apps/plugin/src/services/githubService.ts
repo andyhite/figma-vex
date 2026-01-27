@@ -1,10 +1,9 @@
-import type { GitHubDispatchOptions } from '@figma-vex/shared';
+import type { GitHubDispatchOptions, GitHubDispatchPayload } from '@figma-vex/shared';
 import { GITHUB_API_CONFIG } from '@figma-vex/shared';
 
 export interface DispatchPayload {
   event_type: string;
-  client_payload: {
-    exports: Record<string, string>;
+  client_payload: GitHubDispatchPayload & {
     generated_at: string;
     figma_file: string;
     workflow_file: string;
@@ -42,14 +41,14 @@ export function validateGitHubOptions(options: GitHubDispatchOptions): void {
  * Builds the dispatch payload for GitHub API.
  */
 export function buildDispatchPayload(
-  exports: Record<string, string>,
+  dtcgPayload: GitHubDispatchPayload,
   figmaFile: string,
   workflowFile: string
 ): DispatchPayload {
   return {
     event_type: 'figma-variables-update',
     client_payload: {
-      exports,
+      ...dtcgPayload,
       generated_at: new Date().toISOString(),
       figma_file: figmaFile,
       workflow_file: workflowFile,
@@ -89,7 +88,7 @@ export function parseGitHubError(status: number, errorText: string): string {
  */
 export async function sendGitHubDispatch(
   options: GitHubDispatchOptions,
-  exports: Record<string, string>,
+  dtcgPayload: GitHubDispatchPayload,
   figmaFileName: string
 ): Promise<void> {
   validateGitHubOptions(options);
@@ -98,7 +97,7 @@ export async function sendGitHubDispatch(
   const token = options.token.trim();
 
   const payload = buildDispatchPayload(
-    exports,
+    dtcgPayload,
     figmaFileName,
     options.workflowFileName || 'update-variables.yml'
   );

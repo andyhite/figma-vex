@@ -25,7 +25,6 @@ function convertToPluginSettings(
 
   return {
     ...restSettings,
-    activeTab: 'settings', // Default to settings tab
     selectedCollections: resolvedCollectionIds,
     remBaseVariableId: resolvedRemBaseVariableId,
   };
@@ -60,10 +59,10 @@ export function useSettingsExport({ collections, remBaseVariablePath }: UseSetti
         .map((id) => collectionMap.get(id))
         .filter((name): name is string => name !== undefined);
 
-      // Create exportable settings (omit activeTab, convert IDs to names, convert variable ID to path)
+      // Create exportable settings (convert IDs to names, convert variable ID to path)
       // Destructure to omit fields that need transformation - use rest to exclude
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { activeTab, selectedCollections, remBaseVariableId, ...exportRestSettings } = settings;
+      const { selectedCollections, remBaseVariableId, ...exportRestSettings } = settings;
 
       const exportableSettings: ExportableSettings = {
         ...exportRestSettings,

@@ -30,6 +30,7 @@ describe('github', () => {
   };
 
   const mockInputs: ActionInputs = {
+    dryRun: false,
     token: 'test-token',
     baseBranch: 'main',
     prTitle: 'Test PR Title',
@@ -37,7 +38,17 @@ describe('github', () => {
 
   const mockPayload: RepositoryDispatchPayload = {
     client_payload: {
-      exports: { css: 'test' },
+      document: {
+        $schema: 'https://design-tokens.github.io/format/',
+        collections: {},
+        $metadata: { figmaFile: 'test.figma', generatedAt: new Date().toISOString() },
+      },
+      settings: {
+        colorFormat: 'hex',
+        defaultUnit: 'px',
+        remBase: 16,
+      },
+      export_types: ['css'],
       figma_file: 'test.figma',
       generated_at: new Date().toISOString(),
       workflow_file: 'workflow.yml',

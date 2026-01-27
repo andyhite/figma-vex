@@ -71,6 +71,7 @@ export function JsonTab({
     setStatus({ message: 'Generating...', type: 'info' });
   }, [
     includeCollectionComments,
+    includeModeComments,
     selectedCollections,
     includeStyles,
     styleOutputMode,

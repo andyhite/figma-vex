@@ -22,7 +22,7 @@ describe('App', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    renderResult = undefined as any;
+    renderResult = undefined!;
 
     mockSettings = { ...DEFAULT_SETTINGS };
     mockUpdateSettings = vi.fn((updates) => {

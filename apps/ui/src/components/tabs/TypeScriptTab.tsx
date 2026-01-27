@@ -70,7 +70,7 @@ export function TypeScriptTab({
 
     sendMessage({ type: 'export-typescript', options });
     setStatus({ message: 'Generating...', type: 'info' });
-  }, [prefix, selectedCollections, includeStyles, styleOutputMode, styleTypes, syncCalculations, sendMessage, setStatus]);
+  }, [prefix, selectedCollections, includeModeComments, includeStyles, styleOutputMode, styleTypes, syncCalculations, sendMessage, setStatus]);
 
   return (
     <div>

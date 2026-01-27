@@ -40,24 +40,20 @@ export function GeneralSettings({
   return (
     <div>
       <FormGroup label="Collections">
-        <div className="border-figma-border bg-figma-bg-secondary max-h-[150px] overflow-y-auto rounded border p-2">
-          {collectionsLoading ? (
-            <div className="text-figma-text-tertiary text-xs">Loading collections...</div>
-          ) : collections.length === 0 ? (
-            <div className="text-figma-text-tertiary text-xs">No collections found</div>
-          ) : (
-            <div className="space-y-2">
-              {collections.map((collection) => (
-                <Checkbox
-                  key={collection.id}
-                  label={collection.name}
-                  checked={selectedCollections.includes(collection.id)}
-                  onChange={() => onToggleCollection(collection.id)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {collectionsLoading ? (
+          <div className="text-figma-text-tertiary text-xs">Loading collections...</div>
+        ) : collections.length === 0 ? (
+          <div className="text-figma-text-tertiary text-xs">No collections found</div>
+        ) : (
+          collections.map((collection) => (
+            <Checkbox
+              key={collection.id}
+              label={collection.name}
+              checked={selectedCollections.includes(collection.id)}
+              onChange={() => onToggleCollection(collection.id)}
+            />
+          ))
+        )}
       </FormGroup>
 
       <FormGroup label="Comments">

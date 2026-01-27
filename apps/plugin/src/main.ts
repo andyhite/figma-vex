@@ -6,7 +6,7 @@ import { exportToCss } from './exporters/cssExporter';
 import { exportToScss } from './exporters/scssExporter';
 import { exportToJson } from './exporters/jsonExporter';
 import { exportToTypeScript } from './exporters/typescriptExporter';
-import { sendGitHubDispatch, generateExports, fetchAllStyles, resolveExpression } from './services';
+import { sendGitHubDispatch, prepareGitHubPayload, fetchAllStyles, resolveExpression } from './services';
 import { mergeWithDefaults } from './utils/optionDefaults';
 import { parseDescription } from './utils/descriptionParser';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
@@ -248,15 +248,17 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
         throw new Error('GitHub options are required');
       }
 
-      const exports = await generateExports(
+      const payload = await prepareGitHubPayload(
         variables,
         collections,
         fileName,
-        msg.githubOptions.exportTypes,
-        msg.githubOptions.exportOptions
+        {
+          exportTypes: msg.githubOptions.exportTypes,
+          exportOptions: msg.githubOptions.exportOptions,
+        }
       );
 
-      await sendGitHubDispatch(msg.githubOptions, exports, fileName);
+      await sendGitHubDispatch(msg.githubOptions, payload, fileName);
       postToUI({
         type: 'github-dispatch-success',
         message: 'Successfully sent to GitHub! The workflow should start shortly.',

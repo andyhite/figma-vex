@@ -1,6 +1,10 @@
 name: 'Figma VEX'
 description: 'Update design tokens from Figma Variables Export'
 inputs:
+  dry-run:
+    description: 'Preview changes without creating branches or PRs'
+    required: false
+    default: 'false'
   token:
     description: 'GitHub token for creating branches and PRs'
     required: false
@@ -26,13 +30,15 @@ inputs:
     required: false
 outputs:
   pr-url:
-    description: 'URL of the created or updated pull request'
+    description: 'URL of the created or updated pull request (empty in dry-run mode)'
   pr-number:
-    description: 'Number of the created or updated pull request'
+    description: 'Number of the created or updated pull request (0 in dry-run mode)'
   branch:
-    description: 'Name of the branch used'
+    description: 'Name of the branch used (empty in dry-run mode)'
   updated:
     description: 'true if existing PR was updated, false if new PR created'
+  dry-run:
+    description: 'true if dry-run mode was used'
 runs:
   using: 'node20'
   main: 'dist/action.js'

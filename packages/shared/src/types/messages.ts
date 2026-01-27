@@ -3,6 +3,7 @@
  */
 
 import type { StyleType, StyleOutputMode, StyleSummary } from './styles';
+import type { ColorFormat } from './tokens';
 
 export type ExportType = 'css' | 'scss' | 'json' | 'typescript';
 
@@ -100,7 +101,6 @@ export function getAllRulesWithDefault(
  */
 export interface PluginSettings {
   // Global settings
-  activeTab: string;
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
@@ -141,9 +141,6 @@ export interface PluginSettings {
   nameFormatCasing: CasingOption;
   nameFormatAdvanced: boolean; // Whether to show advanced rules UI
   syncCodeSyntax: boolean;
-
-  // Settings tab organization
-  activeSettingsTab?: string; // Which sub-tab is active in Settings tab
 }
 
 export interface ExportOptions {
@@ -168,6 +165,10 @@ export interface ExportOptions {
   syncCodeSyntax?: boolean;
   // Custom header banner (overrides default auto-generated header)
   headerBanner?: string;
+  // Color format for output (default: 'hex')
+  colorFormat?: ColorFormat;
+  // Base value for rem calculations (default: 16)
+  remBase?: number;
 }
 
 export interface GitHubDispatchOptions {
@@ -187,7 +188,7 @@ export interface CollectionInfo {
  * Settings that can be exported/imported (excludes UI state and sensitive data).
  * Uses names instead of IDs for portability across documents.
  */
-export type ExportableSettings = Omit<PluginSettings, 'activeTab' | 'selectedCollections' | 'remBaseVariableId'> & {
+export type ExportableSettings = Omit<PluginSettings, 'selectedCollections' | 'remBaseVariableId'> & {
   selectedCollections: string[]; // Collection names instead of IDs
   remBaseVariable?: string; // Variable path instead of ID
 };

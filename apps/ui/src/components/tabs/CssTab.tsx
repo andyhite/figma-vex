@@ -155,6 +155,7 @@ export function CssTab({
     remBaseVariableId,
     nameFormatRules,
     syncCodeSyntax,
+    headerBanner,
     sendMessage,
     setStatus,
   ]);

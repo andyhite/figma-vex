@@ -2,7 +2,10 @@
  * Types for GitHub Action
  */
 
+import type { GitHubDispatchPayload } from '@figma-vex/shared';
+
 export interface ActionInputs {
+  dryRun: boolean;
   token: string;
   baseBranch?: string;
   prTitle: string;
@@ -13,8 +16,7 @@ export interface ActionInputs {
 }
 
 export interface RepositoryDispatchPayload {
-  client_payload: {
-    exports: Record<string, string>;
+  client_payload: GitHubDispatchPayload & {
     generated_at: string;
     figma_file: string;
     workflow_file: string;

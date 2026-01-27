@@ -207,6 +207,7 @@ export function GitHubTab({
     prefix,
     useModesAsSelectors,
     includeCollectionComments,
+    includeModeComments,
     selectedCollections,
     includeStyles,
     styleOutputMode,

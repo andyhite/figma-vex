@@ -44,8 +44,8 @@ export default function App() {
   // Load persisted settings
   const { settings, updateSettings } = useSettings();
 
-  // Use settings values with defaults for initial render
-  const activeTab = settings?.activeTab ?? DEFAULT_SETTINGS.activeTab;
+  // Local UI state (not persisted)
+  const [activeTab, setActiveTab] = useState('css');
   const prefix = settings?.prefix ?? DEFAULT_SETTINGS.prefix;
   const includeCollectionComments =
     settings?.includeCollectionComments ?? DEFAULT_SETTINGS.includeCollectionComments;
@@ -66,8 +66,9 @@ export default function App() {
   const nameFormatCasing = settings?.nameFormatCasing ?? DEFAULT_SETTINGS.nameFormatCasing;
   const nameFormatAdvanced = settings?.nameFormatAdvanced ?? DEFAULT_SETTINGS.nameFormatAdvanced;
   const syncCodeSyntax = settings?.syncCodeSyntax ?? DEFAULT_SETTINGS.syncCodeSyntax;
-  const activeSettingsTab =
-    settings?.activeSettingsTab ?? DEFAULT_SETTINGS.activeSettingsTab ?? 'general';
+
+  // Local UI state for settings sub-tab (not persisted)
+  const [activeSettingsTab, setActiveSettingsTab] = useState('general');
 
   // Compute full rules including the default rule (for exports)
   const allNameFormatRules = getAllRulesWithDefault(nameFormatRules, prefix, nameFormatCasing);
@@ -111,7 +112,7 @@ export default function App() {
   });
 
   // Update handlers that persist to settings
-  const handleTabChange = (tab: string) => updateSettings({ activeTab: tab });
+  const handleTabChange = (tab: string) => setActiveTab(tab);
   const handlePrefixChange = (value: string) => updateSettings({ prefix: value });
   const handleIncludeCollectionCommentsChange = (value: boolean) =>
     updateSettings({ includeCollectionComments: value });
@@ -133,8 +134,7 @@ export default function App() {
     updateSettings({ nameFormatAdvanced: enabled });
   const handleSyncCodeSyntaxChange = (enabled: boolean) =>
     updateSettings({ syncCodeSyntax: enabled });
-  const handleActiveSettingsTabChange = (tab: string) =>
-    updateSettings({ activeSettingsTab: tab });
+  const handleActiveSettingsTabChange = (tab: string) => setActiveSettingsTab(tab);
 
   // Handle collection toggle and persist
   const handleToggleCollection = (collectionId: string) => {

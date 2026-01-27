@@ -283,15 +283,13 @@ export function NameFormatRules({
 
         {/* Prefix and Casing - always visible */}
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <FormField>
-            <Input
-              label="Name Prefix"
-              value={prefix}
-              onChange={(e) => onPrefixChange(e.target.value)}
-              placeholder="e.g., ds, theme"
-            />
-          </FormField>
-          <FormField>
+          <Input
+            label="Name Prefix"
+            value={prefix}
+            onChange={(e) => onPrefixChange(e.target.value)}
+            placeholder="e.g., ds, theme"
+          />
+          <div>
             <label className="text-figma-text mb-1 block text-xs font-medium">Casing</label>
             <select
               className="border-figma-border bg-figma-bg text-figma-text focus:ring-figma-border-focus w-full rounded border px-2 py-1.5 text-xs focus:outline-none focus:ring-1"
@@ -304,7 +302,7 @@ export function NameFormatRules({
                 </option>
               ))}
             </select>
-          </FormField>
+          </div>
         </div>
 
         {/* Preview */}
