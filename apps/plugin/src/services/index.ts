@@ -6,3 +6,13 @@ export {
   sendGitHubDispatch,
 } from './githubService';
 export { generateExports } from './exportService';
+export { fetchAllStyles } from './styleResolver';
+export {
+  resolvePaintValue,
+  resolveTextProperties,
+  resolveEffectValue,
+  resolveGridValue,
+  hasBoxShadow,
+  hasFilter,
+  hasBackdropFilter,
+} from './styleValueResolver';

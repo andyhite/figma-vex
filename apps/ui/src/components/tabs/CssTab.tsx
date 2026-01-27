@@ -10,15 +10,25 @@ import { Input } from '../common/Input';
 import { OutputArea } from '../common/OutputArea';
 import { useOutputActions } from '../../hooks/useOutputActions';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions, UIMessage } from '@figma-vex/shared';
+import type { ExportOptions, UIMessage, StyleType, StyleOutputMode } from '@figma-vex/shared';
 
 interface CssTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  includeStyles: boolean;
+  styleOutputMode: StyleOutputMode;
+  styleTypes: StyleType[];
 }
 
-export function CssTab({ prefix, selectedCollections, includeCollectionComments }: CssTabProps) {
+export function CssTab({
+  prefix,
+  selectedCollections,
+  includeCollectionComments,
+  includeStyles,
+  styleOutputMode,
+  styleTypes,
+}: CssTabProps) {
   const [selector, setSelector] = useState(':root');
   const [useModesAsSelectors, setUseModesAsSelectors] = useState(false);
   const [includeModeComments, setIncludeModeComments] = useState(true);
@@ -56,6 +66,9 @@ export function CssTab({ prefix, selectedCollections, includeCollectionComments 
       includeCollectionComments,
       includeModeComments,
       selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+      includeStyles,
+      styleOutputMode,
+      styleTypes,
     };
 
     sendMessage({ type: 'export-css', options });
@@ -67,6 +80,9 @@ export function CssTab({ prefix, selectedCollections, includeCollectionComments 
     includeCollectionComments,
     includeModeComments,
     selectedCollections,
+    includeStyles,
+    styleOutputMode,
+    styleTypes,
     sendMessage,
     setStatus,
   ]);

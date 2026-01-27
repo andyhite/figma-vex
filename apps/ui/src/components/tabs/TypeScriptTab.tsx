@@ -7,14 +7,23 @@ import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
 import { useOutputActions } from '../../hooks/useOutputActions';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions, UIMessage } from '@figma-vex/shared';
+import type { ExportOptions, UIMessage, StyleType, StyleOutputMode } from '@figma-vex/shared';
 
 interface TypeScriptTabProps {
   prefix: string;
   selectedCollections: string[];
+  includeStyles: boolean;
+  styleOutputMode: StyleOutputMode;
+  styleTypes: StyleType[];
 }
 
-export function TypeScriptTab({ prefix, selectedCollections }: TypeScriptTabProps) {
+export function TypeScriptTab({
+  prefix,
+  selectedCollections,
+  includeStyles,
+  styleOutputMode,
+  styleTypes,
+}: TypeScriptTabProps) {
   const [output, setOutput] = useState('');
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
@@ -49,11 +58,14 @@ export function TypeScriptTab({ prefix, selectedCollections }: TypeScriptTabProp
       includeCollectionComments: false,
       includeModeComments: false,
       selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+      includeStyles,
+      styleOutputMode,
+      styleTypes,
     };
 
     sendMessage({ type: 'export-typescript', options });
     setStatus({ message: 'Generating...', type: 'info' });
-  }, [prefix, selectedCollections, sendMessage, setStatus]);
+  }, [prefix, selectedCollections, includeStyles, styleOutputMode, styleTypes, sendMessage, setStatus]);
 
   return (
     <div>

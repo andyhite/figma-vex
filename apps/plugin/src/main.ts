@@ -1,12 +1,12 @@
 /// <reference types="@figma/plugin-typings" />
 
-import type { PluginMessage, UIMessage } from '@figma-vex/shared';
+import type { PluginMessage, UIMessage, StyleCollection } from '@figma-vex/shared';
 import { UI_CONFIG } from '@figma-vex/shared';
 import { exportToCss } from './exporters/cssExporter';
 import { exportToScss } from './exporters/scssExporter';
 import { exportToJson } from './exporters/jsonExporter';
 import { exportToTypeScript } from './exporters/typescriptExporter';
-import { sendGitHubDispatch, generateExports } from './services';
+import { sendGitHubDispatch, generateExports, fetchAllStyles } from './services';
 import { mergeWithDefaults } from './utils/optionDefaults';
 
 /**
@@ -34,30 +34,60 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       break;
     }
 
+    case 'get-styles': {
+      const styles = await fetchAllStyles();
+      postToUI({
+        type: 'styles-list',
+        styles: {
+          paintCount: styles.paint.length,
+          textCount: styles.text.length,
+          effectCount: styles.effect.length,
+          gridCount: styles.grid.length,
+        },
+      });
+      break;
+    }
+
     case 'export-css': {
       const options = mergeWithDefaults('css', msg.options);
-      const css = await exportToCss(variables, collections, fileName, options);
+      let styles: StyleCollection | undefined;
+      if (options.includeStyles) {
+        styles = await fetchAllStyles();
+      }
+      const css = await exportToCss(variables, collections, fileName, options, styles);
       postToUI({ type: 'css-result', css });
       break;
     }
 
     case 'export-scss': {
       const options = mergeWithDefaults('scss', msg.options);
-      const scss = await exportToScss(variables, collections, fileName, options);
+      let styles: StyleCollection | undefined;
+      if (options.includeStyles) {
+        styles = await fetchAllStyles();
+      }
+      const scss = await exportToScss(variables, collections, fileName, options, styles);
       postToUI({ type: 'scss-result', scss });
       break;
     }
 
     case 'export-json': {
       const options = mergeWithDefaults('json', msg.options);
-      const json = await exportToJson(variables, collections, options);
+      let styles: StyleCollection | undefined;
+      if (options.includeStyles) {
+        styles = await fetchAllStyles();
+      }
+      const json = await exportToJson(variables, collections, options, styles);
       postToUI({ type: 'json-result', json });
       break;
     }
 
     case 'export-typescript': {
       const options = mergeWithDefaults('typescript', msg.options);
-      const typescript = await exportToTypeScript(variables, collections, fileName, options);
+      let styles: StyleCollection | undefined;
+      if (options.includeStyles) {
+        styles = await fetchAllStyles();
+      }
+      const typescript = await exportToTypeScript(variables, collections, fileName, options, styles);
       postToUI({ type: 'typescript-result', typescript });
       break;
     }

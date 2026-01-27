@@ -1,9 +1,10 @@
-import type { ExportOptions, TokenConfig } from '@figma-vex/shared';
+import type { ExportOptions, TokenConfig, StyleCollection } from '@figma-vex/shared';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
 import { toCssName, toPrefixedName } from '@plugin/formatters/nameFormatter';
 import { parseDescription } from '@plugin/utils/descriptionParser';
 import { resolveValue } from '@plugin/services/valueResolver';
 import { filterCollections, getCollectionVariables } from '@plugin/utils/collectionUtils';
+import { exportStylesToCssVariables, exportStylesAsCssClasses } from './styleExporter';
 
 /**
  * Generates the CSS file header comment.
@@ -20,13 +21,14 @@ export function generateCssHeader(fileName: string): string {
 }
 
 /**
- * Exports variables to CSS custom properties format.
+ * Exports variables (and optionally styles) to CSS custom properties format.
  */
 export async function exportToCss(
   variables: Variable[],
   collections: VariableCollection[],
   fileName: string,
-  options: ExportOptions
+  options: ExportOptions,
+  styles?: StyleCollection
 ): Promise<string> {
   if (variables.length === 0) {
     return '/* No variables found in this file */';
@@ -65,6 +67,8 @@ export async function exportToCss(
   };
 
   if (options.useModesAsSelectors) {
+    let stylesAdded = false;
+
     for (const collection of filteredCollections) {
       if (options.includeCollectionComments) {
         lines.push(`/* Collection: ${collection.name} */`);
@@ -89,8 +93,29 @@ export async function exportToCss(
           if (line) lines.push(line);
         }
 
+        // Add style variables to the default mode selector only (styles don't have modes)
+        if (
+          isDefault &&
+          !stylesAdded &&
+          options.includeStyles &&
+          styles &&
+          options.styleOutputMode !== 'classes'
+        ) {
+          const styleLines = exportStylesToCssVariables(styles, options, '  ');
+          lines.push(...styleLines);
+          stylesAdded = true;
+        }
+
         lines.push('}', '');
       }
+    }
+
+    // If no default mode was found, add styles to a separate :root block
+    if (!stylesAdded && options.includeStyles && styles && options.styleOutputMode !== 'classes') {
+      lines.push(`${selector} {`);
+      const styleLines = exportStylesToCssVariables(styles, options, '  ');
+      lines.push(...styleLines);
+      lines.push('}', '');
     }
   } else {
     lines.push(`${selector} {`);
@@ -112,7 +137,20 @@ export async function exportToCss(
       }
     }
 
+    // Add style variables inside the selector block
+    if (options.includeStyles && styles && options.styleOutputMode !== 'classes') {
+      const styleLines = exportStylesToCssVariables(styles, options, '  ');
+      lines.push(...styleLines);
+    }
+
     lines.push('}');
+  }
+
+  // Add style classes outside the selector block
+  if (options.includeStyles && styles && options.styleOutputMode === 'classes') {
+    lines.push('');
+    const styleClasses = exportStylesAsCssClasses(styles, options);
+    lines.push(...styleClasses);
   }
 
   return lines.join('\n');

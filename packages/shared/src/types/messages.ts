@@ -2,6 +2,8 @@
  * Shared message types for plugin <-> UI communication
  */
 
+import type { StyleType, StyleOutputMode, StyleSummary } from './styles';
+
 export type ExportType = 'css' | 'scss' | 'json' | 'typescript';
 
 export interface ExportOptions {
@@ -11,6 +13,10 @@ export interface ExportOptions {
   useModesAsSelectors: boolean;
   prefix?: string;
   selectedCollections?: string[];
+  // Style export options
+  includeStyles?: boolean;
+  styleOutputMode?: StyleOutputMode;
+  styleTypes?: StyleType[];
 }
 
 export interface GitHubDispatchOptions {
@@ -29,6 +35,7 @@ export interface CollectionInfo {
 // Messages from UI to Plugin
 export type PluginMessage =
   | { type: 'get-collections' }
+  | { type: 'get-styles' }
   | { type: 'export-css'; options: ExportOptions }
   | { type: 'export-scss'; options: ExportOptions }
   | { type: 'export-json'; options: ExportOptions }
@@ -40,6 +47,7 @@ export type PluginMessage =
 // Messages from Plugin to UI
 export type UIMessage =
   | { type: 'collections-list'; collections: CollectionInfo[] }
+  | { type: 'styles-list'; styles: StyleSummary }
   | { type: 'css-result'; css: string }
   | { type: 'scss-result'; scss: string }
   | { type: 'json-result'; json: string }

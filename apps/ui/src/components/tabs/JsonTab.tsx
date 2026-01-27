@@ -7,14 +7,23 @@ import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
 import { useOutputActions } from '../../hooks/useOutputActions';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions, UIMessage } from '@figma-vex/shared';
+import type { ExportOptions, UIMessage, StyleType, StyleOutputMode } from '@figma-vex/shared';
 
 interface JsonTabProps {
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  includeStyles: boolean;
+  styleOutputMode: StyleOutputMode;
+  styleTypes: StyleType[];
 }
 
-export function JsonTab({ selectedCollections, includeCollectionComments }: JsonTabProps) {
+export function JsonTab({
+  selectedCollections,
+  includeCollectionComments,
+  includeStyles,
+  styleOutputMode,
+  styleTypes,
+}: JsonTabProps) {
   const [output, setOutput] = useState('');
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
@@ -48,11 +57,22 @@ export function JsonTab({ selectedCollections, includeCollectionComments }: Json
       includeCollectionComments,
       includeModeComments: false,
       selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+      includeStyles,
+      styleOutputMode,
+      styleTypes,
     };
 
     sendMessage({ type: 'export-json', options });
     setStatus({ message: 'Generating...', type: 'info' });
-  }, [includeCollectionComments, selectedCollections, sendMessage, setStatus]);
+  }, [
+    includeCollectionComments,
+    selectedCollections,
+    includeStyles,
+    styleOutputMode,
+    styleTypes,
+    sendMessage,
+    setStatus,
+  ]);
 
   return (
     <div>

@@ -7,15 +7,25 @@ import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
 import { useOutputActions } from '../../hooks/useOutputActions';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions, UIMessage } from '@figma-vex/shared';
+import type { ExportOptions, UIMessage, StyleType, StyleOutputMode } from '@figma-vex/shared';
 
 interface ScssTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  includeStyles: boolean;
+  styleOutputMode: StyleOutputMode;
+  styleTypes: StyleType[];
 }
 
-export function ScssTab({ prefix, selectedCollections, includeCollectionComments }: ScssTabProps) {
+export function ScssTab({
+  prefix,
+  selectedCollections,
+  includeCollectionComments,
+  includeStyles,
+  styleOutputMode,
+  styleTypes,
+}: ScssTabProps) {
   const [output, setOutput] = useState('');
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
@@ -50,11 +60,23 @@ export function ScssTab({ prefix, selectedCollections, includeCollectionComments
       includeCollectionComments,
       includeModeComments: false,
       selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+      includeStyles,
+      styleOutputMode,
+      styleTypes,
     };
 
     sendMessage({ type: 'export-scss', options });
     setStatus({ message: 'Generating...', type: 'info' });
-  }, [prefix, includeCollectionComments, selectedCollections, sendMessage, setStatus]);
+  }, [
+    prefix,
+    includeCollectionComments,
+    selectedCollections,
+    includeStyles,
+    styleOutputMode,
+    styleTypes,
+    sendMessage,
+    setStatus,
+  ]);
 
   return (
     <div>

@@ -1,9 +1,16 @@
-import type { ExportOptions, TokenConfig } from '@figma-vex/shared';
+import type { ExportOptions, TokenConfig, StyleCollection } from '@figma-vex/shared';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
 import { toCssName } from '@plugin/formatters/nameFormatter';
 import { parseDescription } from '@plugin/utils/descriptionParser';
 import { resolveValue } from '@plugin/services/valueResolver';
 import { filterCollections, getCollectionVariables } from '@plugin/utils/collectionUtils';
+import {
+  resolvePaintValue,
+  resolveTextProperties,
+  resolveEffectValue,
+  resolveGridValue,
+} from '@plugin/services/styleValueResolver';
+import { toStyleCssName, toStyleClassName } from '@plugin/formatters/styleFormatter';
 
 /**
  * Converts CSS var() references to SCSS variable references.
@@ -60,13 +67,14 @@ export function generateScssHeader(fileName: string): string {
 }
 
 /**
- * Exports variables to SCSS format.
+ * Exports variables (and optionally styles) to SCSS format.
  */
 export async function exportToScss(
   variables: Variable[],
   collections: VariableCollection[],
   fileName: string,
-  options: ExportOptions
+  options: ExportOptions,
+  styles?: StyleCollection
 ): Promise<string> {
   if (variables.length === 0) {
     return '// No variables found in this file';
@@ -120,5 +128,147 @@ export async function exportToScss(
     }
   }
 
+  // Add styles if included
+  if (options.includeStyles && styles) {
+    const styleTypes = options.styleTypes || ['paint', 'text', 'effect', 'grid'];
+
+    if (options.styleOutputMode === 'classes') {
+      // Generate SCSS mixins for styles
+      lines.push('');
+      lines.push('// ═══ Figma Style Mixins ═══');
+      lines.push(...exportStylesToScssMixins(styles, options, styleTypes));
+    } else {
+      // Generate SCSS variables for styles
+      lines.push('');
+      lines.push('// ═══ Figma Style Variables ═══');
+      lines.push(...exportStylesToScssVariables(styles, options, styleTypes));
+    }
+  }
+
   return lines.join('\n');
+}
+
+/**
+ * Exports styles as SCSS variables
+ */
+function exportStylesToScssVariables(
+  styles: StyleCollection,
+  options: ExportOptions,
+  styleTypes: string[]
+): string[] {
+  const lines: string[] = [];
+
+  if (styleTypes.includes('paint') && styles.paint.length > 0) {
+    lines.push('// Paint Styles');
+    for (const style of styles.paint) {
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const scssName = toStyleCssName(style.name);
+      const prefixedName = options.prefix ? `$${options.prefix}-${scssName}` : `$${scssName}`;
+      const value = resolvePaintValue(style, config);
+      lines.push(`${prefixedName}: ${value};`);
+    }
+  }
+
+  if (styleTypes.includes('text') && styles.text.length > 0) {
+    lines.push('// Text Styles');
+    for (const style of styles.text) {
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const scssName = toStyleCssName(style.name);
+      const baseName = options.prefix ? `$${options.prefix}-${scssName}` : `$${scssName}`;
+      const props = resolveTextProperties(style, config);
+      for (const [prop, value] of Object.entries(props)) {
+        lines.push(`${baseName}-${prop}: ${value};`);
+      }
+    }
+  }
+
+  if (styleTypes.includes('effect') && styles.effect.length > 0) {
+    lines.push('// Effect Styles');
+    for (const style of styles.effect) {
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const scssName = toStyleCssName(style.name);
+      const prefixedName = options.prefix ? `$${options.prefix}-${scssName}` : `$${scssName}`;
+      const value = resolveEffectValue(style, config);
+      lines.push(`${prefixedName}: ${value};`);
+    }
+  }
+
+  if (styleTypes.includes('grid') && styles.grid.length > 0) {
+    lines.push('// Grid Styles');
+    for (const style of styles.grid) {
+      const scssName = toStyleCssName(style.name);
+      const prefixedName = options.prefix ? `$${options.prefix}-${scssName}` : `$${scssName}`;
+      const value = resolveGridValue(style);
+      lines.push(`${prefixedName}: ${value};`);
+    }
+  }
+
+  return lines;
+}
+
+/**
+ * Exports styles as SCSS mixins
+ */
+function exportStylesToScssMixins(
+  styles: StyleCollection,
+  options: ExportOptions,
+  styleTypes: string[]
+): string[] {
+  const lines: string[] = [];
+
+  if (styleTypes.includes('paint') && styles.paint.length > 0) {
+    lines.push('// Paint Style Mixins');
+    for (const style of styles.paint) {
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const mixinName = toStyleClassName(style.name, options.prefix);
+      const value = resolvePaintValue(style, config);
+      lines.push(`@mixin ${mixinName}($property: color) {`);
+      lines.push(`  #{$property}: ${value};`);
+      lines.push('}');
+      lines.push('');
+    }
+  }
+
+  if (styleTypes.includes('text') && styles.text.length > 0) {
+    lines.push('// Text Style Mixins');
+    for (const style of styles.text) {
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const mixinName = toStyleClassName(style.name, options.prefix);
+      const props = resolveTextProperties(style, config);
+      lines.push(`@mixin ${mixinName} {`);
+      for (const [prop, value] of Object.entries(props)) {
+        lines.push(`  ${prop}: ${value};`);
+      }
+      lines.push('}');
+      lines.push('');
+    }
+  }
+
+  if (styleTypes.includes('effect') && styles.effect.length > 0) {
+    lines.push('// Effect Style Mixins');
+    for (const style of styles.effect) {
+      const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
+      const mixinName = toStyleClassName(style.name, options.prefix);
+      const value = resolveEffectValue(style, config);
+      lines.push(`@mixin ${mixinName} {`);
+      lines.push(`  box-shadow: ${value};`);
+      lines.push('}');
+      lines.push('');
+    }
+  }
+
+  if (styleTypes.includes('grid') && styles.grid.length > 0) {
+    lines.push('// Grid Style Mixins');
+    for (const style of styles.grid) {
+      const mixinName = toStyleClassName(style.name, options.prefix);
+      const value = resolveGridValue(style);
+      lines.push(`@mixin ${mixinName} {`);
+      lines.push(`  display: grid;`);
+      lines.push(`  grid-template-columns: ${value};`);
+      lines.push('}');
+      lines.push('');
+    }
+  }
+
+  return lines;
 }

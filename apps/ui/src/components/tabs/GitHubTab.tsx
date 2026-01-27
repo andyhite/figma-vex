@@ -7,18 +7,31 @@ import { FormHelpText } from '../common/FormHelpText';
 import { Input } from '../common/Input';
 import { StatusMessage } from '../common/StatusMessage';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions, ExportType, GitHubDispatchOptions, UIMessage } from '@figma-vex/shared';
+import type {
+  ExportOptions,
+  ExportType,
+  GitHubDispatchOptions,
+  UIMessage,
+  StyleType,
+  StyleOutputMode,
+} from '@figma-vex/shared';
 
 interface GitHubTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  includeStyles: boolean;
+  styleOutputMode: StyleOutputMode;
+  styleTypes: StyleType[];
 }
 
 export function GitHubTab({
   prefix,
   selectedCollections,
   includeCollectionComments,
+  includeStyles,
+  styleOutputMode,
+  styleTypes,
 }: GitHubTabProps) {
   const [repository, setRepository] = useState('');
   const [token, setToken] = useState('');
@@ -92,6 +105,9 @@ export function GitHubTab({
       includeCollectionComments,
       includeModeComments: true,
       selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+      includeStyles,
+      styleOutputMode,
+      styleTypes,
     };
 
     const githubOptions: GitHubDispatchOptions = {
@@ -114,6 +130,9 @@ export function GitHubTab({
     useModesAsSelectors,
     includeCollectionComments,
     selectedCollections,
+    includeStyles,
+    styleOutputMode,
+    styleTypes,
     sendMessage,
   ]);
 

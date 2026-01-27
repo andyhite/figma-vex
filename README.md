@@ -17,7 +17,7 @@ pnpm install
 pnpm build
 ```
 
-The source files in `src/` will be compiled and bundled into `dist/`. Then import the manifest.json in Figma as above.
+The source files will be compiled and bundled into `dist/`. Then import the manifest.json in Figma as above.
 
 ## Usage
 
@@ -130,7 +130,7 @@ When "Export modes as separate selectors" is enabled:
 # Install dependencies
 pnpm install
 
-# Build once
+# Build all packages
 pnpm build
 
 # Watch mode (auto-rebuild on changes)
@@ -138,9 +138,6 @@ pnpm dev
 
 # Run tests
 pnpm test
-
-# Run tests with coverage
-pnpm test:coverage
 
 # Type check
 pnpm typecheck
@@ -150,38 +147,42 @@ pnpm lint
 
 # Format code
 pnpm format
-
-# Clean build output
-pnpm clean
 ```
 
 ### Project Structure
 
+This is a Turborepo monorepo with the following structure:
+
 ```
 figma-vex/
-├── src/
-│   ├── plugin/              # Backend (runs in Figma sandbox)
-│   │   ├── exporters/       # CSS, SCSS, JSON, TypeScript exporters
-│   │   ├── formatters/      # Color, name, number formatting
-│   │   ├── services/        # GitHub, value resolver
-│   │   ├── utils/           # Description parser, collection utils
-│   │   └── main.ts          # Plugin entry point
-│   ├── shared/              # Shared types between plugin and UI
-│   │   └── types/
-│   └── ui/                  # React UI (runs in iframe)
-│       ├── components/      # React components
-│       │   ├── common/      # Button, Input, Checkbox, etc.
-│       │   └── tabs/        # CssTab, ScssTab, JsonTab, etc.
-│       ├── hooks/           # usePluginMessage, useClipboard, etc.
-│       ├── services/        # Plugin bridge
-│       └── styles/          # Tailwind CSS
+├── apps/
+│   ├── plugin/              # Figma plugin backend (runs in sandbox)
+│   │   └── src/
+│   │       ├── exporters/   # CSS, SCSS, JSON, TypeScript exporters
+│   │       ├── formatters/  # Color, name, number formatting
+│   │       ├── services/    # GitHub, value resolver
+│   │       ├── utils/       # Description parser, collection utils
+│   │       └── main.ts      # Plugin entry point
+│   ├── ui/                  # Figma plugin UI (React, runs in iframe)
+│   │   └── src/
+│   │       ├── components/  # React components
+│   │       ├── hooks/       # usePluginMessage, useClipboard, etc.
+│   │       ├── services/    # Plugin bridge
+│   │       └── styles/      # Tailwind CSS
+│   └── action/              # GitHub Action for CI/CD integration
+│       └── src/
+├── packages/
+│   └── shared/              # Shared types and config
+│       └── src/
+│           └── types/       # Message types, token types
 ├── dist/                    # Build output (generated)
-│   ├── main.js              # Plugin backend
-│   └── index.html           # React UI (inlined)
+│   ├── plugin.js            # Plugin backend (IIFE)
+│   ├── index.html           # React UI (inlined single file)
+│   └── action.js            # GitHub Action
 ├── manifest.json            # Figma plugin manifest
-├── vite.config.ts           # Plugin build config
-├── vite.config.ui.ts        # UI build config
-└── vitest.config.ts         # Test config
+├── action.yml               # GitHub Action manifest
+├── turbo.json               # Turborepo config
+└── pnpm-workspace.yaml      # pnpm workspace config
 ```
 
 ### Tech Stack
@@ -189,9 +190,24 @@ figma-vex/
 - **TypeScript** - Strict mode enabled
 - **React 19** - Component-based UI
 - **Tailwind CSS** - Styling with Figma design tokens
-- **Vite 6** - Dual build (plugin backend + React UI)
+- **Vite 6** - Build tooling for all packages
 - **Vitest** - Unit testing with coverage
+- **Turborepo** - Monorepo build orchestration
+- **pnpm** - Package management with workspaces
 - **ESLint 9 + Prettier** - Code quality
+
+### Working with Packages
+
+```bash
+# Build a specific package
+pnpm --filter @figma-vex/plugin build
+
+# Run tests for a specific package
+pnpm --filter @figma-vex/ui test
+
+# Add a dependency to a package
+pnpm --filter @figma-vex/plugin add lodash
+```
 
 ## GitHub Integration
 

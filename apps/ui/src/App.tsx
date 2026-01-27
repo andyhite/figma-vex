@@ -12,8 +12,11 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { FormField } from './components/common/FormField';
 import { FormGroup } from './components/common/FormGroup';
 import { Input } from './components/common/Input';
+import { StyleOptions } from './components/common/StyleOptions';
 import { useAutoResize } from './hooks/useAutoResize';
 import { useCollections } from './hooks/useCollections';
+import { useStyles } from './hooks/useStyles';
+import type { StyleType, StyleOutputMode } from '@figma-vex/shared';
 
 const TABS = [
   { id: 'css', label: 'CSS' },
@@ -39,6 +42,12 @@ export default function App() {
   const [includeCollectionComments, setIncludeCollectionComments] = useState(true);
   const { collections, selectedCollections, toggleCollection, loading } = useCollections();
   const containerRef = useAutoResize([activeTab]);
+
+  // Style export options
+  const [includeStyles, setIncludeStyles] = useState(false);
+  const [styleOutputMode, setStyleOutputMode] = useState<StyleOutputMode>('variables');
+  const [styleTypes, setStyleTypes] = useState<StyleType[]>(['paint', 'text', 'effect', 'grid']);
+  const { styleCounts, loading: stylesLoading } = useStyles();
 
   const showCommonOptions = activeTab !== 'help';
 
@@ -88,6 +97,17 @@ export default function App() {
                 onChange={(e) => setIncludeCollectionComments(e.target.checked)}
               />
             </FormField>
+
+            <StyleOptions
+              includeStyles={includeStyles}
+              onIncludeStylesChange={setIncludeStyles}
+              styleOutputMode={styleOutputMode}
+              onStyleOutputModeChange={setStyleOutputMode}
+              styleTypes={styleTypes}
+              onStyleTypesChange={setStyleTypes}
+              styleCounts={styleCounts}
+              loading={stylesLoading}
+            />
           </div>
         </>
       )}
@@ -98,6 +118,9 @@ export default function App() {
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            includeStyles={includeStyles}
+            styleOutputMode={styleOutputMode}
+            styleTypes={styleTypes}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -108,6 +131,9 @@ export default function App() {
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            includeStyles={includeStyles}
+            styleOutputMode={styleOutputMode}
+            styleTypes={styleTypes}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -117,13 +143,22 @@ export default function App() {
           <JsonTab
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            includeStyles={includeStyles}
+            styleOutputMode={styleOutputMode}
+            styleTypes={styleTypes}
           />
         </ErrorBoundary>
       </TabPanel>
 
       <TabPanel id="typescript" activeTab={activeTab}>
         <ErrorBoundary>
-          <TypeScriptTab prefix={prefix} selectedCollections={selectedCollections} />
+          <TypeScriptTab
+            prefix={prefix}
+            selectedCollections={selectedCollections}
+            includeStyles={includeStyles}
+            styleOutputMode={styleOutputMode}
+            styleTypes={styleTypes}
+          />
         </ErrorBoundary>
       </TabPanel>
 
@@ -133,6 +168,9 @@ export default function App() {
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            includeStyles={includeStyles}
+            styleOutputMode={styleOutputMode}
+            styleTypes={styleTypes}
           />
         </ErrorBoundary>
       </TabPanel>
