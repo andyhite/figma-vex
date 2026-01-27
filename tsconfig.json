@@ -16,15 +16,14 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "@plugin/*": ["./src/plugin/*"],
-      "@ui/*": ["./src/ui/*"],
-      "@shared/*": ["./src/shared/*"]
-    },
-    "types": ["@figma/plugin-typings", "node"]
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": [],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "references": [
+    { "path": "./apps/plugin" },
+    { "path": "./apps/ui" },
+    { "path": "./apps/action" },
+    { "path": "./packages/shared" }
+  ]
 }

@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@figma-vex/shared": ["../../packages/shared/src"],
+      "@plugin/*": ["./src/*"]
+    },
+    "types": ["@figma/plugin-typings"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
