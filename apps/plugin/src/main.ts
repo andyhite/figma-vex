@@ -6,7 +6,12 @@ import { exportToCss } from './exporters/cssExporter';
 import { exportToScss } from './exporters/scssExporter';
 import { exportToJson } from './exporters/jsonExporter';
 import { exportToTypeScript } from './exporters/typescriptExporter';
-import { sendGitHubDispatch, prepareGitHubPayload, fetchAllStyles, resolveExpression } from './services';
+import {
+  sendGitHubDispatch,
+  prepareGitHubPayload,
+  fetchAllStyles,
+  resolveExpression,
+} from './services';
 import { mergeWithDefaults } from './utils/optionDefaults';
 import { parseDescription } from './utils/descriptionParser';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
@@ -275,15 +280,10 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
         throw new Error('GitHub options are required');
       }
 
-      const payload = await prepareGitHubPayload(
-        variables,
-        collections,
-        fileName,
-        {
-          exportTypes: msg.githubOptions.exportTypes,
-          exportOptions: msg.githubOptions.exportOptions,
-        }
-      );
+      const payload = await prepareGitHubPayload(variables, collections, fileName, {
+        exportTypes: msg.githubOptions.exportTypes,
+        exportOptions: msg.githubOptions.exportOptions,
+      });
 
       await sendGitHubDispatch(msg.githubOptions, payload, fileName);
       postToUI({
@@ -327,56 +327,18 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
 
     case 'sync-calculations': {
       const options = mergeWithDefaults('css', msg.options);
-      const prefix = options.prefix ?? '';
-
-      let synced = 0;
-      let failed = 0;
-      const warnings: string[] = [];
-
-      for (const collection of collections) {
-        const collectionVars = variables.filter((v) => v.variableCollectionId === collection.id);
-
-        for (const variable of collectionVars) {
-          const descConfig = parseDescription(variable.description);
-          if (!descConfig.expression) continue;
-
-          const config = { ...DEFAULT_CONFIG, ...descConfig };
-
-          for (const mode of collection.modes) {
-            const result = await resolveExpression(
-              config,
-              mode.modeId,
-              variables,
-              collections,
-              prefix
-            );
-
-            if (result.value !== null && result.warnings.length === 0) {
-              try {
-                await variable.setValueForMode(mode.modeId, result.value);
-                synced++;
-              } catch (error) {
-                failed++;
-                const errorMsg = error instanceof Error ? error.message : String(error);
-                warnings.push(`Failed to update ${variable.name}: ${errorMsg}`);
-              }
-            } else {
-              failed++;
-              warnings.push(...result.warnings.map((w) => `${variable.name}: ${w}`));
-            }
-          }
-        }
-      }
-
-      postToUI({ type: 'sync-result', synced, failed, warnings });
+      const result = await syncCalculatedValues(variables, collections, options.prefix ?? '');
+      postToUI({
+        type: 'sync-result',
+        synced: result.synced,
+        failed: result.failed,
+        warnings: result.warnings,
+      });
       break;
     }
 
     case 'sync-code-syntax': {
-      const result = await syncVariableCodeSyntax(
-        variables,
-        msg.options.nameFormatRules
-      );
+      const result = await syncVariableCodeSyntax(variables, msg.options.nameFormatRules);
       postToUI({
         type: 'sync-code-syntax-result',
         synced: result.synced,

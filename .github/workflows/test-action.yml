@@ -1,239 +1,33 @@
-name: Test Action
+name: GitHub Action Test
+run-name: "GitHub Action Test: ${{ github.event.client_payload.title || 'Dispatched from Figma' }}"
 
 on:
-  # Trigger via repository_dispatch (same as production usage)
+  # Only triggered via repository_dispatch (from CI workflow or Figma plugin)
   repository_dispatch:
     types: [test-action]
-  # Run on PRs to validate action changes
-  pull_request:
-    branches: [main]
-  # Allow manual triggering
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: 'Test mode'
-        required: true
-        default: 'dry-run'
-        type: choice
-        options:
-          - dry-run
-          - integration
 
-# Permissions needed for dispatch and workflow monitoring
+# Permissions needed for the action
 permissions:
-  contents: write
-  actions: read
-  pull-requests: write
-
-concurrency:
-  group: test-action-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  # Job 1: Dispatch test event (for manual and PR triggers)
-  dispatch-test:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
+  test:
+    name: Run Action (Dry Run)
     runs-on: ubuntu-latest
-    outputs:
-      run_id: ${{ steps.dispatch.outputs.run_id }}
     steps:
-      - name: Determine mode and ref
+      - name: Determine ref
         id: config
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "mode=dry-run" >> "$GITHUB_OUTPUT"
-            echo "ref=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "mode=${{ inputs.mode }}" >> "$GITHUB_OUTPUT"
-            echo "ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Dispatch test event
-        id: dispatch
-        uses: actions/github-script@v7
         env:
-          MODE: ${{ steps.config.outputs.mode }}
-          REF: ${{ steps.config.outputs.ref }}
-        with:
-          script: |
-            const mode = process.env.MODE;
-            const ref = process.env.REF;
-
-            // Dispatch the repository_dispatch event
-            await github.rest.repos.createDispatchEvent({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              event_type: 'test-action',
-              client_payload: {
-                mode: mode,
-                ref: ref,
-                triggered_by: context.runId.toString(),
-                document: {
-                  $schema: "https://design-tokens.github.io/format/",
-                  collections: {
-                    "Test Collection": {
-                      "primary-color": {
-                        $type: "color",
-                        $value: "#3366cc"
-                      },
-                      "spacing-sm": {
-                        $type: "number",
-                        $value: 8
-                      },
-                      "font-size-base": {
-                        $type: "number",
-                        $value: 16
-                      }
-                    }
-                  },
-                  $metadata: {
-                    figmaFile: "Test Design File",
-                    generatedAt: new Date().toISOString()
-                  }
-                },
-                settings: {
-                  colorFormat: "hex",
-                  defaultUnit: "px",
-                  remBase: 16
-                },
-                export_types: ["css", "scss", "json", "typescript"],
-                figma_file: "Test Design File",
-                generated_at: new Date().toISOString()
-              }
-            });
-
-            console.log(`Dispatched test-action event with mode=${mode}, ref=${ref}`);
-
-            // Wait a moment for the workflow to be created
-            await new Promise(resolve => setTimeout(resolve, 5000));
-
-            // Find the workflow run we just triggered
-            const runs = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'test-action.yml',
-              event: 'repository_dispatch',
-              per_page: 5
-            });
-
-            // Find a run that was created recently (within last 30 seconds)
-            const now = Date.now();
-            const recentRun = runs.data.workflow_runs.find(run => {
-              const created = new Date(run.created_at).getTime();
-              return (now - created) < 30000;
-            });
-
-            if (recentRun) {
-              console.log(`Found workflow run: ${recentRun.id}`);
-              core.setOutput('run_id', recentRun.id.toString());
-            } else {
-              console.log('Could not find the triggered workflow run');
-              core.setOutput('run_id', '');
-            }
-
-      - name: Summary
-        env:
-          MODE: ${{ steps.config.outputs.mode }}
-          RUN_ID: ${{ steps.dispatch.outputs.run_id }}
+          PAYLOAD_REF: ${{ github.event.client_payload.ref }}
+          DEFAULT_REF: ${{ github.sha }}
         run: |
-          {
-            echo "## Test Dispatched"
-            echo "A repository_dispatch event has been sent in **$MODE** mode."
-            if [[ -n "$RUN_ID" ]]; then
-              echo "Triggered workflow run: [#$RUN_ID](/${{ github.repository }}/actions/runs/$RUN_ID)"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  # Job 2: Wait for the dispatched workflow to complete (PR only)
-  wait-for-test:
-    if: github.event_name == 'pull_request'
-    needs: dispatch-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for test workflow
-        uses: actions/github-script@v7
-        env:
-          RUN_ID: ${{ needs.dispatch-test.outputs.run_id }}
-        with:
-          script: |
-            const runId = process.env.RUN_ID;
-
-            if (!runId) {
-              core.setFailed('Could not find the triggered workflow run');
-              return;
-            }
-
-            console.log(`Waiting for workflow run ${runId} to complete...`);
-
-            const maxWaitTime = 10 * 60 * 1000; // 10 minutes
-            const pollInterval = 15 * 1000; // 15 seconds
-            const startTime = Date.now();
-
-            while (Date.now() - startTime < maxWaitTime) {
-              const run = await github.rest.actions.getWorkflowRun({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                run_id: parseInt(runId, 10)
-              });
-
-              const status = run.data.status;
-              const conclusion = run.data.conclusion;
-
-              console.log(`Status: ${status}, Conclusion: ${conclusion}`);
-
-              if (status === 'completed') {
-                if (conclusion === 'success') {
-                  console.log('Workflow completed successfully!');
-                  return;
-                } else {
-                  core.setFailed(`Workflow failed with conclusion: ${conclusion}`);
-                  return;
-                }
-              }
-
-              await new Promise(resolve => setTimeout(resolve, pollInterval));
-            }
-
-            core.setFailed('Timed out waiting for workflow to complete');
-
-      - name: Summary
-        if: success()
-        run: |
-          {
-            echo "## Test Completed"
-            echo "The action test workflow completed successfully."
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  # Job 3: Run the actual action when triggered via repository_dispatch
-  test-action:
-    if: github.event_name == 'repository_dispatch'
-    runs-on: ubuntu-latest
-    outputs:
-      pr-url: ${{ steps.run-action.outputs.pr-url }}
-      pr-number: ${{ steps.run-action.outputs.pr-number }}
-      branch: ${{ steps.run-action.outputs.branch }}
-      updated: ${{ steps.run-action.outputs.updated }}
-      dry-run: ${{ steps.run-action.outputs.dry-run }}
-      mode: ${{ steps.get-mode.outputs.mode }}
-    steps:
-      - name: Get config from payload
-        id: get-mode
-        run: |
-          MODE="${{ github.event.client_payload.mode }}"
-          REF="${{ github.event.client_payload.ref }}"
-          if [[ -z "$MODE" ]]; then
-            MODE="dry-run"
-          fi
-          if [[ -z "$REF" ]]; then
-            REF="${{ github.sha }}"
-          fi
-          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          REF="${PAYLOAD_REF:-$DEFAULT_REF}"
           echo "ref=$REF" >> "$GITHUB_OUTPUT"
-          echo "Test mode: $MODE, ref: $REF"
+          echo "Testing ref: $REF"
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ steps.get-mode.outputs.ref }}
+          ref: ${{ steps.config.outputs.ref }}
 
       - uses: pnpm/action-setup@v4
 
@@ -247,11 +41,11 @@ jobs:
       - name: Build action
         run: pnpm --filter @figma-vex/action build
 
-      - name: Run Figma VEX Action
+      - name: Run Figma VEX Action (dry-run)
         id: run-action
         uses: ./
         with:
-          dry-run: ${{ steps.get-mode.outputs.mode == 'dry-run' }}
+          dry-run: true
           token: ${{ secrets.GITHUB_TOKEN }}
           base-branch: main
           pr-title: 'test: update design tokens (automated test)'
@@ -260,47 +54,9 @@ jobs:
           json-path: 'test-output/tokens.json'
           typescript-path: 'test-output/tokens.ts'
 
-      - name: Verify outputs (integration mode)
-        if: steps.get-mode.outputs.mode == 'integration'
+      - name: Summary
         env:
-          PR_URL: ${{ steps.run-action.outputs.pr-url }}
-          PR_NUMBER: ${{ steps.run-action.outputs.pr-number }}
-          BRANCH: ${{ steps.run-action.outputs.branch }}
-          UPDATED: ${{ steps.run-action.outputs.updated }}
-        run: |
-          echo "PR URL: $PR_URL"
-          echo "PR Number: $PR_NUMBER"
-          echo "Branch: $BRANCH"
-          echo "Updated: $UPDATED"
-
-          if [[ -z "$PR_URL" ]]; then
-            echo "::error::Missing pr-url output"
-            exit 1
-          fi
-          if [[ -z "$PR_NUMBER" || "$PR_NUMBER" == "0" ]]; then
-            echo "::error::Missing pr-number output"
-            exit 1
-          fi
-          if [[ -z "$BRANCH" ]]; then
-            echo "::error::Missing branch output"
-            exit 1
-          fi
-
-      - name: Verify generated files exist (integration mode)
-        if: steps.get-mode.outputs.mode == 'integration'
-        run: |
-          for file in test-output/tokens.css test-output/tokens.scss test-output/tokens.json test-output/tokens.ts; do
-            if [[ ! -f "$file" ]]; then
-              echo "::error::Expected file $file was not created"
-              exit 1
-            fi
-            echo "Verified: $file exists"
-          done
-
-      - name: Summary (dry-run mode)
-        if: steps.get-mode.outputs.mode == 'dry-run'
-        env:
-          REF: ${{ steps.get-mode.outputs.ref }}
+          REF: ${{ steps.config.outputs.ref }}
         run: |
           {
             echo "## Dry-Run Test Results"
@@ -319,80 +75,4 @@ jobs:
             echo "See the action logs above for the full file contents and PR description."
             echo ""
             echo "✅ Dry-run completed successfully - no changes were made"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Summary (integration mode)
-        if: steps.get-mode.outputs.mode == 'integration'
-        env:
-          PR_URL: ${{ steps.run-action.outputs.pr-url }}
-          PR_NUMBER: ${{ steps.run-action.outputs.pr-number }}
-          BRANCH: ${{ steps.run-action.outputs.branch }}
-          UPDATED: ${{ steps.run-action.outputs.updated }}
-        run: |
-          {
-            echo "## Integration Test Results"
-            echo ""
-            echo "### Outputs"
-            echo "| Output | Value |"
-            echo "|--------|-------|"
-            echo "| PR URL | $PR_URL |"
-            echo "| PR Number | $PR_NUMBER |"
-            echo "| Branch | $BRANCH |"
-            echo "| Updated | $UPDATED |"
-            echo ""
-            echo "### Generated Files"
-            echo "- test-output/tokens.css"
-            echo "- test-output/tokens.scss"
-            echo "- test-output/tokens.json"
-            echo "- test-output/tokens.ts"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  # Job 4: Cleanup - close the test PR after verification (integration mode only)
-  cleanup:
-    if: github.event_name == 'repository_dispatch' && needs.test-action.outputs.mode == 'integration'
-    needs: test-action
-    runs-on: ubuntu-latest
-    steps:
-      - name: Close test PR
-        uses: actions/github-script@v7
-        env:
-          PR_NUMBER: ${{ needs.test-action.outputs.pr-number }}
-          BRANCH: ${{ needs.test-action.outputs.branch }}
-        with:
-          script: |
-            const prNumber = parseInt(process.env.PR_NUMBER, 10);
-            if (prNumber) {
-              await github.rest.pulls.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber,
-                state: 'closed'
-              });
-              console.log(`Closed test PR #${prNumber}`);
-
-              // Delete the test branch
-              const branch = process.env.BRANCH;
-              if (branch) {
-                try {
-                  await github.rest.git.deleteRef({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    ref: `heads/${branch}`
-                  });
-                  console.log(`Deleted branch: ${branch}`);
-                } catch (e) {
-                  console.log(`Could not delete branch ${branch}: ${e.message}`);
-                }
-              }
-            }
-
-      - name: Summary
-        env:
-          PR_NUMBER: ${{ needs.test-action.outputs.pr-number }}
-          BRANCH: ${{ needs.test-action.outputs.branch }}
-        run: |
-          {
-            echo "## Cleanup Complete"
-            echo "- Closed test PR #$PR_NUMBER"
-            echo "- Deleted branch: $BRANCH"
           } >> "$GITHUB_STEP_SUMMARY"

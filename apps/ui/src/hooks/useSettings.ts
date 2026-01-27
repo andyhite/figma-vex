@@ -69,7 +69,10 @@ export function useSettings(): UseSettingsReturn {
             (r) => r.id !== '__default__'
           );
           // Migrate cssIncludeModeComments to includeModeComments if needed
-          if (mergedSettings.includeModeComments === undefined && 'cssIncludeModeComments' in message.settings) {
+          if (
+            mergedSettings.includeModeComments === undefined &&
+            'cssIncludeModeComments' in message.settings
+          ) {
             mergedSettings.includeModeComments = message.settings.cssIncludeModeComments ?? true;
           }
           setSettings(mergedSettings);
@@ -113,7 +116,9 @@ export function useSettings(): UseSettingsReturn {
         const newSettings = { ...prev, ...updates };
         // Filter out any default rules from custom rules (default is computed)
         if (updates.nameFormatRules !== undefined) {
-          newSettings.nameFormatRules = updates.nameFormatRules.filter((r) => r.id !== '__default__');
+          newSettings.nameFormatRules = updates.nameFormatRules.filter(
+            (r) => r.id !== '__default__'
+          );
         }
         saveSettings(newSettings);
         return newSettings;
@@ -122,14 +127,19 @@ export function useSettings(): UseSettingsReturn {
     [saveSettings]
   );
 
-  // Cleanup timeout on unmount
+  // Cleanup timeout on unmount and flush any pending saves
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+      // Flush any pending settings immediately on unmount to prevent data loss
+      if (pendingSettingsRef.current) {
+        sendMessage({ type: 'save-settings', settings: pendingSettingsRef.current });
+        pendingSettingsRef.current = null;
+      }
     };
-  }, []);
+  }, [sendMessage]);
 
   return {
     settings,

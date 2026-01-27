@@ -1,205 +1,212 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { writeFiles } from './files.js';
+import { writeFiles, validateFilePath } from './files.js';
 import type { FileWrite } from './types.js';
 
-// Mock fs module
+// Mock fs module only, not path (we need real path behavior for validation)
 vi.mock('fs');
-vi.mock('path');
 
 describe('files', () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // Set a consistent workspace for tests
+    process.env = { ...originalEnv, GITHUB_WORKSPACE: '/workspace' };
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    process.env = originalEnv;
+  });
+
+  describe('validateFilePath', () => {
+    it('should accept relative paths within workspace', () => {
+      const result = validateFilePath('tokens/variables.css');
+      expect(result).toBe('/workspace/tokens/variables.css');
+    });
+
+    it('should accept nested relative paths', () => {
+      const result = validateFilePath('deeply/nested/path/file.json');
+      expect(result).toBe('/workspace/deeply/nested/path/file.json');
+    });
+
+    it('should reject absolute paths', () => {
+      expect(() => validateFilePath('/etc/passwd')).toThrow('Absolute paths are not allowed');
+      expect(() => validateFilePath('/root/.bashrc')).toThrow('Absolute paths are not allowed');
+    });
+
+    it('should reject path traversal attempts', () => {
+      expect(() => validateFilePath('../../../etc/passwd')).toThrow('Path traversal detected');
+      expect(() => validateFilePath('tokens/../../etc/passwd')).toThrow('Path traversal detected');
+      expect(() => validateFilePath('tokens/../../../outside')).toThrow('Path traversal detected');
+    });
+
+    it('should allow paths with .. that stay within workspace', () => {
+      // tokens/../variables.css resolves to /workspace/variables.css (within workspace)
+      const result = validateFilePath('tokens/../variables.css');
+      expect(result).toBe('/workspace/variables.css');
+    });
+
+    it('should handle paths with special characters', () => {
+      const result = validateFilePath('path/to/file (1).css');
+      expect(result).toBe('/workspace/path/to/file (1).css');
+    });
+
+    it('should handle paths with unicode characters', () => {
+      const result = validateFilePath('path/to/café.css');
+      expect(result).toBe('/workspace/path/to/café.css');
+    });
+
+    it('should use cwd when GITHUB_WORKSPACE is not set', () => {
+      delete process.env.GITHUB_WORKSPACE;
+      const cwd = process.cwd();
+      const result = validateFilePath('file.css');
+      expect(result).toBe(path.join(cwd, 'file.css'));
+    });
   });
 
   describe('writeFiles', () => {
-    it('should create directories and write files', () => {
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
+    beforeEach(() => {
+      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+    });
 
+    it('should create directories and write files with validated paths', () => {
       const files: FileWrite[] = [
-        { path: '/path/to/file1.css', content: 'content1' },
-        { path: '/path/to/file2.scss', content: 'content2' },
+        { path: 'path/to/file1.css', content: 'content1' },
+        { path: 'path/to/file2.scss', content: 'content2' },
       ];
 
       writeFiles(files);
 
-      expect(mockDirname).toHaveBeenCalledTimes(2);
-      expect(mockExistsSync).toHaveBeenCalledTimes(2);
-      expect(mockMkdirSync).toHaveBeenCalledTimes(2);
-      expect(mockMkdirSync).toHaveBeenCalledWith('/path/to', { recursive: true });
-      expect(mockWriteFileSync).toHaveBeenCalledTimes(2);
-      expect(mockWriteFileSync).toHaveBeenCalledWith('/path/to/file1.css', 'content1', 'utf8');
-      expect(mockWriteFileSync).toHaveBeenCalledWith('/path/to/file2.scss', 'content2', 'utf8');
+      expect(fs.mkdirSync).toHaveBeenCalledTimes(2);
+      expect(fs.writeFileSync).toHaveBeenCalledTimes(2);
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        '/workspace/path/to/file1.css',
+        'content1',
+        'utf8'
+      );
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        '/workspace/path/to/file2.scss',
+        'content2',
+        'utf8'
+      );
     });
 
     it('should not create directories if they already exist', () => {
-      const mockExistsSync = vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
+      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
 
-      const files: FileWrite[] = [{ path: '/path/to/file.css', content: 'content' }];
+      const files: FileWrite[] = [{ path: 'path/to/file.css', content: 'content' }];
 
       writeFiles(files);
 
-      expect(mockExistsSync).toHaveBeenCalledOnce();
-      expect(mockMkdirSync).not.toHaveBeenCalled();
-      expect(mockWriteFileSync).toHaveBeenCalledOnce();
+      expect(fs.mkdirSync).not.toHaveBeenCalled();
+      expect(fs.writeFileSync).toHaveBeenCalledOnce();
     });
 
     it('should handle empty file array', () => {
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-
       writeFiles([]);
 
-      expect(mockWriteFileSync).not.toHaveBeenCalled();
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
     });
 
     it('should handle nested directory paths', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/deeply/nested/path');
-
       const files: FileWrite[] = [
-        { path: '/deeply/nested/path/file.json', content: 'json content' },
+        { path: 'deeply/nested/path/file.json', content: 'json content' },
       ];
 
       writeFiles(files);
 
-      expect(mockDirname).toHaveBeenCalledWith('/deeply/nested/path/file.json');
-      expect(mockMkdirSync).toHaveBeenCalledWith('/deeply/nested/path', { recursive: true });
-      expect(mockWriteFileSync).toHaveBeenCalledWith(
-        '/deeply/nested/path/file.json',
+      expect(fs.mkdirSync).toHaveBeenCalledWith('/workspace/deeply/nested/path', {
+        recursive: true,
+      });
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        '/workspace/deeply/nested/path/file.json',
         'json content',
         'utf8'
       );
     });
 
-    it('should handle file path with special characters', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
-
-      const files: FileWrite[] = [
-        { path: '/path/to/file (1).css', content: 'content' },
-        { path: '/path/to/file[test].scss', content: 'content' },
-      ];
-
-      writeFiles(files);
-
-      expect(mockWriteFileSync).toHaveBeenCalledTimes(2);
-    });
-
-    it('should handle file path with unicode characters', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
-
-      const files: FileWrite[] = [
-        { path: '/path/to/café.css', content: 'content' },
-      ];
-
-      writeFiles(files);
-
-      expect(mockWriteFileSync).toHaveBeenCalledWith('/path/to/café.css', 'content', 'utf8');
-    });
-
-    it('should handle very long file paths', () => {
-      const longPath = '/very/' + 'long/'.repeat(100) + 'file.css';
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/very/long/path');
-
-      const files: FileWrite[] = [{ path: longPath, content: 'content' }];
-
-      writeFiles(files);
-
-      expect(mockDirname).toHaveBeenCalledWith(longPath);
-      expect(mockMkdirSync).toHaveBeenCalled();
-    });
-
     it('should handle file with empty content', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
-
-      const files: FileWrite[] = [{ path: '/path/to/empty.css', content: '' }];
+      const files: FileWrite[] = [{ path: 'path/to/empty.css', content: '' }];
 
       writeFiles(files);
 
-      expect(mockWriteFileSync).toHaveBeenCalledWith('/path/to/empty.css', '', 'utf8');
+      expect(fs.writeFileSync).toHaveBeenCalledWith('/workspace/path/to/empty.css', '', 'utf8');
     });
 
     it('should handle file with very large content', () => {
       const largeContent = 'a'.repeat(1000000);
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
 
-      const files: FileWrite[] = [{ path: '/path/to/large.css', content: largeContent }];
+      const files: FileWrite[] = [{ path: 'path/to/large.css', content: largeContent }];
 
       writeFiles(files);
 
-      expect(mockWriteFileSync).toHaveBeenCalledWith('/path/to/large.css', largeContent, 'utf8');
-    });
-
-    it('should handle file path at root', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      const mockDirname = vi.spyOn(path, 'dirname').mockReturnValue('/');
-
-      const files: FileWrite[] = [{ path: '/file.css', content: 'content' }];
-
-      writeFiles(files);
-
-      expect(mockDirname).toHaveBeenCalledWith('/file.css');
-      expect(mockMkdirSync).toHaveBeenCalledWith('/', { recursive: true });
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        '/workspace/path/to/large.css',
+        largeContent,
+        'utf8'
+      );
     });
 
     it('should handle multiple files with same directory', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      const mockWriteFileSync = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      vi.spyOn(path, 'dirname').mockReturnValue('/path/to');
-
       const files: FileWrite[] = [
-        { path: '/path/to/file1.css', content: 'content1' },
-        { path: '/path/to/file2.css', content: 'content2' },
-        { path: '/path/to/file3.css', content: 'content3' },
+        { path: 'path/to/file1.css', content: 'content1' },
+        { path: 'path/to/file2.css', content: 'content2' },
+        { path: 'path/to/file3.css', content: 'content3' },
       ];
 
       writeFiles(files);
 
-      // Should only create directory once (or check once per file)
-      expect(mockWriteFileSync).toHaveBeenCalledTimes(3);
+      expect(fs.writeFileSync).toHaveBeenCalledTimes(3);
     });
 
-    it('should handle file path with trailing slash in directory', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const mockMkdirSync = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-      vi.spyOn(path, 'dirname').mockReturnValue('/path/to/');
+    it('should reject files with absolute paths', () => {
+      const files: FileWrite[] = [{ path: '/etc/passwd', content: 'malicious' }];
 
-      const files: FileWrite[] = [{ path: '/path/to/file.css', content: 'content' }];
+      expect(() => writeFiles(files)).toThrow('Absolute paths are not allowed');
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
 
-      writeFiles(files);
+    it('should reject files with path traversal', () => {
+      const files: FileWrite[] = [{ path: '../../../etc/passwd', content: 'malicious' }];
 
-      expect(mockMkdirSync).toHaveBeenCalled();
+      expect(() => writeFiles(files)).toThrow('Path traversal detected');
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('should validate all paths before writing any files', () => {
+      const files: FileWrite[] = [
+        { path: 'valid/file.css', content: 'content' },
+        { path: '../../../etc/passwd', content: 'malicious' }, // Invalid
+      ];
+
+      expect(() => writeFiles(files)).toThrow('Path traversal detected');
+      // First file should NOT have been written due to fail-fast validation
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('should provide error context when write fails', () => {
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {
+        throw new Error('EACCES: permission denied');
+      });
+
+      const files: FileWrite[] = [{ path: 'path/to/file.css', content: 'content' }];
+
+      expect(() => writeFiles(files)).toThrow('Failed to write file path/to/file.css: EACCES');
+    });
+
+    it('should provide error context when mkdir fails', () => {
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => {
+        throw new Error('EACCES: permission denied');
+      });
+
+      const files: FileWrite[] = [{ path: 'path/to/file.css', content: 'content' }];
+
+      expect(() => writeFiles(files)).toThrow('Failed to write file path/to/file.css: EACCES');
     });
   });
 });

@@ -98,11 +98,15 @@ describe('validatePayload', () => {
   });
 
   it('should throw for undefined payload', () => {
-    expect(() => validatePayload(undefined)).toThrow('Invalid event payload: payload is not an object');
+    expect(() => validatePayload(undefined)).toThrow(
+      'Invalid event payload: payload is not an object'
+    );
   });
 
   it('should throw for non-object payload', () => {
-    expect(() => validatePayload('string')).toThrow('Invalid event payload: payload is not an object');
+    expect(() => validatePayload('string')).toThrow(
+      'Invalid event payload: payload is not an object'
+    );
   });
 
   it('should throw when client_payload is missing', () => {
@@ -181,6 +185,64 @@ describe('validatePayload', () => {
     expect(() => validatePayload(payload)).toThrow(
       'Invalid event payload: client_payload.generated_at is missing or invalid'
     );
+  });
+
+  it('should throw when export_types contains invalid values', () => {
+    const payload = {
+      client_payload: {
+        document: {},
+        settings: {},
+        export_types: ['css', 'invalid', 'also-invalid'],
+        figma_file: 'test.figma',
+        generated_at: '2024-01-01',
+      },
+    };
+    expect(() => validatePayload(payload)).toThrow(
+      'Invalid event payload: export_types contains invalid values: invalid, also-invalid'
+    );
+  });
+
+  it('should throw when export_types contains non-string values', () => {
+    const payload = {
+      client_payload: {
+        document: {},
+        settings: {},
+        export_types: ['css', 123, null],
+        figma_file: 'test.figma',
+        generated_at: '2024-01-01',
+      },
+    };
+    expect(() => validatePayload(payload)).toThrow(
+      'Invalid event payload: export_types contains invalid values'
+    );
+  });
+
+  it('should throw when export_types is empty', () => {
+    const payload = {
+      client_payload: {
+        document: {},
+        settings: {},
+        export_types: [],
+        figma_file: 'test.figma',
+        generated_at: '2024-01-01',
+      },
+    };
+    expect(() => validatePayload(payload)).toThrow(
+      'Invalid event payload: export_types must contain at least one export type'
+    );
+  });
+
+  it('should accept all valid export types', () => {
+    const payload = {
+      client_payload: {
+        document: {},
+        settings: {},
+        export_types: ['css', 'scss', 'json', 'typescript'],
+        figma_file: 'test.figma',
+        generated_at: '2024-01-01',
+      },
+    };
+    expect(validatePayload(payload)).toBe(true);
   });
 });
 

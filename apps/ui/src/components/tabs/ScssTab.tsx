@@ -1,19 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { Button } from '../common/Button';
 import { ButtonGroup } from '../common/ButtonGroup';
 import { CopyIcon } from '../common/CopyIcon';
 import { DownloadIcon } from '../common/DownloadIcon';
 import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
-import { useOutputActions } from '../../hooks/useOutputActions';
-import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type {
-  ExportOptions,
-  UIMessage,
-  StyleType,
-  StyleOutputMode,
-  NameFormatRule,
-} from '@figma-vex/shared';
+import { useExportListener } from '../../hooks/useExportListener';
+import type { ExportOptions, StyleType, StyleOutputMode, NameFormatRule } from '@figma-vex/shared';
 
 interface ScssTabProps {
   prefix: string;
@@ -48,31 +41,11 @@ export function ScssTab({
   numberPrecision,
   exportAsCalcExpressions,
 }: ScssTabProps) {
-  const [output, setOutput] = useState('');
-  const { sendMessage, listenToMessage } = usePluginMessage();
-  const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
+  const { output, status, setStatus, handleCopy, handleDownload, sendMessage } = useExportListener({
+    resultType: 'scss-result',
     filename: 'variables.scss',
     mimeType: 'text/scss',
   });
-
-  // Listen for SCSS results
-  const handleMessage = useCallback(
-    (message: UIMessage) => {
-      if (message.type === 'scss-result') {
-        setOutput(message.scss);
-        setStatus({ message: 'Generated successfully!', type: 'success' });
-      } else if (message.type === 'error') {
-        setStatus({ message: message.message, type: 'error' });
-      }
-    },
-    [setStatus]
-  );
-
-  // Set up message listener
-  useEffect(() => {
-    const cleanup = listenToMessage(handleMessage);
-    return cleanup;
-  }, [listenToMessage, handleMessage]);
 
   const handleExport = useCallback(() => {
     const options: ExportOptions = {

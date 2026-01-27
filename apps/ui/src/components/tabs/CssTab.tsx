@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '../common/Button';
 import { ButtonGroup } from '../common/ButtonGroup';
 import { CopyIcon } from '../common/CopyIcon';
@@ -6,15 +6,8 @@ import { DownloadIcon } from '../common/DownloadIcon';
 import { IconButton } from '../common/IconButton';
 import { Input } from '../common/Input';
 import { OutputArea } from '../common/OutputArea';
-import { useOutputActions } from '../../hooks/useOutputActions';
-import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type {
-  ExportOptions,
-  UIMessage,
-  StyleType,
-  StyleOutputMode,
-  NameFormatRule,
-} from '@figma-vex/shared';
+import { useExportListener } from '../../hooks/useExportListener';
+import type { ExportOptions, StyleType, StyleOutputMode, NameFormatRule } from '@figma-vex/shared';
 
 interface CssTabProps {
   prefix: string;
@@ -56,36 +49,17 @@ export function CssTab({
   onSelectorChange,
 }: CssTabProps) {
   const [selector, setSelector] = useState(initialSelector);
-  const [output, setOutput] = useState('');
 
   const handleSelectorChange = (value: string) => {
     setSelector(value);
     onSelectorChange?.(value);
   };
-  const { sendMessage, listenToMessage } = usePluginMessage();
-  const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
+
+  const { output, status, setStatus, handleCopy, handleDownload, sendMessage } = useExportListener({
+    resultType: 'css-result',
     filename: 'variables.css',
     mimeType: 'text/css',
   });
-
-  // Listen for CSS results
-  const handleMessage = useCallback(
-    (message: UIMessage) => {
-      if (message.type === 'css-result') {
-        setOutput(message.css);
-        setStatus({ message: 'Generated successfully!', type: 'success' });
-      } else if (message.type === 'error') {
-        setStatus({ message: message.message, type: 'error' });
-      }
-    },
-    [setStatus]
-  );
-
-  // Set up message listener
-  useEffect(() => {
-    const cleanup = listenToMessage(handleMessage);
-    return cleanup;
-  }, [listenToMessage, handleMessage]);
 
   const handleExport = useCallback(() => {
     const options: ExportOptions = {

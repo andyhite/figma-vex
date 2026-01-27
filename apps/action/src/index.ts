@@ -24,6 +24,19 @@ export function validateInputs(inputs: ActionInputs): void {
 }
 
 /**
+ * Valid export type values
+ */
+const VALID_EXPORT_TYPES = ['css', 'scss', 'json', 'typescript'] as const;
+type ValidExportType = (typeof VALID_EXPORT_TYPES)[number];
+
+/**
+ * Validates that a value is a valid export type
+ */
+function isValidExportType(value: unknown): value is ValidExportType {
+  return typeof value === 'string' && VALID_EXPORT_TYPES.includes(value as ValidExportType);
+}
+
+/**
  * Validates the repository dispatch event payload
  */
 export function validatePayload(payload: unknown): payload is RepositoryDispatchPayload {
@@ -49,6 +62,19 @@ export function validatePayload(payload: unknown): payload is RepositoryDispatch
 
   if (!Array.isArray(cp.export_types)) {
     throw new Error('Invalid event payload: client_payload.export_types is missing or invalid');
+  }
+
+  // Validate that export_types contains only valid values
+  const invalidTypes = cp.export_types.filter((t) => !isValidExportType(t));
+  if (invalidTypes.length > 0) {
+    throw new Error(
+      `Invalid event payload: export_types contains invalid values: ${invalidTypes.join(', ')}. ` +
+        `Valid values are: ${VALID_EXPORT_TYPES.join(', ')}`
+    );
+  }
+
+  if (cp.export_types.length === 0) {
+    throw new Error('Invalid event payload: export_types must contain at least one export type');
   }
 
   if (!cp.figma_file || typeof cp.figma_file !== 'string') {
@@ -150,7 +176,9 @@ async function run(): Promise<void> {
 
     // Handle dry-run mode
     if (inputs.dryRun) {
-      core.info('🔍 Dry-run mode enabled - previewing changes without writing files or creating PR');
+      core.info(
+        '🔍 Dry-run mode enabled - previewing changes without writing files or creating PR'
+      );
       core.info('');
 
       // Output PR title

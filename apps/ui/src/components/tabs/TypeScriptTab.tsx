@@ -1,13 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { Button } from '../common/Button';
 import { ButtonGroup } from '../common/ButtonGroup';
 import { CopyIcon } from '../common/CopyIcon';
 import { DownloadIcon } from '../common/DownloadIcon';
 import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
-import { useOutputActions } from '../../hooks/useOutputActions';
-import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions, UIMessage, StyleType, StyleOutputMode } from '@figma-vex/shared';
+import { useExportListener } from '../../hooks/useExportListener';
+import type { ExportOptions, StyleType, StyleOutputMode } from '@figma-vex/shared';
 
 interface TypeScriptTabProps {
   prefix: string;
@@ -30,31 +29,11 @@ export function TypeScriptTab({
   styleTypes,
   numberPrecision,
 }: TypeScriptTabProps) {
-  const [output, setOutput] = useState('');
-  const { sendMessage, listenToMessage } = usePluginMessage();
-  const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
+  const { output, status, setStatus, handleCopy, handleDownload, sendMessage } = useExportListener({
+    resultType: 'typescript-result',
     filename: 'variables.d.ts',
     mimeType: 'text/typescript',
   });
-
-  // Listen for TypeScript results
-  const handleMessage = useCallback(
-    (message: UIMessage) => {
-      if (message.type === 'typescript-result') {
-        setOutput(message.typescript);
-        setStatus({ message: 'Generated successfully!', type: 'success' });
-      } else if (message.type === 'error') {
-        setStatus({ message: message.message, type: 'error' });
-      }
-    },
-    [setStatus]
-  );
-
-  // Set up message listener
-  useEffect(() => {
-    const cleanup = listenToMessage(handleMessage);
-    return cleanup;
-  }, [listenToMessage, handleMessage]);
 
   const handleExport = useCallback(() => {
     const options: ExportOptions = {
@@ -73,7 +52,18 @@ export function TypeScriptTab({
 
     sendMessage({ type: 'export-typescript', options });
     setStatus({ message: 'Generating...', type: 'info' });
-  }, [prefix, selectedCollections, includeModeComments, includeStyles, styleOutputMode, styleTypes, syncCalculations, numberPrecision, sendMessage, setStatus]);
+  }, [
+    prefix,
+    selectedCollections,
+    includeModeComments,
+    includeStyles,
+    styleOutputMode,
+    styleTypes,
+    syncCalculations,
+    numberPrecision,
+    sendMessage,
+    setStatus,
+  ]);
 
   return (
     <div>

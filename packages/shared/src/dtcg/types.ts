@@ -108,6 +108,7 @@ export interface DTCGConversionSettings {
   colorFormat: ColorFormat;
   defaultUnit: Unit;
   remBase: number;
+  numberPrecision?: number;
 
   // CSS/SCSS specific
   selector?: string;

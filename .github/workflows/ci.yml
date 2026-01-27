@@ -1,10 +1,16 @@
 name: CI
+run-name: "CI: ${{ github.event.pull_request.title || format('Push to {0}', github.ref_name) }}"
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,6 +18,7 @@ concurrency:
 
 jobs:
   lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +31,7 @@ jobs:
       - run: pnpm lint
 
   typecheck:
+    name: Type Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +44,7 @@ jobs:
       - run: pnpm typecheck
 
   test:
+    name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +57,7 @@ jobs:
       - run: pnpm test
 
   build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,3 +68,165 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+
+  test-action-dispatch:
+    name: Action Test (Dispatch)
+    runs-on: ubuntu-latest
+    outputs:
+      run_id: ${{ steps.dispatch.outputs.run_id }}
+    steps:
+      - name: Dispatch test event
+        id: dispatch
+        uses: actions/github-script@v7
+        env:
+          REF: ${{ github.event.pull_request.head.sha || github.sha }}
+          TITLE: ${{ github.event.pull_request.title || format('Push to {0}', github.ref_name) }}
+        with:
+          script: |
+            const ref = process.env.REF;
+            const title = process.env.TITLE;
+
+            // Dispatch the repository_dispatch event to trigger test-action.yml
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'test-action',
+              client_payload: {
+                ref: ref,
+                title: title,
+                triggered_by: context.runId.toString(),
+                document: {
+                  $schema: "https://design-tokens.github.io/format/",
+                  collections: {
+                    "Test Collection": {
+                      "primary-color": {
+                        $type: "color",
+                        $value: "#3366cc"
+                      },
+                      "spacing-sm": {
+                        $type: "number",
+                        $value: 8
+                      },
+                      "font-size-base": {
+                        $type: "number",
+                        $value: 16
+                      }
+                    }
+                  },
+                  $metadata: {
+                    figmaFile: "Test Design File",
+                    generatedAt: new Date().toISOString()
+                  }
+                },
+                settings: {
+                  colorFormat: "hex",
+                  defaultUnit: "px",
+                  remBase: 16
+                },
+                export_types: ["css", "scss", "json", "typescript"],
+                figma_file: "Test Design File",
+                generated_at: new Date().toISOString()
+              }
+            });
+
+            console.log(`Dispatched test-action event for ref=${ref}`);
+
+            // Wait a moment for the workflow to be created
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            // Find the workflow run we just triggered
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'test-action.yml',
+              event: 'repository_dispatch',
+              per_page: 5
+            });
+
+            // Find a run that was created recently (within last 30 seconds)
+            const now = Date.now();
+            const recentRun = runs.data.workflow_runs.find(run => {
+              const created = new Date(run.created_at).getTime();
+              return (now - created) < 30000;
+            });
+
+            if (recentRun) {
+              console.log(`Found workflow run: ${recentRun.id}`);
+              core.setOutput('run_id', recentRun.id.toString());
+            } else {
+              console.log('Could not find the triggered workflow run');
+              core.setOutput('run_id', '');
+            }
+
+      - name: Summary
+        env:
+          RUN_ID: ${{ steps.dispatch.outputs.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          {
+            echo "## Action Test Dispatched"
+            echo "A test-action workflow has been triggered in dry-run mode."
+            if [[ -n "$RUN_ID" ]]; then
+              echo ""
+              echo "Triggered workflow run: [#$RUN_ID](/$REPO/actions/runs/$RUN_ID)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  test-action-wait:
+    name: Action Test (Result)
+    needs: test-action-dispatch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for test workflow
+        uses: actions/github-script@v7
+        env:
+          RUN_ID: ${{ needs.test-action-dispatch.outputs.run_id }}
+        with:
+          script: |
+            const runId = process.env.RUN_ID;
+
+            if (!runId) {
+              core.setFailed('Could not find the triggered workflow run');
+              return;
+            }
+
+            console.log(`Waiting for workflow run ${runId} to complete...`);
+
+            const maxWaitTime = 10 * 60 * 1000; // 10 minutes
+            const pollInterval = 15 * 1000; // 15 seconds
+            const startTime = Date.now();
+
+            while (Date.now() - startTime < maxWaitTime) {
+              const run = await github.rest.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: parseInt(runId, 10)
+              });
+
+              const status = run.data.status;
+              const conclusion = run.data.conclusion;
+
+              console.log(`Status: ${status}, Conclusion: ${conclusion}`);
+
+              if (status === 'completed') {
+                if (conclusion === 'success') {
+                  console.log('Workflow completed successfully!');
+                  return;
+                } else {
+                  core.setFailed(`Workflow failed with conclusion: ${conclusion}`);
+                  return;
+                }
+              }
+
+              await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+
+            core.setFailed('Timed out waiting for workflow to complete');
+
+      - name: Summary
+        if: success()
+        run: |
+          {
+            echo "## Action Test Completed"
+            echo "The action test workflow completed successfully."
+          } >> "$GITHUB_STEP_SUMMARY"
