@@ -1,5 +1,6 @@
 import { FormField } from '../common/FormField';
 import { Checkbox } from '../common/Checkbox';
+import { Input } from '../common/Input';
 import { useNumericVariables } from '../../hooks/useNumericVariables';
 
 interface CalculationsSettingsProps {
@@ -7,10 +8,10 @@ interface CalculationsSettingsProps {
   onRemBaseVariableChange: (id: string | null) => void;
   numberPrecision: number;
   onNumberPrecisionChange: (precision: number) => void;
+  cssSelector: string;
+  onCssSelectorChange: (selector: string) => void;
   cssExportAsCalcExpressions: boolean;
   onCssExportAsCalcExpressionsChange: (value: boolean) => void;
-  scssExportAsCalcExpressions: boolean;
-  onScssExportAsCalcExpressionsChange: (value: boolean) => void;
   cssUseModesAsSelectors: boolean;
   onCssUseModesAsSelectorsChange: (value: boolean) => void;
 }
@@ -20,10 +21,10 @@ export function CalculationsSettings({
   onRemBaseVariableChange,
   numberPrecision,
   onNumberPrecisionChange,
+  cssSelector,
+  onCssSelectorChange,
   cssExportAsCalcExpressions,
   onCssExportAsCalcExpressionsChange,
-  scssExportAsCalcExpressions,
-  onScssExportAsCalcExpressionsChange,
   cssUseModesAsSelectors,
   onCssUseModesAsSelectorsChange,
 }: CalculationsSettingsProps) {
@@ -94,13 +95,22 @@ export function CalculationsSettings({
 
       <div className="border-figma-border mt-4 border-t pt-4">
         <label className="text-figma-text mb-3 block text-xs font-medium">CSS Output Options</label>
+        <Input
+          label="CSS Selector"
+          value={cssSelector}
+          onChange={(e) => onCssSelectorChange(e.target.value)}
+          placeholder=":root"
+        />
+        <p className="text-figma-text-tertiary mb-4 text-xs">
+          The CSS selector to wrap variables in (e.g., :root, .theme-light).
+        </p>
         <FormField>
           <Checkbox
             label="Export as calc() expressions"
             checked={cssExportAsCalcExpressions}
             onChange={(e) => onCssExportAsCalcExpressionsChange(e.target.checked)}
           />
-          <p className="text-figma-text-tertiary mt-1 ml-5 text-xs">
+          <p className="text-figma-text-tertiary ml-5 mt-1 text-xs">
             Output calculated values as calc() expressions instead of resolved values.
           </p>
         </FormField>
@@ -110,22 +120,8 @@ export function CalculationsSettings({
             checked={cssUseModesAsSelectors}
             onChange={(e) => onCssUseModesAsSelectorsChange(e.target.checked)}
           />
-          <p className="text-figma-text-tertiary mt-1 ml-5 text-xs">
+          <p className="text-figma-text-tertiary ml-5 mt-1 text-xs">
             Create separate CSS selectors for each mode instead of using the default mode.
-          </p>
-        </FormField>
-      </div>
-
-      <div className="border-figma-border mt-4 border-t pt-4">
-        <label className="text-figma-text mb-3 block text-xs font-medium">SCSS Output Options</label>
-        <FormField>
-          <Checkbox
-            label="Export as calc() expressions"
-            checked={scssExportAsCalcExpressions}
-            onChange={(e) => onScssExportAsCalcExpressionsChange(e.target.checked)}
-          />
-          <p className="text-figma-text-tertiary mt-1 ml-5 text-xs">
-            Output calculated values as calc() expressions instead of resolved values.
           </p>
         </FormField>
       </div>

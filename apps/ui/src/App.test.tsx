@@ -67,7 +67,6 @@ describe('App', () => {
     render(<App />);
 
     expect(screen.getByRole('button', { name: 'CSS' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'SCSS' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'JSON' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'TypeScript' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'GitHub' })).toBeInTheDocument();
@@ -78,20 +77,19 @@ describe('App', () => {
   it('should start with CSS tab active', () => {
     render(<App />);
 
-    expect(screen.getByText('CSS Selector')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generate CSS' })).toBeInTheDocument();
   });
 
   it('should switch tabs when clicked', async () => {
     renderResult = render(<App />);
 
-    const scssTab = screen.getByRole('button', { name: 'SCSS' });
-    await userEvent.click(scssTab);
+    const jsonTab = screen.getByRole('button', { name: 'JSON' });
+    await userEvent.click(jsonTab);
 
-    // Wait for the tab to switch and SCSS content to appear
+    // Wait for the tab to switch and JSON content to appear
     await waitFor(() => {
-      expect(screen.queryByLabelText('CSS Selector')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Generate JSON' })).toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: 'Generate SCSS' })).toBeInTheDocument();
   });
 
   it('should render collections checkbox list on settings tab', async () => {

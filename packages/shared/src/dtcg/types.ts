@@ -2,7 +2,7 @@
  * DTCG (Design Tokens Community Group) Intermediate Format Types
  *
  * These types define the canonical intermediate format used for serialization
- * and conversion between Figma variables/styles and output formats (CSS, SCSS, TypeScript).
+ * and conversion between Figma variables/styles and output formats (CSS, JSON, TypeScript).
  */
 
 import type { Unit, ColorFormat } from '../types/tokens';
@@ -110,7 +110,7 @@ export interface DTCGConversionSettings {
   remBase: number;
   numberPrecision?: number;
 
-  // CSS/SCSS specific
+  // CSS specific
   selector?: string;
   useModesAsSelectors?: boolean;
   includeCollectionComments?: boolean;

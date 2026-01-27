@@ -48,16 +48,3 @@ export function formatCssName(path: string[], options: DTCGConversionSettings): 
   const cssName = toCssName(figmaName);
   return options.prefix ? `${options.prefix}-${cssName}` : cssName;
 }
-
-/**
- * Formats a token path to an SCSS variable name.
- * Same as CSS but with $ prefix.
- *
- * @param path - Token path segments
- * @param options - Conversion settings
- * @returns SCSS variable name (with $ prefix)
- */
-export function formatScssName(path: string[], options: DTCGConversionSettings): string {
-  const cssName = formatCssName(path, options);
-  return `$${cssName}`;
-}

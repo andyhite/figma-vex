@@ -20,9 +20,6 @@ const baseDefaults: ExportOptions = {
  */
 const formatOverrides: Record<ExportType, Partial<ExportOptions>> = {
   css: {},
-  scss: {
-    includeModeComments: false,
-  },
   json: {},
   typescript: {
     includeCollectionComments: false,

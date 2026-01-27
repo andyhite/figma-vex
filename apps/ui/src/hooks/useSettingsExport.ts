@@ -27,6 +27,7 @@ function convertToPluginSettings(
     ...restSettings,
     selectedCollections: resolvedCollectionIds,
     remBaseVariableId: resolvedRemBaseVariableId,
+    githubToken: '', // Token is never exported/imported for security
   };
 }
 
@@ -248,7 +249,11 @@ export function useSettingsExport({ collections, remBaseVariablePath }: UseSetti
           });
         } else {
           // No variable to resolve, return immediately
-          const resolvedSettings = convertToPluginSettings(settings, resolvedCollectionIds, undefined);
+          const resolvedSettings = convertToPluginSettings(
+            settings,
+            resolvedCollectionIds,
+            undefined
+          );
 
           return {
             success: true,

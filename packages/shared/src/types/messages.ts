@@ -5,7 +5,7 @@
 import type { StyleType, StyleOutputMode, StyleSummary } from './styles';
 import type { ColorFormat } from './tokens';
 
-export type ExportType = 'css' | 'scss' | 'json' | 'typescript';
+export type ExportType = 'css' | 'json' | 'typescript';
 
 /**
  * Pattern-based rule for transforming Figma variable names to custom CSS variable names.
@@ -97,7 +97,6 @@ export function getAllRulesWithDefault(
 
 /**
  * Plugin settings that get persisted to the document.
- * Note: GitHub token is intentionally excluded for security.
  */
 export interface PluginSettings {
   // Global settings
@@ -120,21 +119,17 @@ export interface PluginSettings {
   cssUseModesAsSelectors: boolean;
   cssIncludeModeComments: boolean; // Deprecated - kept for migration, use includeModeComments instead
 
-  // GitHub tab settings (excluding token for security)
+  // GitHub settings
   githubRepository: string;
+  githubToken: string;
   githubWorkflowFileName: string;
   githubExportTypes: ExportType[];
-  githubCssSelector: string;
-  githubUseModesAsSelectors: boolean;
 
   // Rem base variable (global setting)
   remBaseVariableId?: string;
 
   // CSS tab settings
   cssExportAsCalcExpressions: boolean;
-
-  // SCSS tab settings
-  scssExportAsCalcExpressions: boolean;
 
   // Name format settings (global)
   nameFormatRules: NameFormatRule[]; // Custom rules only (default rule is computed)
@@ -195,8 +190,12 @@ export interface CollectionInfo {
 /**
  * Settings that can be exported/imported (excludes UI state and sensitive data).
  * Uses names instead of IDs for portability across documents.
+ * Note: githubToken is excluded for security - never export tokens.
  */
-export type ExportableSettings = Omit<PluginSettings, 'selectedCollections' | 'remBaseVariableId'> & {
+export type ExportableSettings = Omit<
+  PluginSettings,
+  'selectedCollections' | 'remBaseVariableId' | 'githubToken'
+> & {
   selectedCollections: string[]; // Collection names instead of IDs
   remBaseVariable?: string; // Variable path instead of ID
 };
@@ -217,7 +216,6 @@ export type PluginMessage =
   | { type: 'get-numeric-variables' }
   | { type: 'get-variable-names' }
   | { type: 'export-css'; options: ExportOptions }
-  | { type: 'export-scss'; options: ExportOptions }
   | { type: 'export-json'; options: ExportOptions }
   | { type: 'export-typescript'; options: ExportOptions }
   | { type: 'github-dispatch'; githubOptions: GitHubDispatchOptions }
@@ -244,7 +242,6 @@ export type UIMessage =
   | { type: 'numeric-variables-list'; variables: NumericVariableInfo[] }
   | { type: 'variable-names-list'; names: string[] }
   | { type: 'css-result'; css: string }
-  | { type: 'scss-result'; scss: string }
   | { type: 'json-result'; json: string }
   | { type: 'typescript-result'; typescript: string }
   | { type: 'github-dispatch-success'; message: string }

@@ -24,13 +24,11 @@ const mockSettings: PluginSettings = {
   cssUseModesAsSelectors: false,
   cssIncludeModeComments: true,
   githubRepository: 'org/repo',
+  githubToken: '',
   githubWorkflowFileName: 'update.yml',
   githubExportTypes: ['css'],
-  githubCssSelector: ':root',
-  githubUseModesAsSelectors: false,
   remBaseVariableId: 'var-1',
   cssExportAsCalcExpressions: false,
-  scssExportAsCalcExpressions: false,
   nameFormatRules: [],
   nameFormatCasing: 'kebab',
   nameFormatAdvanced: false,
@@ -277,10 +275,7 @@ describe('useSettingsExport', () => {
           githubRepository: '',
           githubWorkflowFileName: 'update.yml',
           githubExportTypes: ['css'],
-          githubCssSelector: ':root',
-          githubUseModesAsSelectors: false,
           cssExportAsCalcExpressions: false,
-          scssExportAsCalcExpressions: false,
           nameFormatRules: [],
           syncCodeSyntax: false,
         },
@@ -302,12 +297,10 @@ describe('useSettingsExport', () => {
 
     it('should resolve variable path via plugin message', async () => {
       let messageCallback: ((msg: unknown) => void) | null = null;
-      vi.spyOn(pluginBridge, 'onMessage').mockImplementation(
-        ((cb: (msg: unknown) => void) => {
-          messageCallback = cb;
-          return vi.fn();
-        }) as typeof pluginBridge.onMessage
-      );
+      vi.spyOn(pluginBridge, 'onMessage').mockImplementation(((cb: (msg: unknown) => void) => {
+        messageCallback = cb;
+        return vi.fn();
+      }) as typeof pluginBridge.onMessage);
       vi.spyOn(pluginBridge, 'postMessage').mockImplementation(() => {
         setTimeout(() => {
           messageCallback?.({
@@ -341,11 +334,8 @@ describe('useSettingsExport', () => {
           githubRepository: '',
           githubWorkflowFileName: 'update.yml',
           githubExportTypes: ['css'],
-          githubCssSelector: ':root',
-          githubUseModesAsSelectors: false,
           remBaseVariable: 'Primitives/Base',
           cssExportAsCalcExpressions: false,
-          scssExportAsCalcExpressions: false,
           nameFormatRules: [],
           syncCodeSyntax: false,
         },
@@ -388,10 +378,7 @@ describe('useSettingsExport', () => {
           githubRepository: '',
           githubWorkflowFileName: 'update.yml',
           githubExportTypes: ['css'],
-          githubCssSelector: ':root',
-          githubUseModesAsSelectors: false,
           cssExportAsCalcExpressions: false,
-          scssExportAsCalcExpressions: false,
           nameFormatRules: [],
           syncCodeSyntax: false,
         },

@@ -82,23 +82,6 @@ describe('useExportListener', () => {
     expect(result.current.status.message).toBe('Generated successfully!');
   });
 
-  it('should update output when receiving scss-result message', () => {
-    const { result } = renderHook(() =>
-      useExportListener({
-        resultType: 'scss-result',
-        filename: 'variables.scss',
-        mimeType: 'text/scss',
-      })
-    );
-
-    act(() => {
-      messageHandler?.({ type: 'scss-result', scss: '$color: red;' } as UIMessage);
-    });
-
-    expect(result.current.output).toBe('$color: red;');
-    expect(result.current.status.type).toBe('success');
-  });
-
   it('should update output when receiving json-result message', () => {
     const { result } = renderHook(() =>
       useExportListener({
@@ -161,7 +144,7 @@ describe('useExportListener', () => {
     );
 
     act(() => {
-      messageHandler?.({ type: 'scss-result', scss: '$color: red;' } as UIMessage);
+      messageHandler?.({ type: 'json-result', json: '{"color": "red"}' } as UIMessage);
     });
 
     expect(result.current.output).toBe('');

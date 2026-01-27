@@ -324,13 +324,13 @@ describe('github', () => {
         stderr: '',
       });
 
-      await handleBranchAndPR(mockInputs, mockPayload, ['file.css', 'file.scss']);
+      await handleBranchAndPR(mockInputs, mockPayload, ['file.css', 'file.json']);
 
       const createCall = mockOctokit.rest.pulls.create.mock.calls[0][0];
       expect(createCall.body).toContain('Figma Variables Update');
       expect(createCall.body).toContain('test.figma');
       expect(createCall.body).toContain('- `file.css`');
-      expect(createCall.body).toContain('- `file.scss`');
+      expect(createCall.body).toContain('- `file.json`');
     });
   });
 
@@ -586,13 +586,5 @@ describe('github', () => {
       expect(result.updated).toBe(true);
     });
 
-    it('should handle multiple var() references in SCSS conversion', async () => {
-      // This tests the regex replacement in scssExporter
-      const scssValue = 'var(--color-primary) and var(--color-secondary)';
-      const result = scssValue.replace(/var\(--([^)]+)\)/g, (_, varName) => {
-        return `$${varName}`;
-      });
-      expect(result).toBe('$color-primary and $color-secondary');
-    });
   });
 });

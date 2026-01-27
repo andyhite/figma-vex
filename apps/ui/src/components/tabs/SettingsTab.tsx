@@ -3,6 +3,7 @@ import { GeneralSettings } from '../settings/GeneralSettings';
 import { VariablesSettings } from '../settings/VariablesSettings';
 import { CalculationsSettings } from '../settings/CalculationsSettings';
 import { StylesSettings } from '../settings/StylesSettings';
+import { GitHubSettings } from '../settings/GitHubSettings';
 import { BackupSettings } from '../settings/BackupSettings';
 import type {
   StyleType,
@@ -10,6 +11,7 @@ import type {
   StyleSummary,
   NameFormatRule,
   CasingOption,
+  ExportType,
 } from '@figma-vex/shared';
 
 interface Collection {
@@ -49,14 +51,12 @@ interface SettingsTabProps {
   onNumberPrecisionChange: (precision: number) => void;
 
   // CSS export options
+  cssSelector: string;
+  onCssSelectorChange: (selector: string) => void;
   cssExportAsCalcExpressions: boolean;
   onCssExportAsCalcExpressionsChange: (value: boolean) => void;
   cssUseModesAsSelectors: boolean;
   onCssUseModesAsSelectorsChange: (value: boolean) => void;
-
-  // SCSS export options
-  scssExportAsCalcExpressions: boolean;
-  onScssExportAsCalcExpressionsChange: (value: boolean) => void;
 
   // Style options
   includeStyles: boolean;
@@ -81,6 +81,18 @@ interface SettingsTabProps {
   // Debug mode
   debugMode: boolean;
   onDebugModeChange: (enabled: boolean) => void;
+
+  // GitHub settings
+  initialGithubRepository?: string;
+  initialGithubToken?: string;
+  initialGithubWorkflowFileName?: string;
+  initialGithubExportTypes?: ExportType[];
+  onGithubSettingsChange?: (settings: {
+    githubRepository: string;
+    githubToken: string;
+    githubWorkflowFileName: string;
+    githubExportTypes: ExportType[];
+  }) => void;
 
   // Import/Export/Reset
   onExportSettings: () => void;
@@ -109,12 +121,12 @@ export function SettingsTab({
   onRemBaseVariableChange,
   numberPrecision,
   onNumberPrecisionChange,
+  cssSelector,
+  onCssSelectorChange,
   cssExportAsCalcExpressions,
   onCssExportAsCalcExpressionsChange,
   cssUseModesAsSelectors,
   onCssUseModesAsSelectorsChange,
-  scssExportAsCalcExpressions,
-  onScssExportAsCalcExpressionsChange,
   includeStyles,
   onIncludeStylesChange,
   styleOutputMode,
@@ -133,6 +145,11 @@ export function SettingsTab({
   onSyncCodeSyntaxChange,
   debugMode,
   onDebugModeChange,
+  initialGithubRepository,
+  initialGithubToken,
+  initialGithubWorkflowFileName,
+  initialGithubExportTypes,
+  onGithubSettingsChange,
   onExportSettings,
   onImportSettings,
   onResetSettings,
@@ -180,12 +197,12 @@ export function SettingsTab({
             onRemBaseVariableChange={onRemBaseVariableChange}
             numberPrecision={numberPrecision}
             onNumberPrecisionChange={onNumberPrecisionChange}
+            cssSelector={cssSelector}
+            onCssSelectorChange={onCssSelectorChange}
             cssExportAsCalcExpressions={cssExportAsCalcExpressions}
             onCssExportAsCalcExpressionsChange={onCssExportAsCalcExpressionsChange}
             cssUseModesAsSelectors={cssUseModesAsSelectors}
             onCssUseModesAsSelectorsChange={onCssUseModesAsSelectorsChange}
-            scssExportAsCalcExpressions={scssExportAsCalcExpressions}
-            onScssExportAsCalcExpressionsChange={onScssExportAsCalcExpressionsChange}
           />
         )}
         {activeSettingsTab === 'styles' && (
@@ -198,6 +215,15 @@ export function SettingsTab({
             onStyleTypesChange={onStyleTypesChange}
             styleCounts={styleCounts}
             loading={stylesLoading}
+          />
+        )}
+        {activeSettingsTab === 'github' && (
+          <GitHubSettings
+            initialRepository={initialGithubRepository}
+            initialToken={initialGithubToken}
+            initialWorkflowFileName={initialGithubWorkflowFileName}
+            initialExportTypes={initialGithubExportTypes}
+            onSettingsChange={onGithubSettingsChange}
           />
         )}
         {activeSettingsTab === 'backup' && (

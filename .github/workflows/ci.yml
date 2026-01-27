@@ -123,7 +123,7 @@ jobs:
                   defaultUnit: "px",
                   remBase: 16
                 },
-                export_types: ["css", "scss", "json", "typescript"],
+                export_types: ["css", "json", "typescript"],
                 figma_file: "Test Design File",
                 generated_at: new Date().toISOString()
               }

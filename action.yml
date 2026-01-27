@@ -19,9 +19,6 @@ inputs:
   css-path:
     description: 'Path to write CSS variables'
     required: false
-  scss-path:
-    description: 'Path to write SCSS variables'
-    required: false
   json-path:
     description: 'Path to write JSON tokens'
     required: false

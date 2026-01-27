@@ -19,13 +19,11 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   cssUseModesAsSelectors: false,
   cssIncludeModeComments: true, // Deprecated, kept for migration
   githubRepository: '',
+  githubToken: '',
   githubWorkflowFileName: 'update-variables.yml',
   githubExportTypes: ['css', 'json'],
-  githubCssSelector: ':root',
-  githubUseModesAsSelectors: false,
   remBaseVariableId: undefined,
   cssExportAsCalcExpressions: false,
-  scssExportAsCalcExpressions: false,
   nameFormatRules: [], // Custom rules only (default is computed from prefix + casing)
   nameFormatCasing: 'kebab',
   nameFormatAdvanced: false,

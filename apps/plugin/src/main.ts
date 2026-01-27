@@ -3,7 +3,6 @@
 import type { PluginMessage, UIMessage, StyleCollection, PluginSettings } from '@figma-vex/shared';
 import { UI_CONFIG } from '@figma-vex/shared';
 import { exportToCss } from './exporters/cssExporter';
-import { exportToScss } from './exporters/scssExporter';
 import { exportToJson } from './exporters/jsonExporter';
 import { exportToTypeScript } from './exporters/typescriptExporter';
 import {
@@ -217,25 +216,6 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       }
       const css = await exportToCss(variables, collections, fileName, options, styles);
       postToUI({ type: 'css-result', css });
-      break;
-    }
-
-    case 'export-scss': {
-      const options = mergeWithDefaults('scss', msg.options);
-      // Sync calculated values to Figma if enabled
-      if (options.syncCalculations) {
-        await syncCalculatedValues(variables, collections, options.prefix ?? '');
-      }
-      // Sync code syntax to Figma if enabled
-      if (options.syncCodeSyntax && options.nameFormatRules?.length) {
-        await syncVariableCodeSyntax(variables, options.nameFormatRules);
-      }
-      let styles: StyleCollection | undefined;
-      if (options.includeStyles) {
-        styles = await fetchAllStyles();
-      }
-      const scss = await exportToScss(variables, collections, fileName, options, styles);
-      postToUI({ type: 'scss-result', scss });
       break;
     }
 

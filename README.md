@@ -158,7 +158,7 @@ figma-vex/
 ├── apps/
 │   ├── plugin/              # Figma plugin backend (runs in sandbox)
 │   │   └── src/
-│   │       ├── exporters/   # CSS, SCSS, JSON, TypeScript exporters
+│   │       ├── exporters/   # CSS, JSON, TypeScript exporters
 │   │       ├── formatters/  # Color, name, number formatting
 │   │       ├── services/    # GitHub, value resolver
 │   │       ├── utils/       # Description parser, collection utils
@@ -237,7 +237,6 @@ The plugin sends a `repository_dispatch` event with:
   {
     "exports": {
       "css": "...",
-      "scss": "...",
       "json": "...",
       "typescript": "..."
     },

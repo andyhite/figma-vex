@@ -50,7 +50,6 @@ jobs:
           base-branch: main
           pr-title: 'test: update design tokens (automated test)'
           css-path: 'test-output/tokens.css'
-          scss-path: 'test-output/tokens.scss'
           json-path: 'test-output/tokens.json'
           typescript-path: 'test-output/tokens.ts'
 
@@ -68,7 +67,6 @@ jobs:
             echo "- **PR Title:** test: update design tokens (automated test)"
             echo "- **Files that would be written:**"
             echo "  - test-output/tokens.css"
-            echo "  - test-output/tokens.scss"
             echo "  - test-output/tokens.json"
             echo "  - test-output/tokens.ts"
             echo ""

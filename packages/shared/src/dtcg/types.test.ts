@@ -176,7 +176,7 @@ describe('DTCG Types', () => {
           defaultUnit: 'px',
           remBase: 16,
         },
-        export_types: ['css', 'scss'],
+        export_types: ['css', 'json'],
       };
       expect(payload.document).toBeDefined();
       expect(payload.settings).toBeDefined();

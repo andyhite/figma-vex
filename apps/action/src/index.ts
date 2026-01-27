@@ -4,7 +4,7 @@
 
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { convertToCss, convertToScss, convertToTypeScript } from '@figma-vex/shared';
+import { convertToCss, convertToTypeScript } from '@figma-vex/shared';
 import { writeFiles } from './files.js';
 import { handleBranchAndPR } from './github.js';
 import { createPRBody } from './pr/body.js';
@@ -14,11 +14,11 @@ import type { ActionInputs, FileWrite, RepositoryDispatchPayload } from './types
  * Validates that at least one path input is provided
  */
 export function validateInputs(inputs: ActionInputs): void {
-  const hasPath = inputs.cssPath || inputs.scssPath || inputs.jsonPath || inputs.typescriptPath;
+  const hasPath = inputs.cssPath || inputs.jsonPath || inputs.typescriptPath;
 
   if (!hasPath) {
     throw new Error(
-      'At least one path input must be provided (css-path, scss-path, json-path, or typescript-path)'
+      'At least one path input must be provided (css-path, json-path, or typescript-path)'
     );
   }
 }
@@ -26,7 +26,7 @@ export function validateInputs(inputs: ActionInputs): void {
 /**
  * Valid export type values
  */
-const VALID_EXPORT_TYPES = ['css', 'scss', 'json', 'typescript'] as const;
+const VALID_EXPORT_TYPES = ['css', 'json', 'typescript'] as const;
 type ValidExportType = (typeof VALID_EXPORT_TYPES)[number];
 
 /**
@@ -105,13 +105,6 @@ export function collectFilesToWrite(
     });
   }
 
-  if (inputs.scssPath && export_types.includes('scss')) {
-    files.push({
-      path: inputs.scssPath,
-      content: convertToScss(document, settings),
-    });
-  }
-
   if (inputs.jsonPath && export_types.includes('json')) {
     files.push({
       path: inputs.jsonPath,
@@ -141,7 +134,6 @@ async function run(): Promise<void> {
       baseBranch: core.getInput('base-branch') || undefined,
       prTitle: core.getInput('pr-title') || 'chore: update design tokens from figma',
       cssPath: core.getInput('css-path') || undefined,
-      scssPath: core.getInput('scss-path') || undefined,
       jsonPath: core.getInput('json-path') || undefined,
       typescriptPath: core.getInput('typescript-path') || undefined,
     };
@@ -179,27 +171,33 @@ async function run(): Promise<void> {
       core.info(
         '🔍 Dry-run mode enabled - previewing changes without writing files or creating PR'
       );
-      core.info('');
 
-      // Output PR title
-      core.info(`📝 PR Title: ${inputs.prTitle}`);
-      core.info('');
-
-      // Output PR body
+      // Generate PR body
       const prBody = createPRBody(typedPayload, filePaths);
-      core.info('📄 PR Description:');
-      core.info('---');
-      core.info(prBody);
-      core.info('---');
-      core.info('');
 
-      // Output file contents
-      core.info(`📁 Files to be written (${filesToWrite.length}):`);
+      // Write to job summary
+      core.summary.addHeading('Dry-Run Preview', 2);
+      core.summary.addRaw('No changes were made. This is a preview of what would be created.\n\n');
+
+      // PR Title
+      core.summary.addHeading('PR Title', 3);
+      core.summary.addCodeBlock(inputs.prTitle, 'text');
+
+      // PR Description
+      core.summary.addHeading('PR Description', 3);
+      core.summary.addDetails('Click to expand', `\n\n${prBody}\n\n`);
+
+      // Files
+      core.summary.addHeading(`Files (${filesToWrite.length})`, 3);
       for (const file of filesToWrite) {
-        core.info('');
-        core.info(`=== ${file.path} ===`);
-        core.info(file.content);
+        const ext = file.path.split('.').pop() || 'text';
+        core.summary.addDetails(file.path, `\n\n\`\`\`${ext}\n${file.content}\n\`\`\`\n\n`);
       }
+
+      core.summary.addSeparator();
+      core.summary.addRaw('✅ **Dry-run complete** - no changes were made\n');
+
+      await core.summary.write();
 
       // Set dry-run outputs
       core.setOutput('pr-url', '');
@@ -208,8 +206,7 @@ async function run(): Promise<void> {
       core.setOutput('updated', 'false');
       core.setOutput('dry-run', 'true');
 
-      core.info('');
-      core.info('✅ Dry-run complete - no changes were made');
+      core.info('✅ Dry-run complete - see job summary for preview');
       return;
     }
 

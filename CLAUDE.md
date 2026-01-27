@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Vex is a Figma plugin that exports variables to CSS custom properties, SCSS, JSON (Style Dictionary format), and TypeScript with configurable units and color formats. It features a React-based UI, GitHub integration for CI/CD workflows, and a corresponding GitHub Action.
+Vex is a Figma plugin that exports variables to CSS custom properties, JSON (Style Dictionary format), and TypeScript with configurable units and color formats. It features a React-based UI, GitHub integration for CI/CD workflows, and a corresponding GitHub Action.
 
 ## Commands
 
@@ -63,14 +63,14 @@ The plugin and UI communicate via typed messages defined in `packages/shared/src
 
 ### Key Plugin Modules
 
-- **exporters/** - Format-specific exporters (CSS, SCSS, JSON, TypeScript)
+- **exporters/** - Format-specific exporters (CSS, JSON, TypeScript)
 - **formatters/** - Color, name, and number formatting
 - **services/** - GitHub integration, value resolution, expression evaluation
 - **utils/** - Description parser (reads `unit:`, `format:`, `expression:` from variable descriptions), glob matching for name format rules
 
 ### Key UI Patterns
 
-- Tab-based interface with export format tabs (CSS, SCSS, JSON, TypeScript, GitHub) plus Settings and Help
+- Tab-based interface with export format tabs (CSS, JSON, TypeScript, GitHub) plus Settings and Help
 - Custom hooks in `apps/ui/src/hooks/` for plugin communication, settings persistence, and UI state
 - Settings are persisted to Figma document via `figma.root.setPluginData()`
 

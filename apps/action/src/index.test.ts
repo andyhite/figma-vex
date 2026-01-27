@@ -55,7 +55,6 @@ describe('validateInputs', () => {
       token: 'test-token',
       prTitle: 'test',
       cssPath: 'styles/tokens.css',
-      scssPath: 'styles/tokens.scss',
       jsonPath: 'tokens.json',
       typescriptPath: 'tokens.d.ts',
     };
@@ -69,7 +68,7 @@ describe('validateInputs', () => {
       prTitle: 'test',
     };
     expect(() => validateInputs(inputs)).toThrow(
-      'At least one path input must be provided (css-path, scss-path, json-path, or typescript-path)'
+      'At least one path input must be provided (css-path, json-path, or typescript-path)'
     );
   });
 
@@ -79,7 +78,6 @@ describe('validateInputs', () => {
       token: 'test-token',
       prTitle: 'test',
       cssPath: undefined,
-      scssPath: undefined,
       jsonPath: undefined,
       typescriptPath: undefined,
     };
@@ -237,7 +235,7 @@ describe('validatePayload', () => {
       client_payload: {
         document: {},
         settings: {},
-        export_types: ['css', 'scss', 'json', 'typescript'],
+        export_types: ['css', 'json', 'typescript'],
         figma_file: 'test.figma',
         generated_at: '2024-01-01',
       },
@@ -284,7 +282,7 @@ describe('collectFilesToWrite', () => {
       dryRun: false,
       token: 'test-token',
       prTitle: 'test',
-      scssPath: 'styles/tokens.scss',
+      typescriptPath: 'tokens.d.ts',
     };
     const payload = createMockPayload(); // export_types: ['css', 'json']
 
@@ -308,23 +306,6 @@ describe('collectFilesToWrite', () => {
     expect(files).toHaveLength(2);
     expect(files.map((f) => f.path)).toContain('styles/tokens.css');
     expect(files.map((f) => f.path)).toContain('tokens.json');
-  });
-
-  it('should collect SCSS file when path and export type match', () => {
-    const inputs: ActionInputs = {
-      dryRun: false,
-      token: 'test-token',
-      prTitle: 'test',
-      scssPath: 'styles/tokens.scss',
-    };
-    const payload = createMockPayload();
-    payload.client_payload.export_types = ['scss'];
-
-    const files = collectFilesToWrite(inputs, payload);
-
-    expect(files).toHaveLength(1);
-    expect(files[0].path).toBe('styles/tokens.scss');
-    expect(files[0].content).toContain('$colors-primary');
   });
 
   it('should collect TypeScript file when path and export type match', () => {

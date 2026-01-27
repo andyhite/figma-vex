@@ -77,7 +77,7 @@ describe('files', () => {
     it('should create directories and write files with validated paths', () => {
       const files: FileWrite[] = [
         { path: 'path/to/file1.css', content: 'content1' },
-        { path: 'path/to/file2.scss', content: 'content2' },
+        { path: 'path/to/file2.json', content: 'content2' },
       ];
 
       writeFiles(files);
@@ -90,7 +90,7 @@ describe('files', () => {
         'utf8'
       );
       expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/workspace/path/to/file2.scss',
+        '/workspace/path/to/file2.json',
         'content2',
         'utf8'
       );

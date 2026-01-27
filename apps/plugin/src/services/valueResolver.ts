@@ -4,7 +4,7 @@ import { toCssName, toPrefixedName, getVariableCssName } from '@plugin/formatter
 import { formatColor } from '@plugin/formatters/colorFormatter';
 import { formatNumber } from '@plugin/formatters/numberFormatter';
 import { resolveExpression } from './expressionResolver';
-import { formatForCss, formatForScss } from './expressionFormatter';
+import { formatForCss } from './expressionFormatter';
 
 /**
  * Resolves a variable value to its string representation.
@@ -21,7 +21,7 @@ import { formatForCss, formatForScss } from './expressionFormatter';
  * @param collections - All available collections (required for expression evaluation)
  * @param exportAsCalcExpressions - If true, output expressions as calc() instead of resolved values
  * @param remBaseVariableId - Optional rem base variable ID for unit conversion
- * @param outputFormat - Output format: 'css' for CSS calc(), 'scss' for SCSS math, undefined for resolved
+ * @param outputFormat - Output format: 'css' for CSS calc(), undefined for resolved
  * @param nameFormatRules - Name format rules including default rule with prefix
  */
 export async function resolveValue(
@@ -36,7 +36,7 @@ export async function resolveValue(
   collections?: VariableCollection[],
   exportAsCalcExpressions = false,
   remBaseVariableId?: string | null,
-  outputFormat?: 'css' | 'scss',
+  outputFormat?: 'css',
   nameFormatRules?: NameFormatRule[]
 ): Promise<string> {
   // Prevent infinite recursion
@@ -48,16 +48,6 @@ export async function resolveValue(
     if (exportAsCalcExpressions && outputFormat && nameFormatRules) {
       if (outputFormat === 'css') {
         const formatted = formatForCss(
-          config.expression,
-          variables,
-          collections,
-          nameFormatRules,
-          remBaseVariableId,
-          config.unit
-        );
-        return formatted;
-      } else if (outputFormat === 'scss') {
-        const formatted = formatForScss(
           config.expression,
           variables,
           collections,

@@ -2,10 +2,9 @@ import { useState, useRef, useCallback } from 'react';
 import { TabBar } from './components/tabs/TabBar';
 import { TabPanel } from './components/tabs/TabPanel';
 import { CssTab } from './components/tabs/CssTab';
-import { ScssTab } from './components/tabs/ScssTab';
 import { JsonTab } from './components/tabs/JsonTab';
 import { TypeScriptTab } from './components/tabs/TypeScriptTab';
-import { GitHubTab } from './components/tabs/GitHubTab';
+import { GitHubActionTab } from './components/tabs/GitHubActionTab';
 import { SettingsTab } from './components/tabs/SettingsTab';
 import { HelpTab } from './components/tabs/HelpTab';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -22,7 +21,6 @@ import { getAllRulesWithDefault } from '@figma-vex/shared';
 
 const TABS = [
   { id: 'css', label: 'CSS' },
-  { id: 'scss', label: 'SCSS' },
   { id: 'json', label: 'JSON' },
   { id: 'typescript', label: 'TypeScript' },
   { id: 'github', label: 'GitHub' },
@@ -32,7 +30,6 @@ const TABS = [
 
 const TAB_DESCRIPTIONS: Record<string, string> = {
   css: 'Export variables as CSS custom properties with customizable selectors and formatting options.',
-  scss: 'Export variables as SCSS variables for use in Sass/SCSS stylesheets.',
   json: 'Export as JSON for use with Style Dictionary or other token tools.',
   typescript: 'Generate TypeScript type definitions for CSS custom properties.',
   github: 'Send generated exports to GitHub via repository_dispatch event.',
@@ -49,8 +46,7 @@ export default function App() {
   const prefix = settings?.prefix ?? DEFAULT_SETTINGS.prefix;
   const includeCollectionComments =
     settings?.includeCollectionComments ?? DEFAULT_SETTINGS.includeCollectionComments;
-  const includeModeComments =
-    settings?.includeModeComments ?? DEFAULT_SETTINGS.includeModeComments;
+  const includeModeComments = settings?.includeModeComments ?? DEFAULT_SETTINGS.includeModeComments;
   const headerBanner = settings?.headerBanner ?? DEFAULT_SETTINGS.headerBanner;
   const syncCalculations = settings?.syncCalculations ?? DEFAULT_SETTINGS.syncCalculations;
   const includeStyles = settings?.includeStyles ?? DEFAULT_SETTINGS.includeStyles;
@@ -60,8 +56,6 @@ export default function App() {
     settings?.remBaseVariableId ?? DEFAULT_SETTINGS.remBaseVariableId ?? null;
   const cssExportAsCalcExpressions =
     settings?.cssExportAsCalcExpressions ?? DEFAULT_SETTINGS.cssExportAsCalcExpressions;
-  const scssExportAsCalcExpressions =
-    settings?.scssExportAsCalcExpressions ?? DEFAULT_SETTINGS.scssExportAsCalcExpressions;
   const nameFormatRules = settings?.nameFormatRules ?? DEFAULT_SETTINGS.nameFormatRules;
   const nameFormatCasing = settings?.nameFormatCasing ?? DEFAULT_SETTINGS.nameFormatCasing;
   const nameFormatAdvanced = settings?.nameFormatAdvanced ?? DEFAULT_SETTINGS.nameFormatAdvanced;
@@ -142,8 +136,6 @@ export default function App() {
     updateSettings({ cssExportAsCalcExpressions: value });
   const handleCssUseModesAsSelectorsChange = (value: boolean) =>
     updateSettings({ cssUseModesAsSelectors: value });
-  const handleScssExportAsCalcExpressionsChange = (value: boolean) =>
-    updateSettings({ scssExportAsCalcExpressions: value });
   const handleDebugModeChange = (enabled: boolean) => updateSettings({ debugMode: enabled });
   const handleActiveSettingsTabChange = (tab: string) => setActiveSettingsTab(tab);
 
@@ -293,29 +285,7 @@ export default function App() {
             numberPrecision={numberPrecision}
             useModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
             exportAsCalcExpressions={cssExportAsCalcExpressions}
-            initialSelector={settings?.cssSelector}
-            onSelectorChange={(selector) => updateSettings({ cssSelector: selector })}
-          />
-        </ErrorBoundary>
-      </TabPanel>
-
-      <TabPanel id="scss" activeTab={activeTab}>
-        <ErrorBoundary>
-          <ScssTab
-            prefix={prefix}
-            selectedCollections={selectedCollections}
-            includeCollectionComments={includeCollectionComments}
-            includeModeComments={includeModeComments}
-            headerBanner={headerBanner}
-            syncCalculations={syncCalculations}
-            includeStyles={includeStyles}
-            styleOutputMode={styleOutputMode}
-            styleTypes={styleTypes}
-            remBaseVariableId={remBaseVariableId}
-            nameFormatRules={allNameFormatRules}
-            syncCodeSyntax={syncCodeSyntax}
-            numberPrecision={numberPrecision}
-            exportAsCalcExpressions={scssExportAsCalcExpressions}
+            selector={settings?.cssSelector ?? ':root'}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -352,7 +322,7 @@ export default function App() {
 
       <TabPanel id="github" activeTab={activeTab}>
         <ErrorBoundary>
-          <GitHubTab
+          <GitHubActionTab
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
@@ -362,12 +332,12 @@ export default function App() {
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
             numberPrecision={numberPrecision}
-            initialRepository={settings?.githubRepository}
-            initialWorkflowFileName={settings?.githubWorkflowFileName}
-            initialExportTypes={settings?.githubExportTypes}
-            initialCssSelector={settings?.githubCssSelector}
-            initialUseModesAsSelectors={settings?.githubUseModesAsSelectors}
-            onSettingsChange={(githubSettings) => updateSettings(githubSettings)}
+            repository={settings?.githubRepository ?? ''}
+            token={settings?.githubToken ?? ''}
+            workflowFileName={settings?.githubWorkflowFileName ?? 'update-variables.yml'}
+            exportTypes={settings?.githubExportTypes ?? ['css', 'json']}
+            cssSelector={settings?.cssSelector ?? ':root'}
+            useModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -391,12 +361,12 @@ export default function App() {
             onRemBaseVariableChange={handleRemBaseVariableChange}
             numberPrecision={numberPrecision}
             onNumberPrecisionChange={handleNumberPrecisionChange}
+            cssSelector={settings?.cssSelector ?? ':root'}
+            onCssSelectorChange={(selector) => updateSettings({ cssSelector: selector })}
             cssExportAsCalcExpressions={cssExportAsCalcExpressions}
             onCssExportAsCalcExpressionsChange={handleCssExportAsCalcExpressionsChange}
             cssUseModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
             onCssUseModesAsSelectorsChange={handleCssUseModesAsSelectorsChange}
-            scssExportAsCalcExpressions={scssExportAsCalcExpressions}
-            onScssExportAsCalcExpressionsChange={handleScssExportAsCalcExpressionsChange}
             includeStyles={includeStyles}
             onIncludeStylesChange={handleIncludeStylesChange}
             styleOutputMode={styleOutputMode}
@@ -415,6 +385,11 @@ export default function App() {
             onSyncCodeSyntaxChange={handleSyncCodeSyntaxChange}
             debugMode={debugMode}
             onDebugModeChange={handleDebugModeChange}
+            initialGithubRepository={settings?.githubRepository}
+            initialGithubToken={settings?.githubToken}
+            initialGithubWorkflowFileName={settings?.githubWorkflowFileName}
+            initialGithubExportTypes={settings?.githubExportTypes}
+            onGithubSettingsChange={(githubSettings) => updateSettings(githubSettings)}
             onExportSettings={handleExportSettings}
             onImportSettings={handleImportSettings}
             onResetSettings={handleResetSettings}

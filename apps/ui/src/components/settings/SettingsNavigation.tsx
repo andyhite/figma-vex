@@ -8,6 +8,7 @@ const TABS = [
   { id: 'variables', label: 'Variables' },
   { id: 'calc', label: 'Calc' },
   { id: 'styles', label: 'Styles' },
+  { id: 'github', label: 'GitHub' },
   { id: 'backup', label: 'Data' },
 ];
 

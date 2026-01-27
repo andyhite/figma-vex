@@ -32,6 +32,7 @@ describe('CssTab', () => {
     numberPrecision: 4,
     useModesAsSelectors: false,
     exportAsCalcExpressions: false,
+    selector: ':root',
   };
 
   beforeEach(() => {
@@ -60,13 +61,6 @@ describe('CssTab', () => {
     render(<CssTab {...defaultProps} />);
 
     expect(screen.getByRole('button', { name: 'Generate CSS' })).toBeInTheDocument();
-  });
-
-  it('should render CSS selector input', () => {
-    render(<CssTab {...defaultProps} />);
-
-    expect(screen.getByText('CSS Selector')).toBeInTheDocument();
-    expect(screen.getByDisplayValue(':root')).toBeInTheDocument();
   });
 
   it('should send export-css message when generate is clicked', async () => {

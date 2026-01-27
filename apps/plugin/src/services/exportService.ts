@@ -9,7 +9,7 @@ import type {
   DTCGDocument,
   DTCGConversionSettings,
 } from '@figma-vex/shared';
-import { convertToCss, convertToScss, convertToTypeScript } from '@figma-vex/shared';
+import { convertToCss, convertToTypeScript } from '@figma-vex/shared';
 import { serializeToDTCG } from '../serializers/dtcgSerializer';
 import { fetchAllStyles } from './styleResolver';
 import { mergeWithDefaults } from '../utils/optionDefaults';
@@ -48,8 +48,6 @@ function convertToFormat(
   switch (type) {
     case 'css':
       return convertToCss(document, settings);
-    case 'scss':
-      return convertToScss(document, settings);
     case 'typescript':
       return convertToTypeScript(document, settings);
     case 'json':
@@ -111,7 +109,11 @@ export async function prepareGitHubPayload(
     exportTypes: ExportType[];
     exportOptions: ExportOptions;
   }
-): Promise<{ document: DTCGDocument; settings: DTCGConversionSettings; export_types: ExportType[] }> {
+): Promise<{
+  document: DTCGDocument;
+  settings: DTCGConversionSettings;
+  export_types: ExportType[];
+}> {
   const styles = options.exportOptions.includeStyles ? await fetchAllStyles() : undefined;
 
   const document = await serializeToDTCG(

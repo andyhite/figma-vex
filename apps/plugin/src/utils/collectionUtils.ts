@@ -16,7 +16,7 @@ export function filterCollections(
 
 /**
  * Gets variables for a collection, sorted by CSS-normalized name.
- * Use this for CSS, SCSS, and TypeScript exports.
+ * Use this for CSS and TypeScript exports.
  */
 export function getCollectionVariables(variables: Variable[], collectionId: string): Variable[] {
   return variables

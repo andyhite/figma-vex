@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatCssName, formatScssName } from './names';
+import { formatCssName } from './names';
 import type { DTCGConversionSettings } from '../types';
 
 describe('DTCG Name Transforms', () => {
@@ -83,35 +83,6 @@ describe('DTCG Name Transforms', () => {
     it('should handle empty path', () => {
       const name = formatCssName([], baseOptions);
       expect(name).toBe('');
-    });
-  });
-
-  describe('formatScssName', () => {
-    it('should format name with $ prefix', () => {
-      const name = formatScssName(['Collection', 'Token'], baseOptions);
-      expect(name).toBe('$collection-token');
-    });
-
-    it('should include prefix in SCSS name', () => {
-      const options = { ...baseOptions, prefix: 'ds' };
-      const name = formatScssName(['Collection', 'Token'], options);
-      expect(name).toBe('$ds-collection-token');
-    });
-
-    it('should apply same rules as CSS name formatting', () => {
-      const options: DTCGConversionSettings = {
-        ...baseOptions,
-        nameFormatRules: [
-          {
-            id: 'test-rule',
-            pattern: 'Collection/Token',
-            replacement: 'custom-name',
-            enabled: true,
-          },
-        ],
-      };
-      const name = formatScssName(['Collection', 'Token'], options);
-      expect(name).toBe('$custom-name');
     });
   });
 });

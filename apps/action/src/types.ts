@@ -10,7 +10,6 @@ export interface ActionInputs {
   baseBranch?: string;
   prTitle: string;
   cssPath?: string;
-  scssPath?: string;
   jsonPath?: string;
   typescriptPath?: string;
 }

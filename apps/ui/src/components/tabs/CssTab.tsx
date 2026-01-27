@@ -1,10 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Button } from '../common/Button';
 import { ButtonGroup } from '../common/ButtonGroup';
 import { CopyIcon } from '../common/CopyIcon';
 import { DownloadIcon } from '../common/DownloadIcon';
 import { IconButton } from '../common/IconButton';
-import { Input } from '../common/Input';
 import { OutputArea } from '../common/OutputArea';
 import { useExportListener } from '../../hooks/useExportListener';
 import type { ExportOptions, StyleType, StyleOutputMode, NameFormatRule } from '@figma-vex/shared';
@@ -25,8 +24,7 @@ interface CssTabProps {
   numberPrecision: number;
   useModesAsSelectors: boolean;
   exportAsCalcExpressions: boolean;
-  initialSelector?: string;
-  onSelectorChange?: (selector: string) => void;
+  selector: string;
 }
 
 export function CssTab({
@@ -45,16 +43,8 @@ export function CssTab({
   numberPrecision,
   useModesAsSelectors,
   exportAsCalcExpressions,
-  initialSelector = ':root',
-  onSelectorChange,
+  selector,
 }: CssTabProps) {
-  const [selector, setSelector] = useState(initialSelector);
-
-  const handleSelectorChange = (value: string) => {
-    setSelector(value);
-    onSelectorChange?.(value);
-  };
-
   const { output, status, setStatus, handleCopy, handleDownload, sendMessage } = useExportListener({
     resultType: 'css-result',
     filename: 'variables.css',
@@ -106,11 +96,6 @@ export function CssTab({
 
   return (
     <div>
-      <Input
-        label="CSS Selector"
-        value={selector}
-        onChange={(e) => handleSelectorChange(e.target.value)}
-      />
       <ButtonGroup>
         <Button onClick={handleExport}>Generate CSS</Button>
       </ButtonGroup>

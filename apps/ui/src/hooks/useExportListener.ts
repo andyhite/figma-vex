@@ -6,14 +6,13 @@ import type { UIMessage } from '@figma-vex/shared';
 /**
  * Result message types that contain export output
  */
-type ExportResultType = 'css-result' | 'scss-result' | 'json-result' | 'typescript-result';
+type ExportResultType = 'css-result' | 'json-result' | 'typescript-result';
 
 /**
  * Maps result types to their output property names
  */
 const resultPropertyMap: Record<ExportResultType, string> = {
   'css-result': 'css',
-  'scss-result': 'scss',
   'json-result': 'json',
   'typescript-result': 'typescript',
 };

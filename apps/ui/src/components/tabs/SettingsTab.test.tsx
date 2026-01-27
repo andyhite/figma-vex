@@ -24,12 +24,12 @@ describe('SettingsTab', () => {
     onRemBaseVariableChange: vi.fn(),
     numberPrecision: 4,
     onNumberPrecisionChange: vi.fn(),
+    cssSelector: ':root',
+    onCssSelectorChange: vi.fn(),
     cssExportAsCalcExpressions: false,
     onCssExportAsCalcExpressionsChange: vi.fn(),
     cssUseModesAsSelectors: false,
     onCssUseModesAsSelectorsChange: vi.fn(),
-    scssExportAsCalcExpressions: false,
-    onScssExportAsCalcExpressionsChange: vi.fn(),
     includeStyles: false,
     onIncludeStylesChange: vi.fn(),
     styleOutputMode: 'variables' as const,
@@ -63,7 +63,13 @@ describe('SettingsTab', () => {
 
   it('should call onPrefixChange when prefix is updated', async () => {
     const onPrefixChange = vi.fn();
-    render(<SettingsTab {...defaultProps} activeSettingsTab="variables" onPrefixChange={onPrefixChange} />);
+    render(
+      <SettingsTab
+        {...defaultProps}
+        activeSettingsTab="variables"
+        onPrefixChange={onPrefixChange}
+      />
+    );
 
     const input = screen.getByPlaceholderText('e.g., ds, theme');
     await userEvent.type(input, 'ds');
