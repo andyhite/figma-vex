@@ -36,6 +36,10 @@ export function parseDescription(description: string): Partial<TokenConfig> {
   const calcMatch = description.match(CALC_REGEX);
   if (calcMatch) {
     config.expression = calcMatch[1].trim();
+    console.log('[calc:parser] Parsed expression from description:', {
+      description,
+      expression: config.expression,
+    });
   }
 
   return config;

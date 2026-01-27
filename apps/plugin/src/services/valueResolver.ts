@@ -35,12 +35,30 @@ export async function resolveValue(
 
   // Handle expression evaluation if present
   if (config.expression && collections && resolvedType === 'FLOAT') {
+    console.log('[calc] Evaluating expression:', {
+      expression: config.expression,
+      modeId: _modeId,
+      prefix,
+      hasCollections: !!collections,
+      collectionsCount: collections?.length,
+      variablesCount: variables.length,
+    });
+
     const result = await resolveExpression(config, _modeId, variables, collections, prefix);
+
+    console.log('[calc] Expression result:', {
+      expression: config.expression,
+      value: result.value,
+      unit: result.unit,
+      warnings: result.warnings,
+    });
 
     if (result.value !== null && result.warnings.length === 0) {
       // Apply the configured unit/remBase to the evaluated result
       const effectiveConfig = { ...config, unit: result.unit };
-      return formatNumber(result.value, effectiveConfig);
+      const formatted = formatNumber(result.value, effectiveConfig);
+      console.log('[calc] Formatted result:', formatted);
+      return formatted;
     }
     // Fall through to normal resolution if expression failed
     // Warnings are logged but we use the fallback value

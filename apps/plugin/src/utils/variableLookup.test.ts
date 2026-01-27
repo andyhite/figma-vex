@@ -28,16 +28,17 @@ const mockCollections = [
 ] as unknown as VariableCollection[];
 
 describe('buildVariableLookup', () => {
-  it('should create lookup map with CSS variable names as keys', () => {
+  it('should create lookup map with CSS variable names as keys (no collection prefix)', () => {
     const lookup = buildVariableLookup(mockVariables, mockCollections, '');
-    expect(lookup.has('--primitives-spacing-base')).toBe(true);
-    expect(lookup.has('--tokens-typography-font-size-lg')).toBe(true);
-    expect(lookup.has('--primitives-colors-primary')).toBe(true);
+    // Keys should match CSS export format: just variable name, no collection
+    expect(lookup.has('--spacing-base')).toBe(true);
+    expect(lookup.has('--typography-font-size-lg')).toBe(true);
+    expect(lookup.has('--colors-primary')).toBe(true);
   });
 
   it('should include prefix in keys when provided', () => {
     const lookup = buildVariableLookup(mockVariables, mockCollections, 'ds');
-    expect(lookup.has('--ds-primitives-spacing-base')).toBe(true);
+    expect(lookup.has('--ds-spacing-base')).toBe(true);
   });
 
   it('should skip variables with missing collections', () => {
@@ -53,7 +54,7 @@ describe('buildVariableLookup', () => {
 describe('lookupVariable', () => {
   it('should find variable by CSS var() reference', () => {
     const lookup = buildVariableLookup(mockVariables, mockCollections, '');
-    const result = lookupVariable('var(--primitives-spacing-base)', lookup);
+    const result = lookupVariable('var(--spacing-base)', lookup);
     expect(result?.variable.id).toBe('var-1');
   });
 
@@ -65,7 +66,7 @@ describe('lookupVariable', () => {
 
   it('should handle var() syntax correctly', () => {
     const lookup = buildVariableLookup(mockVariables, mockCollections, '');
-    const result = lookupVariable('var(--tokens-typography-font-size-lg)', lookup);
+    const result = lookupVariable('var(--typography-font-size-lg)', lookup);
     expect(result?.variable.id).toBe('var-2');
   });
 

@@ -389,7 +389,7 @@ describe('resolveValue', () => {
     it('should evaluate expression when provided in config', async () => {
       const config = {
         ...DEFAULT_CONFIG,
-        expression: 'var(--primitives-spacing-base) * 2',
+        expression: 'var(--spacing-base) * 2',
       };
       const result = await resolveValue(
         8, // fallback value
@@ -429,7 +429,7 @@ describe('resolveValue', () => {
       const config = {
         ...DEFAULT_CONFIG,
         unit: 'rem' as const,
-        expression: 'var(--primitives-spacing-base) * 2',
+        expression: 'var(--spacing-base) * 2',
       };
       const result = await resolveValue(
         8,
@@ -448,7 +448,7 @@ describe('resolveValue', () => {
     it('should not evaluate expression for non-FLOAT types', async () => {
       const config = {
         ...DEFAULT_CONFIG,
-        expression: 'var(--primitives-spacing-base) * 2',
+        expression: 'var(--spacing-base) * 2',
       };
       const result = await resolveValue(
         'hello',
@@ -467,7 +467,7 @@ describe('resolveValue', () => {
     it('should not evaluate expression when collections not provided', async () => {
       const config = {
         ...DEFAULT_CONFIG,
-        expression: 'var(--primitives-spacing-base) * 2',
+        expression: 'var(--spacing-base) * 2',
       };
       const result = await resolveValue(
         8,

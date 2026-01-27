@@ -54,7 +54,7 @@ describe('resolveExpression', () => {
   it('should resolve simple expression', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--primitives-spacing-base) * 2',
+      expression: 'var(--spacing-base) * 2',
     };
     const result = await resolveExpression(
       config,
@@ -72,7 +72,7 @@ describe('resolveExpression', () => {
   it('should resolve expression with different mode values', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--primitives-spacing-base) * 2',
+      expression: 'var(--spacing-base) * 2',
     };
 
     const result1 = await resolveExpression(
@@ -97,7 +97,7 @@ describe('resolveExpression', () => {
   it('should resolve aliases fully', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--primitives-alias-spacing) * 2',
+      expression: 'var(--alias-spacing) * 2',
     };
     const result = await resolveExpression(
       config,
@@ -114,7 +114,7 @@ describe('resolveExpression', () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
       unit: 'rem',
-      expression: 'var(--primitives-spacing-base) * 2',
+      expression: 'var(--spacing-base) * 2',
     };
     const result = await resolveExpression(
       config,
@@ -148,7 +148,7 @@ describe('resolveExpression', () => {
   it('should return warning for non-numeric variable', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--primitives-colors-primary) * 2',
+      expression: 'var(--colors-primary) * 2',
     };
     const result = await resolveExpression(
       config,
@@ -165,7 +165,7 @@ describe('resolveExpression', () => {
   it('should handle prefix', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--ds-primitives-spacing-base) * 2',
+      expression: 'var(--ds-spacing-base) * 2',
     };
     const result = await resolveExpression(
       config,
@@ -193,12 +193,11 @@ describe('resolveExpression', () => {
   });
 
   it('should resolve cross-collection variable references', async () => {
-    // This test verifies the design doc requirement:
-    // "Cross-collection references allowed"
-    // Combines primitives/spacing-base (col-1) with tokens/typography-font-lg (col-2)
+    // Variables from different collections can be combined in expressions
+    // spacing/base is in primitives (col-1), typography/font-lg is in tokens (col-2)
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--primitives-spacing-base) + var(--tokens-typography-font-lg)',
+      expression: 'var(--spacing-base) + var(--typography-font-lg)',
     };
     const result = await resolveExpression(
       config,

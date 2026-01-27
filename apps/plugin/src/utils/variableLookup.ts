@@ -10,7 +10,7 @@ export interface VariableLookupEntry {
 
 /**
  * Builds a lookup map from CSS variable names to Figma variables.
- * Keys are in the format "--[prefix-]collection-name-variable-name".
+ * Keys are in the format "--[prefix-]variable-name" matching the CSS export format.
  *
  * @param variables - All Figma variables
  * @param collections - All variable collections
@@ -29,10 +29,9 @@ export function buildVariableLookup(
     const collection = collectionMap.get(variable.variableCollectionId);
     if (!collection) continue;
 
-    const collectionPrefix = toCssName(collection.name);
+    // Match the CSS export format: just the variable name, no collection prefix
     const variableName = toCssName(variable.name);
-    const fullName = `${collectionPrefix}-${variableName}`;
-    const cssName = `--${toPrefixedName(fullName, prefix)}`;
+    const cssName = `--${toPrefixedName(variableName, prefix)}`;
 
     lookup.set(cssName, { variable, collection });
   }

@@ -12,12 +12,51 @@ import {
 } from './expressionEvaluator';
 
 /**
+ * Finds the best matching mode ID for a variable based on the current mode context.
+ * Matches by mode name first, then falls back to the first mode of the variable's collection.
+ */
+function findMatchingModeId(
+  variable: Variable,
+  currentModeId: string,
+  currentModeName: string | undefined,
+  collections: VariableCollection[]
+): string | null {
+  const variableCollection = collections.find(c => c.id === variable.variableCollectionId);
+  if (!variableCollection) return null;
+
+  // First try: exact mode ID match (same collection)
+  if (variable.valuesByMode[currentModeId] !== undefined) {
+    return currentModeId;
+  }
+
+  // Second try: match by mode name
+  if (currentModeName) {
+    const matchingMode = variableCollection.modes.find(m => m.name === currentModeName);
+    if (matchingMode && variable.valuesByMode[matchingMode.modeId] !== undefined) {
+      return matchingMode.modeId;
+    }
+  }
+
+  // Fallback: use the first mode of the variable's collection
+  if (variableCollection.modes.length > 0) {
+    const firstMode = variableCollection.modes[0];
+    if (variable.valuesByMode[firstMode.modeId] !== undefined) {
+      return firstMode.modeId;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Resolves a variable value to a number, following aliases if needed.
  */
 async function resolveToNumber(
   variable: Variable,
   modeId: string,
+  modeName: string | undefined,
   variables: Variable[],
+  collections: VariableCollection[],
   depth = 0,
   visited = new Set<string>()
 ): Promise<{ value: number | null; unit: Unit }> {
@@ -30,7 +69,22 @@ async function resolveToNumber(
   }
   visited.add(variable.id);
 
-  const value = variable.valuesByMode[modeId];
+  // Find the correct mode ID for this variable
+  const effectiveModeId = findMatchingModeId(variable, modeId, modeName, collections);
+
+  console.log('[calc:resolver] Mode resolution:', {
+    variableName: variable.name,
+    requestedModeId: modeId,
+    requestedModeName: modeName,
+    effectiveModeId,
+    availableModes: Object.keys(variable.valuesByMode),
+  });
+
+  if (!effectiveModeId) {
+    return { value: null, unit: 'px' };
+  }
+
+  const value = variable.valuesByMode[effectiveModeId];
 
   // Handle alias - resolve to actual value
   if (
@@ -43,7 +97,7 @@ async function resolveToNumber(
     if (!aliasedVar) {
       return { value: null, unit: 'px' };
     }
-    return resolveToNumber(aliasedVar, modeId, variables, depth + 1, visited);
+    return resolveToNumber(aliasedVar, modeId, modeName, variables, collections, depth + 1, visited);
   }
 
   // Handle direct number value
@@ -76,14 +130,31 @@ export async function resolveExpression(
     return { value: null, unit: config.unit, warnings: ['No expression provided'] };
   }
 
+  // Find the current mode name for cross-collection matching
+  let currentModeName: string | undefined;
+  for (const collection of collections) {
+    const mode = collection.modes.find(m => m.modeId === modeId);
+    if (mode) {
+      currentModeName = mode.name;
+      break;
+    }
+  }
+
+  console.log('[calc:resolver] Current mode:', { modeId, modeName: currentModeName });
+
   const lookup = buildVariableLookup(variables, collections, prefix);
   const varRefs = extractVarReferences(expression);
   const context: EvaluationContext = {};
   const warnings: string[] = [];
 
+  console.log('[calc:resolver] Lookup map keys (first 20):', Array.from(lookup.keys()).slice(0, 20));
+  console.log('[calc:resolver] Extracted var refs:', varRefs);
+
   // Resolve each variable reference
   for (const varRef of varRefs) {
     const entry = lookupVariable(varRef, lookup);
+
+    console.log('[calc:resolver] Looking up:', varRef, '-> found:', !!entry);
 
     if (!entry) {
       // Don't warn here - expressionEvaluator will report missing variables
@@ -91,6 +162,12 @@ export async function resolveExpression(
     }
 
     const { variable } = entry;
+
+    console.log('[calc:resolver] Variable:', {
+      name: variable.name,
+      resolvedType: variable.resolvedType,
+      valuesByMode: variable.valuesByMode,
+    });
 
     // Check if variable is numeric
     if (variable.resolvedType !== 'FLOAT') {
@@ -100,7 +177,9 @@ export async function resolveExpression(
       continue;
     }
 
-    const resolved = await resolveToNumber(variable, modeId, variables);
+    const resolved = await resolveToNumber(variable, modeId, currentModeName, variables, collections);
+
+    console.log('[calc:resolver] Resolved to number:', resolved);
 
     if (resolved.value === null) {
       warnings.push(`Could not resolve value for '${varRef}'`);
@@ -109,6 +188,8 @@ export async function resolveExpression(
 
     context[varRef] = { value: resolved.value, unit: resolved.unit };
   }
+
+  console.log('[calc:resolver] Final context:', context);
 
   // Evaluate the expression
   const result = evaluateExpression(expression, context);
