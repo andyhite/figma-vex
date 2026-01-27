@@ -96,6 +96,24 @@ export interface CollectionInfo {
   name: string;
 }
 
+/**
+ * Settings that can be exported/imported (excludes UI state and sensitive data).
+ * Uses names instead of IDs for portability across documents.
+ */
+export type ExportableSettings = Omit<PluginSettings, 'activeTab' | 'selectedCollections' | 'remBaseVariableId'> & {
+  selectedCollections: string[]; // Collection names instead of IDs
+  remBaseVariable?: string; // Variable path instead of ID
+};
+
+/**
+ * Settings export file format.
+ */
+export interface SettingsExportFile {
+  version: number;
+  exportedAt: string; // ISO 8601 timestamp
+  settings: ExportableSettings;
+}
+
 // Messages from UI to Plugin
 export type PluginMessage =
   | { type: 'get-collections' }
@@ -111,7 +129,9 @@ export type PluginMessage =
   | { type: 'save-settings'; settings: PluginSettings }
   | { type: 'load-settings' }
   | { type: 'sync-calculations'; options: ExportOptions }
-  | { type: 'sync-code-syntax'; options: { nameFormatRules: NameFormatRule[]; prefix?: string } };
+  | { type: 'sync-code-syntax'; options: { nameFormatRules: NameFormatRule[]; prefix?: string } }
+  | { type: 'resolve-collection-names'; names: string[] }
+  | { type: 'resolve-variable-path'; path: string };
 
 export interface NumericVariableInfo {
   id: string;
@@ -132,4 +152,6 @@ export type UIMessage =
   | { type: 'error'; message: string }
   | { type: 'settings-loaded'; settings: PluginSettings | null }
   | { type: 'sync-result'; synced: number; failed: number; warnings: string[] }
-  | { type: 'sync-code-syntax-result'; synced: number; skipped: number };
+  | { type: 'sync-code-syntax-result'; synced: number; skipped: number }
+  | { type: 'collection-names-resolved'; results: Array<{ name: string; id: string | null }> }
+  | { type: 'variable-path-resolved'; path: string; id: string | null };

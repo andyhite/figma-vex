@@ -1,3 +1,4 @@
+import { useState, useRef, useCallback } from 'react';
 import { TabBar } from './components/tabs/TabBar';
 import { TabPanel } from './components/tabs/TabPanel';
 import { CssTab } from './components/tabs/CssTab';
@@ -8,11 +9,15 @@ import { GitHubTab } from './components/tabs/GitHubTab';
 import { SettingsTab } from './components/tabs/SettingsTab';
 import { HelpTab } from './components/tabs/HelpTab';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { ImportSettingsModal } from './components/common/ImportSettingsModal';
+import { ConfirmModal } from './components/common/ConfirmModal';
 import { useAutoResize } from './hooks/useAutoResize';
 import { useCollections } from './hooks/useCollections';
 import { useStyles } from './hooks/useStyles';
 import { useSettings, DEFAULT_SETTINGS } from './hooks/useSettings';
-import type { StyleType, StyleOutputMode } from '@figma-vex/shared';
+import { useNumericVariables } from './hooks/useNumericVariables';
+import { useSettingsExport } from './hooks/useSettingsExport';
+import type { StyleType, StyleOutputMode, PluginSettings } from '@figma-vex/shared';
 
 const TABS = [
   { id: 'css', label: 'CSS' },
@@ -68,6 +73,31 @@ export default function App() {
 
   const containerRef = useAutoResize([activeTab]);
   const { styleCounts, loading: stylesLoading } = useStyles();
+  const { variables: numericVariables } = useNumericVariables();
+
+  // Import modal state
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
+  const [importError, setImportError] = useState<string | undefined>();
+  const [importLoading, setImportLoading] = useState(false);
+  const [pendingImportSettings, setPendingImportSettings] = useState<PluginSettings | null>(null);
+  const [importFilename, setImportFilename] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset confirmation state
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+
+  // Get remBaseVariablePath for export
+  const remBaseVariablePath =
+    remBaseVariableId && numericVariables.length > 0
+      ? numericVariables.find((v) => v.id === remBaseVariableId)?.path
+      : undefined;
+
+  // Settings export/import hook
+  const { exportSettings, importSettings } = useSettingsExport({
+    collections,
+    remBaseVariablePath,
+  });
 
   // Update handlers that persist to settings
   const handleTabChange = (tab: string) => updateSettings({ activeTab: tab });
@@ -97,8 +127,116 @@ export default function App() {
     updateSettings({ selectedCollections: newSelected });
   };
 
+  // Export settings handler
+  const handleExportSettings = useCallback(() => {
+    if (!settings) return;
+    exportSettings(settings);
+  }, [settings, exportSettings]);
+
+  // Import settings handler - opens file picker
+  const handleImportSettings = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  // Handle file selection for import
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      setImportFilename(file.name);
+      setImportError(undefined);
+      setImportLoading(true);
+      setImportModalOpen(true);
+
+      // Import and validate settings
+      const result = await importSettings(file);
+
+      setImportLoading(false);
+
+      if (!result.success) {
+        setImportError(result.error || 'Failed to import settings');
+        return;
+      }
+
+      // Store pending settings and warnings
+      if (result.settings) {
+        setPendingImportSettings(result.settings);
+        setImportWarnings(result.warnings || []);
+      }
+    },
+    [importSettings]
+  );
+
+  // Confirm import - apply settings
+  const handleConfirmImport = useCallback(() => {
+    if (pendingImportSettings) {
+      // Apply all settings at once
+      updateSettings(pendingImportSettings);
+      setImportModalOpen(false);
+      setPendingImportSettings(null);
+      setImportWarnings([]);
+      setImportFilename('');
+    }
+  }, [pendingImportSettings, updateSettings]);
+
+  // Cancel import
+  const handleCancelImport = useCallback(() => {
+    setImportModalOpen(false);
+    setPendingImportSettings(null);
+    setImportWarnings([]);
+    setImportError(undefined);
+    setImportFilename('');
+  }, []);
+
+  // Reset settings - show confirmation
+  const handleResetSettings = useCallback(() => {
+    setResetConfirmOpen(true);
+  }, []);
+
+  // Confirm reset - apply defaults
+  const handleConfirmReset = useCallback(() => {
+    updateSettings(DEFAULT_SETTINGS);
+    setResetConfirmOpen(false);
+  }, [updateSettings]);
+
+  // Cancel reset
+  const handleCancelReset = useCallback(() => {
+    setResetConfirmOpen(false);
+  }, []);
+
   return (
     <div ref={containerRef} className="bg-figma-bg text-figma-text">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+      <ImportSettingsModal
+        isOpen={importModalOpen}
+        onClose={handleCancelImport}
+        onConfirm={handleConfirmImport}
+        filename={importFilename}
+        warnings={importWarnings}
+        error={importError}
+        loading={importLoading}
+      />
+      <ConfirmModal
+        isOpen={resetConfirmOpen}
+        onClose={handleCancelReset}
+        onConfirm={handleConfirmReset}
+        title="Reset Settings"
+        message="This will reset all settings to their default values. This action cannot be undone."
+        confirmLabel="Reset"
+        variant="danger"
+      />
       <TabBar tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
       {activeTab !== 'help' && (
@@ -219,6 +357,9 @@ export default function App() {
             onNameFormatRulesChange={handleNameFormatRulesChange}
             syncCodeSyntax={syncCodeSyntax}
             onSyncCodeSyntaxChange={handleSyncCodeSyntaxChange}
+            onExportSettings={handleExportSettings}
+            onImportSettings={handleImportSettings}
+            onResetSettings={handleResetSettings}
           />
         </ErrorBoundary>
       </TabPanel>

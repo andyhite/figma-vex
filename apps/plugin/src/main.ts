@@ -11,6 +11,7 @@ import { mergeWithDefaults } from './utils/optionDefaults';
 import { parseDescription } from './utils/descriptionParser';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
 import { toCustomCssName } from './utils/globMatcher';
+import { lookupByPath } from './utils/variableLookup';
 import type { NameFormatRule } from '@figma-vex/shared';
 
 const SETTINGS_KEY = 'figma-vex-settings';
@@ -341,6 +342,40 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
         synced: result.synced,
         skipped: result.skipped,
       });
+      break;
+    }
+
+    case 'resolve-collection-names': {
+      const results = msg.names.map((name) => {
+        const collection = collections.find((c) => c.name === name);
+        return {
+          name,
+          id: collection?.id ?? null,
+        };
+      });
+      postToUI({
+        type: 'collection-names-resolved',
+        results,
+      });
+      break;
+    }
+
+    case 'resolve-variable-path': {
+      try {
+        const entry = lookupByPath(msg.path, variables, collections);
+        postToUI({
+          type: 'variable-path-resolved',
+          path: msg.path,
+          id: entry?.variable.id ?? null,
+        });
+      } catch {
+        // If lookup fails (e.g., ambiguous path), return null
+        postToUI({
+          type: 'variable-path-resolved',
+          path: msg.path,
+          id: null,
+        });
+      }
       break;
     }
 

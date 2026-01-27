@@ -4,6 +4,7 @@ import { FormGroup } from '../common/FormGroup';
 import { Input } from '../common/Input';
 import { StyleOptions } from '../common/StyleOptions';
 import { NameFormatRules } from '../settings/NameFormatRules';
+import { Button } from '../common/Button';
 import { useNumericVariables } from '../../hooks/useNumericVariables';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
 import { useCallback, useEffect, useState } from 'react';
@@ -54,6 +55,11 @@ interface SettingsTabProps {
   onNameFormatRulesChange: (rules: NameFormatRule[]) => void;
   syncCodeSyntax: boolean;
   onSyncCodeSyntaxChange: (enabled: boolean) => void;
+
+  // Import/Export/Reset
+  onExportSettings: () => void;
+  onImportSettings: () => void;
+  onResetSettings: () => void;
 }
 
 export function SettingsTab({
@@ -79,6 +85,9 @@ export function SettingsTab({
   onNameFormatRulesChange,
   syncCodeSyntax,
   onSyncCodeSyntaxChange,
+  onExportSettings,
+  onImportSettings,
+  onResetSettings,
 }: SettingsTabProps) {
   const { variables: numericVariables, loading: numericVariablesLoading } = useNumericVariables();
   const { sendMessage, listenToMessage } = usePluginMessage();
@@ -208,6 +217,20 @@ export function SettingsTab({
           {syncStatus.skipped > 0 && `, skipped ${syncStatus.skipped}`}
         </div>
       )}
+
+      <div className="border-figma-border mt-6 border-t pt-4">
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={onExportSettings} className="flex-1">
+            Export
+          </Button>
+          <Button variant="secondary" onClick={onImportSettings} className="flex-1">
+            Import
+          </Button>
+          <Button variant="secondary" onClick={onResetSettings} className="flex-1">
+            Reset
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
