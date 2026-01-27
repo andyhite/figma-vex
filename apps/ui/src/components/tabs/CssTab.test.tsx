@@ -45,6 +45,7 @@ describe('CssTab', () => {
         prefix=""
         selectedCollections={[]}
         includeCollectionComments={true}
+        includeModeComments={false}
         syncCalculations={false}
         includeStyles={false}
         styleOutputMode="variables"
@@ -64,6 +65,7 @@ describe('CssTab', () => {
         prefix=""
         selectedCollections={[]}
         includeCollectionComments={true}
+        includeModeComments={false}
         syncCalculations={false}
         includeStyles={false}
         styleOutputMode="variables"
@@ -84,6 +86,7 @@ describe('CssTab', () => {
         prefix="ds"
         selectedCollections={['1']}
         includeCollectionComments={true}
+        includeModeComments={false}
         syncCalculations={false}
         includeStyles={false}
         styleOutputMode="variables"
@@ -104,9 +107,14 @@ describe('CssTab', () => {
         prefix: 'ds',
         useModesAsSelectors: false,
         includeCollectionComments: true,
-        includeModeComments: true,
+        includeModeComments: false,
         selectedCollections: ['1'],
         exportAsCalcExpressions: false,
+        includeStyles: false,
+        styleOutputMode: 'variables',
+        styleTypes: [],
+        syncCalculations: false,
+        syncCodeSyntax: true,
       }),
     });
   });
@@ -117,6 +125,7 @@ describe('CssTab', () => {
         prefix=""
         selectedCollections={[]}
         includeCollectionComments={true}
+        includeModeComments={false}
         syncCalculations={false}
         includeStyles={false}
         styleOutputMode="variables"
@@ -147,6 +156,7 @@ describe('CssTab', () => {
         prefix=""
         selectedCollections={[]}
         includeCollectionComments={true}
+        includeModeComments={false}
         syncCalculations={false}
         includeStyles={false}
         styleOutputMode="variables"
@@ -181,6 +191,7 @@ describe('CssTab', () => {
         prefix=""
         selectedCollections={[]}
         includeCollectionComments={true}
+        includeModeComments={false}
         syncCalculations={false}
         includeStyles={false}
         styleOutputMode="variables"
@@ -217,6 +228,7 @@ describe('CssTab', () => {
         prefix=""
         selectedCollections={[]}
         includeCollectionComments={true}
+        includeModeComments={false}
         syncCalculations={false}
         includeStyles={false}
         styleOutputMode="variables"

@@ -22,6 +22,8 @@ interface CssTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  includeModeComments: boolean; // Global setting from Settings tab
+  headerBanner?: string; // Global setting from Settings tab
   syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
@@ -32,12 +34,10 @@ interface CssTabProps {
   // Persisted settings
   initialSelector?: string;
   initialUseModesAsSelectors?: boolean;
-  initialIncludeModeComments?: boolean;
   initialExportAsCalcExpressions?: boolean;
   onSettingsChange?: (settings: {
     cssSelector: string;
     cssUseModesAsSelectors: boolean;
-    cssIncludeModeComments: boolean;
     cssExportAsCalcExpressions: boolean;
   }) => void;
 }
@@ -46,6 +46,8 @@ export function CssTab({
   prefix,
   selectedCollections,
   includeCollectionComments,
+  includeModeComments,
+  headerBanner,
   syncCalculations,
   includeStyles,
   styleOutputMode,
@@ -55,13 +57,11 @@ export function CssTab({
   syncCodeSyntax,
   initialSelector = ':root',
   initialUseModesAsSelectors = false,
-  initialIncludeModeComments = true,
   initialExportAsCalcExpressions = false,
   onSettingsChange,
 }: CssTabProps) {
   const [selector, setSelector] = useState(initialSelector);
   const [useModesAsSelectors, setUseModesAsSelectors] = useState(initialUseModesAsSelectors);
-  const [includeModeComments, setIncludeModeComments] = useState(initialIncludeModeComments);
   const [exportAsCalcExpressions, setExportAsCalcExpressions] = useState(
     initialExportAsCalcExpressions
   );
@@ -73,7 +73,6 @@ export function CssTab({
     onSettingsChange?.({
       cssSelector: value,
       cssUseModesAsSelectors: useModesAsSelectors,
-      cssIncludeModeComments: includeModeComments,
       cssExportAsCalcExpressions: exportAsCalcExpressions,
     });
   };
@@ -83,17 +82,6 @@ export function CssTab({
     onSettingsChange?.({
       cssSelector: selector,
       cssUseModesAsSelectors: value,
-      cssIncludeModeComments: includeModeComments,
-      cssExportAsCalcExpressions: exportAsCalcExpressions,
-    });
-  };
-
-  const handleIncludeModeCommentsChange = (value: boolean) => {
-    setIncludeModeComments(value);
-    onSettingsChange?.({
-      cssSelector: selector,
-      cssUseModesAsSelectors: useModesAsSelectors,
-      cssIncludeModeComments: value,
       cssExportAsCalcExpressions: exportAsCalcExpressions,
     });
   };
@@ -103,7 +91,6 @@ export function CssTab({
     onSettingsChange?.({
       cssSelector: selector,
       cssUseModesAsSelectors: useModesAsSelectors,
-      cssIncludeModeComments: includeModeComments,
       cssExportAsCalcExpressions: value,
     });
   };
@@ -148,6 +135,7 @@ export function CssTab({
       remBaseVariableId: remBaseVariableId || undefined,
       nameFormatRules: nameFormatRules && nameFormatRules.length > 0 ? nameFormatRules : undefined,
       syncCodeSyntax,
+      headerBanner: headerBanner,
     };
 
     sendMessage({ type: 'export-css', options });
@@ -183,13 +171,6 @@ export function CssTab({
           label="Export modes as separate selectors"
           checked={useModesAsSelectors}
           onChange={(e) => handleUseModesAsSelectorChange(e.target.checked)}
-        />
-      </FormField>
-      <FormField>
-        <Checkbox
-          label="Include mode comments"
-          checked={includeModeComments}
-          onChange={(e) => handleIncludeModeCommentsChange(e.target.checked)}
         />
       </FormField>
       <FormField>

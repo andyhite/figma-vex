@@ -114,7 +114,7 @@ export async function resolveExpression(
   modeId: string,
   variables: Variable[],
   collections: VariableCollection[],
-  prefix: string
+  _prefix: string
 ): Promise<EvaluationResult> {
   const expression = config.expression;
   if (!expression) {

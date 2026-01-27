@@ -38,7 +38,17 @@ describe('JsonTab', () => {
   });
 
   it('should send export-json message when generate is clicked', async () => {
-    render(<JsonTab selectedCollections={['1']} includeCollectionComments={true} />);
+    render(
+      <JsonTab
+        selectedCollections={['1']}
+        includeCollectionComments={true}
+        includeModeComments={false}
+        syncCalculations={false}
+        includeStyles={false}
+        styleOutputMode="variables"
+        styleTypes={[]}
+      />
+    );
 
     const button = screen.getByRole('button', { name: 'Generate JSON' });
     await userEvent.click(button);
@@ -51,12 +61,26 @@ describe('JsonTab', () => {
         includeCollectionComments: true,
         includeModeComments: false,
         selectedCollections: ['1'],
+        includeStyles: false,
+        styleOutputMode: 'variables',
+        styleTypes: [],
+        syncCalculations: false,
       },
     });
   });
 
   it('should display output when json-result message is received', async () => {
-    render(<JsonTab selectedCollections={[]} includeCollectionComments={true} />);
+    render(
+      <JsonTab
+        selectedCollections={[]}
+        includeCollectionComments={true}
+        includeModeComments={false}
+        syncCalculations={false}
+        includeStyles={false}
+        styleOutputMode="variables"
+        styleTypes={[]}
+      />
+    );
 
     act(() => {
       if (messageHandler) {

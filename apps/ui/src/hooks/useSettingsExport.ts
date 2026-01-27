@@ -19,28 +19,15 @@ function convertToPluginSettings(
   resolvedCollectionIds: string[],
   resolvedRemBaseVariableId?: string
 ): PluginSettings {
+  // Destructure to omit fields that need transformation - use rest to exclude selectedCollections and remBaseVariable
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { selectedCollections, remBaseVariable, ...restSettings } = settings;
+
   return {
+    ...restSettings,
     activeTab: 'settings', // Default to settings tab
-    prefix: settings.prefix,
     selectedCollections: resolvedCollectionIds,
-    includeCollectionComments: settings.includeCollectionComments,
-    syncCalculations: settings.syncCalculations,
-    includeStyles: settings.includeStyles,
-    styleOutputMode: settings.styleOutputMode,
-    styleTypes: settings.styleTypes,
-    cssSelector: settings.cssSelector,
-    cssUseModesAsSelectors: settings.cssUseModesAsSelectors,
-    cssIncludeModeComments: settings.cssIncludeModeComments,
-    githubRepository: settings.githubRepository,
-    githubWorkflowFileName: settings.githubWorkflowFileName,
-    githubExportTypes: settings.githubExportTypes,
-    githubCssSelector: settings.githubCssSelector,
-    githubUseModesAsSelectors: settings.githubUseModesAsSelectors,
     remBaseVariableId: resolvedRemBaseVariableId,
-    cssExportAsCalcExpressions: settings.cssExportAsCalcExpressions,
-    scssExportAsCalcExpressions: settings.scssExportAsCalcExpressions,
-    nameFormatRules: settings.nameFormatRules,
-    syncCodeSyntax: settings.syncCodeSyntax,
   };
 }
 
@@ -74,27 +61,14 @@ export function useSettingsExport({ collections, remBaseVariablePath }: UseSetti
         .filter((name): name is string => name !== undefined);
 
       // Create exportable settings (omit activeTab, convert IDs to names, convert variable ID to path)
+      // Destructure to omit fields that need transformation - use rest to exclude
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { activeTab, selectedCollections, remBaseVariableId, ...exportRestSettings } = settings;
+
       const exportableSettings: ExportableSettings = {
-        prefix: settings.prefix,
+        ...exportRestSettings,
         selectedCollections: selectedCollectionNames,
-        includeCollectionComments: settings.includeCollectionComments,
-        syncCalculations: settings.syncCalculations,
-        includeStyles: settings.includeStyles,
-        styleOutputMode: settings.styleOutputMode,
-        styleTypes: settings.styleTypes,
-        cssSelector: settings.cssSelector,
-        cssUseModesAsSelectors: settings.cssUseModesAsSelectors,
-        cssIncludeModeComments: settings.cssIncludeModeComments,
-        githubRepository: settings.githubRepository,
-        githubWorkflowFileName: settings.githubWorkflowFileName,
-        githubExportTypes: settings.githubExportTypes,
-        githubCssSelector: settings.githubCssSelector,
-        githubUseModesAsSelectors: settings.githubUseModesAsSelectors,
         remBaseVariable: remBaseVariablePath,
-        cssExportAsCalcExpressions: settings.cssExportAsCalcExpressions,
-        scssExportAsCalcExpressions: settings.scssExportAsCalcExpressions,
-        nameFormatRules: settings.nameFormatRules,
-        syncCodeSyntax: settings.syncCodeSyntax,
       };
 
       const exportFile: SettingsExportFile = {
@@ -213,6 +187,7 @@ export function useSettingsExport({ collections, remBaseVariablePath }: UseSetti
 
         // Resolve variable path to ID (if set)
         if (settings.remBaseVariable) {
+          const remBaseVariablePath = settings.remBaseVariable;
           // Send message to resolve variable path with timeout
           return new Promise((resolve) => {
             let resolved = false;
@@ -223,7 +198,7 @@ export function useSettingsExport({ collections, remBaseVariablePath }: UseSetti
                 resolved = true;
                 cleanup?.();
                 warnings.push(
-                  `Variable path "${settings.remBaseVariable}" resolution timed out - skipping`
+                  `Variable path "${remBaseVariablePath}" resolution timed out - skipping`
                 );
                 const resolvedSettings = convertToPluginSettings(
                   settings,
@@ -241,7 +216,7 @@ export function useSettingsExport({ collections, remBaseVariablePath }: UseSetti
             cleanup = listenToMessage((message) => {
               if (
                 message.type === 'variable-path-resolved' &&
-                message.path === settings.remBaseVariable
+                message.path === remBaseVariablePath
               ) {
                 if (!resolved) {
                   resolved = true;
@@ -252,7 +227,7 @@ export function useSettingsExport({ collections, remBaseVariablePath }: UseSetti
                   if (message.id) {
                     resolvedRemBaseVariableId = message.id;
                   } else {
-                    warnings.push(`Variable path "${settings.remBaseVariable}" not found`);
+                    warnings.push(`Variable path "${remBaseVariablePath}" not found`);
                   }
 
                   const resolvedSettings = convertToPluginSettings(
@@ -270,7 +245,7 @@ export function useSettingsExport({ collections, remBaseVariablePath }: UseSetti
               }
             });
 
-            sendMessage({ type: 'resolve-variable-path', path: settings.remBaseVariable });
+            sendMessage({ type: 'resolve-variable-path', path: remBaseVariablePath });
           });
         } else {
           // No variable to resolve, return immediately

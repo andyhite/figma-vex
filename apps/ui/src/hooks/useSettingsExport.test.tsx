@@ -16,6 +16,7 @@ const mockSettings: PluginSettings = {
   prefix: 'ds',
   selectedCollections: ['col-1', 'col-2'],
   includeCollectionComments: true,
+  includeModeComments: false,
   syncCalculations: false,
   includeStyles: true,
   styleOutputMode: 'variables',
@@ -32,6 +33,8 @@ const mockSettings: PluginSettings = {
   cssExportAsCalcExpressions: false,
   scssExportAsCalcExpressions: false,
   nameFormatRules: [],
+  nameFormatCasing: 'kebab',
+  nameFormatAdvanced: false,
   syncCodeSyntax: false,
 };
 
@@ -315,10 +318,12 @@ describe('useSettingsExport', () => {
 
     it('should resolve variable path via plugin message', async () => {
       let messageCallback: ((msg: unknown) => void) | null = null;
-      vi.spyOn(pluginBridge, 'onMessage').mockImplementation((cb) => {
-        messageCallback = cb;
-        return vi.fn();
-      });
+      vi.spyOn(pluginBridge, 'onMessage').mockImplementation(
+        ((cb: (msg: unknown) => void) => {
+          messageCallback = cb;
+          return vi.fn();
+        }) as typeof pluginBridge.onMessage
+      );
       vi.spyOn(pluginBridge, 'postMessage').mockImplementation(() => {
         setTimeout(() => {
           messageCallback?.({

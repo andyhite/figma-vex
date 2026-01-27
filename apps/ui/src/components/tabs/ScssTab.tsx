@@ -21,6 +21,8 @@ interface ScssTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  includeModeComments: boolean; // Global setting from Settings tab
+  headerBanner?: string; // Global setting from Settings tab
   syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
@@ -37,6 +39,8 @@ export function ScssTab({
   prefix,
   selectedCollections,
   includeCollectionComments,
+  includeModeComments,
+  headerBanner,
   syncCalculations,
   includeStyles,
   styleOutputMode,
@@ -89,7 +93,7 @@ export function ScssTab({
       prefix: prefix.trim() || undefined,
       useModesAsSelectors: false,
       includeCollectionComments,
-      includeModeComments: false,
+      includeModeComments,
       selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
       includeStyles,
       styleOutputMode,
@@ -99,6 +103,7 @@ export function ScssTab({
       remBaseVariableId: remBaseVariableId || undefined,
       nameFormatRules: nameFormatRules && nameFormatRules.length > 0 ? nameFormatRules : undefined,
       syncCodeSyntax,
+      headerBanner: headerBanner,
     };
 
     sendMessage({ type: 'export-scss', options });
@@ -106,6 +111,7 @@ export function ScssTab({
   }, [
     prefix,
     includeCollectionComments,
+    includeModeComments,
     selectedCollections,
     includeStyles,
     styleOutputMode,

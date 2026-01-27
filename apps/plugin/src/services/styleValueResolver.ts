@@ -251,9 +251,9 @@ export function resolveGridValue(style: ResolvedGridStyle): string {
     return 'none';
   }
 
-  // Find column and row grids
-  const columnsGrid = grids.find((g) => g.pattern === 'COLUMNS');
-  const rowsGrid = grids.find((g) => g.pattern === 'ROWS');
+  // Find column and row grids (these are RowsColsLayoutGrid types with count property)
+  const columnsGrid = grids.find((g): g is RowsColsLayoutGrid => g.pattern === 'COLUMNS');
+  const rowsGrid = grids.find((g): g is RowsColsLayoutGrid => g.pattern === 'ROWS');
 
   const values: string[] = [];
 

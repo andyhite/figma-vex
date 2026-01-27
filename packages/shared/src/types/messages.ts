@@ -23,12 +23,45 @@ export type CasingOption = 'kebab' | 'snake' | 'camel' | 'pascal' | 'lower' | 'u
 
 /**
  * Computes the default rule replacement from prefix and casing.
+ * The separator between prefix and content matches the casing convention:
+ * - kebab: hyphen (-)
+ * - snake/upper: underscore (_)
+ * - camel/pascal: no separator
+ * - lower: hyphen (CSS convention)
+ *
  * @param prefix - Optional prefix to prepend
  * @param casing - Casing option
  * @returns Replacement string for the default ** rule
  */
 export function computeDefaultReplacement(prefix: string, casing: CasingOption): string {
-  return prefix ? `${prefix}-\${1:${casing}}` : `\${1:${casing}}`;
+  if (!prefix) {
+    return `\${1:${casing}}`;
+  }
+
+  switch (casing) {
+    case 'kebab':
+      // kebab-case: prefix-content
+      return `${prefix}-\${1:kebab}`;
+    case 'snake':
+      // snake_case: prefix_content
+      return `${prefix}_\${1:snake}`;
+    case 'camel':
+      // camelCase: prefixContent (use pascal for content so first char is uppercase)
+      return `${prefix}\${1:pascal}`;
+    case 'pascal': {
+      // PascalCase: PrefixContent (capitalize prefix)
+      const pascalPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase();
+      return `${pascalPrefix}\${1:pascal}`;
+    }
+    case 'lower':
+      // lowercase: prefix-content (kebab-style, all lowercase)
+      return `${prefix.toLowerCase()}-\${1:kebab}`;
+    case 'upper':
+      // UPPERCASE: PREFIX_CONTENT (screaming snake_case)
+      return `${prefix.toUpperCase()}_\${1:snake}`;
+    default:
+      return `${prefix}-\${1:${casing}}`;
+  }
 }
 
 /**
@@ -71,6 +104,8 @@ export interface PluginSettings {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  includeModeComments: boolean; // Moved from CSS tab to global settings
+  headerBanner?: string; // Custom header banner text for exports
 
   // Calculation settings
   syncCalculations: boolean;
@@ -83,7 +118,7 @@ export interface PluginSettings {
   // CSS tab settings
   cssSelector: string;
   cssUseModesAsSelectors: boolean;
-  cssIncludeModeComments: boolean;
+  cssIncludeModeComments: boolean; // Deprecated - kept for migration, use includeModeComments instead
 
   // GitHub tab settings (excluding token for security)
   githubRepository: string;
@@ -106,6 +141,9 @@ export interface PluginSettings {
   nameFormatCasing: CasingOption;
   nameFormatAdvanced: boolean; // Whether to show advanced rules UI
   syncCodeSyntax: boolean;
+
+  // Settings tab organization
+  activeSettingsTab?: string; // Which sub-tab is active in Settings tab
 }
 
 export interface ExportOptions {
@@ -128,6 +166,8 @@ export interface ExportOptions {
   nameFormatRules?: NameFormatRule[];
   // Sync code syntax to Figma before export
   syncCodeSyntax?: boolean;
+  // Custom header banner (overrides default auto-generated header)
+  headerBanner?: string;
 }
 
 export interface GitHubDispatchOptions {

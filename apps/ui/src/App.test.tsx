@@ -31,7 +31,7 @@ describe('App', () => {
       if (renderResult && renderResult.container) {
         try {
           renderResult.rerender(<App />);
-        } catch (e) {
+        } catch {
           // Component may have been unmounted, ignore
         }
       }
@@ -46,6 +46,7 @@ describe('App', () => {
 
     vi.spyOn(useStyles, 'useStyles').mockReturnValue({
       styleCounts: { paintCount: 5, textCount: 3, effectCount: 2, gridCount: 1 },
+      totalStyles: 11,
       loading: false,
     });
 
@@ -123,8 +124,12 @@ describe('App', () => {
     const settingsTab = screen.getByRole('button', { name: 'Settings' });
     await userEvent.click(settingsTab);
 
+    // Navigate to Variables sub-tab where prefix input is located
+    const variablesSubTab = screen.getByRole('button', { name: 'Variables' });
+    await userEvent.click(variablesSubTab);
+
     await waitFor(() => {
-      expect(screen.getByText('Variable Prefix (optional)')).toBeInTheDocument();
+      expect(screen.getByText('Name Prefix')).toBeInTheDocument();
     });
     expect(screen.getByPlaceholderText('e.g., ds, theme')).toBeInTheDocument();
   });
@@ -134,6 +139,10 @@ describe('App', () => {
 
     const settingsTab = screen.getByRole('button', { name: 'Settings' });
     await userEvent.click(settingsTab);
+
+    // Navigate to Variables sub-tab where prefix input is located
+    const variablesSubTab = screen.getByRole('button', { name: 'Variables' });
+    await userEvent.click(variablesSubTab);
 
     const input = screen.getByPlaceholderText('e.g., ds, theme');
     await userEvent.type(input, 'ds-');
@@ -206,7 +215,7 @@ describe('App', () => {
     const helpTab = screen.getByRole('button', { name: 'Help' });
     await userEvent.click(helpTab);
 
-    expect(screen.queryByText('Variable Prefix (optional)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Name Prefix')).not.toBeInTheDocument();
     expect(screen.queryByText('Collections')).not.toBeInTheDocument();
   });
 
@@ -214,7 +223,7 @@ describe('App', () => {
     render(<App />);
 
     // CSS tab is active by default
-    expect(screen.queryByText('Variable Prefix (optional)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Name Prefix')).not.toBeInTheDocument();
     expect(screen.queryByText('Collections')).not.toBeInTheDocument();
   });
 

@@ -12,6 +12,7 @@ import type { ExportOptions, UIMessage, StyleType, StyleOutputMode } from '@figm
 interface TypeScriptTabProps {
   prefix: string;
   selectedCollections: string[];
+  includeModeComments: boolean; // Global setting from Settings tab
   syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
@@ -21,6 +22,7 @@ interface TypeScriptTabProps {
 export function TypeScriptTab({
   prefix,
   selectedCollections,
+  includeModeComments,
   syncCalculations,
   includeStyles,
   styleOutputMode,
@@ -58,7 +60,7 @@ export function TypeScriptTab({
       prefix: prefix.trim() || undefined,
       useModesAsSelectors: false,
       includeCollectionComments: false,
-      includeModeComments: false,
+      includeModeComments,
       selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
       includeStyles,
       styleOutputMode,

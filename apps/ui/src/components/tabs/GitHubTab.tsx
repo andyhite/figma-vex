@@ -20,6 +20,7 @@ interface GitHubTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  includeModeComments: boolean; // Global setting from Settings tab
   syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
@@ -43,6 +44,7 @@ export function GitHubTab({
   prefix,
   selectedCollections,
   includeCollectionComments,
+  includeModeComments,
   syncCalculations,
   includeStyles,
   styleOutputMode,
@@ -178,7 +180,7 @@ export function GitHubTab({
       prefix: prefix.trim() || undefined,
       useModesAsSelectors,
       includeCollectionComments,
-      includeModeComments: true,
+      includeModeComments,
       selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
       includeStyles,
       styleOutputMode,

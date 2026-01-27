@@ -12,6 +12,7 @@ import type { ExportOptions, UIMessage, StyleType, StyleOutputMode } from '@figm
 interface JsonTabProps {
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  includeModeComments: boolean; // Global setting from Settings tab
   syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
@@ -21,6 +22,7 @@ interface JsonTabProps {
 export function JsonTab({
   selectedCollections,
   includeCollectionComments,
+  includeModeComments,
   syncCalculations,
   includeStyles,
   styleOutputMode,
@@ -57,7 +59,7 @@ export function JsonTab({
       selector: ':root',
       useModesAsSelectors: false,
       includeCollectionComments,
-      includeModeComments: false,
+      includeModeComments,
       selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
       includeStyles,
       styleOutputMode,

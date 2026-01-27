@@ -95,7 +95,7 @@ async function syncVariableCodeSyntax(
       try {
         variable.setVariableCodeSyntax('WEB', cssVarName);
         synced++;
-      } catch (error) {
+      } catch {
         // Silently skip on error (e.g., variable is read-only)
         skipped++;
       }

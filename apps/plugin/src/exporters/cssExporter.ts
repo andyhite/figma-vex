@@ -9,7 +9,10 @@ import { exportStylesToCssVariables, exportStylesAsCssClasses } from './styleExp
 /**
  * Generates the CSS file header comment.
  */
-export function generateCssHeader(fileName: string): string {
+export function generateCssHeader(fileName: string, customHeader?: string): string {
+  if (customHeader) {
+    return customHeader + '\n';
+  }
   return [
     '/**',
     ' * Auto-generated CSS Custom Properties',
@@ -37,7 +40,7 @@ export async function exportToCss(
   const filteredCollections = filterCollections(collections, options.selectedCollections);
   const selector = (options.selector != null ? options.selector.trim() : null) || ':root';
 
-  const lines: string[] = [generateCssHeader(fileName)];
+  const lines: string[] = [generateCssHeader(fileName, options.headerBanner)];
 
   const processVariable = async (
     variable: Variable,

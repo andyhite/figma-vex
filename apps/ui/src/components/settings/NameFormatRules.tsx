@@ -25,6 +25,11 @@ const CASING_OPTIONS: { value: CasingOption; label: string }[] = [
   { value: 'upper', label: 'UPPERCASE' },
 ];
 
+interface Collection {
+  id: string;
+  name: string;
+}
+
 interface NameFormatRulesProps {
   // Custom rules (excluding default)
   rules: NameFormatRule[];
@@ -47,6 +52,7 @@ interface NameFormatRulesProps {
 
   // Variable names for unmatched detection
   variableNames?: string[];
+  collections?: Collection[];
   selectedCollections?: string[];
 }
 
@@ -124,6 +130,7 @@ export function NameFormatRules({
   onSyncCodeSyntaxChange,
   onSyncNow,
   variableNames = [],
+  collections = [],
   selectedCollections = [],
 }: NameFormatRulesProps) {
   const [testInput, setTestInput] = useState('');
@@ -139,16 +146,19 @@ export function NameFormatRules({
   // Filter variable names by selected collections
   const filteredVariableNames = useMemo(() => {
     if (!selectedCollections.length) return variableNames;
+    // Build a set of selected collection names from their IDs
+    const selectedCollectionNames = new Set(
+      selectedCollections
+        .map((id) => collections.find((c) => c.id === id)?.name)
+        .filter((name): name is string => name !== undefined)
+    );
+    if (selectedCollectionNames.size === 0) return variableNames;
     return variableNames.filter((name) => {
+      // variableNames format is "CollectionName/variablePath"
       const collectionName = name.split('/')[0];
-      // Check if this collection is selected (need to match by name)
-      return selectedCollections.some((id) => {
-        // variableNames format is "CollectionName/variablePath"
-        // We'd need collection names to filter properly, for now just return all
-        return true;
-      });
+      return selectedCollectionNames.has(collectionName);
     });
-  }, [variableNames, selectedCollections]);
+  }, [variableNames, collections, selectedCollections]);
 
   // Find unmatched variables
   const unmatchedVariables = useMemo(() => {
@@ -420,21 +430,46 @@ export function NameFormatRules({
 
         {/* Test field */}
         <FormField className="mt-4">
-          <Input
-            label="Test"
+          <label className="text-figma-text mb-1 block text-xs font-medium">Test</label>
+          <select
+            className="border-figma-border bg-figma-bg text-figma-text focus:ring-figma-border-focus w-full rounded border px-2 py-1.5 text-xs focus:outline-none focus:ring-1"
             value={testInput}
             onChange={(e) => setTestInput(e.target.value)}
-            placeholder="Enter a Figma variable name to test"
-            className="text-xs"
-          />
+          >
+            <option value="">Select a variable to test...</option>
+            {Object.entries(
+              filteredVariableNames.reduce(
+                (groups, name) => {
+                  const collectionName = name.split('/')[0] || 'Other';
+                  if (!groups[collectionName]) {
+                    groups[collectionName] = [];
+                  }
+                  groups[collectionName].push(name);
+                  return groups;
+                },
+                {} as Record<string, string[]>
+              )
+            ).map(([collectionName, names]) => (
+              <optgroup key={collectionName} label={collectionName}>
+                {names.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
           {testInput && matchingRule && (
-            <div className="text-figma-text-secondary mt-1 text-xs">
-              Result: <span className="text-figma-text font-mono">{matchingRule.result}</span>
-              {matchingRule.isDefault ? ' (default rule)' : ` (Rule ${matchingRule.index + 1})`}
+            <div className="text-figma-text-secondary mt-2 text-xs">
+              <span className="text-figma-text-tertiary">Result:</span>{' '}
+              <span className="text-figma-text font-mono">{matchingRule.result}</span>
+              <span className="text-figma-text-tertiary ml-1">
+                {matchingRule.isDefault ? '(default rule)' : `(Rule ${matchingRule.index + 1})`}
+              </span>
             </div>
           )}
           {testInput && !matchingRule && (
-            <div className="text-figma-text-tertiary mt-1 text-xs">No matching rule found</div>
+            <div className="text-figma-text-tertiary mt-2 text-xs">No matching rule found</div>
           )}
         </FormField>
       </FormGroup>

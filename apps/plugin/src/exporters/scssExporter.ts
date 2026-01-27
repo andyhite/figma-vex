@@ -55,7 +55,10 @@ function convertVarToScss(value: string): string {
 /**
  * Generates the SCSS file header comment.
  */
-export function generateScssHeader(fileName: string): string {
+export function generateScssHeader(fileName: string, customHeader?: string): string {
+  if (customHeader) {
+    return customHeader + '\n';
+  }
   return [
     '//',
     '// Auto-generated SCSS Variables',
@@ -82,7 +85,7 @@ export async function exportToScss(
 
   const filteredCollections = filterCollections(collections, options.selectedCollections);
 
-  const lines: string[] = [generateScssHeader(fileName)];
+  const lines: string[] = [generateScssHeader(fileName, options.headerBanner)];
 
   const processVariable = async (variable: Variable, modeId: string): Promise<string> => {
     const config: TokenConfig = {

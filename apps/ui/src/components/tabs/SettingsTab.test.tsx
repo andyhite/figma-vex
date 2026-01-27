@@ -16,25 +16,44 @@ describe('SettingsTab', () => {
     collectionsLoading: false,
     includeCollectionComments: true,
     onIncludeCollectionCommentsChange: vi.fn(),
+    includeModeComments: false,
+    onIncludeModeCommentsChange: vi.fn(),
+    headerBanner: undefined,
+    onHeaderBannerChange: vi.fn(),
+    remBaseVariableId: null,
+    onRemBaseVariableChange: vi.fn(),
     includeStyles: false,
     onIncludeStylesChange: vi.fn(),
     styleOutputMode: 'variables' as const,
     onStyleOutputModeChange: vi.fn(),
-    styleTypes: ['paint', 'text', 'effect', 'grid'] as const,
+    styleTypes: ['paint', 'text', 'effect', 'grid'] as ('paint' | 'text' | 'effect' | 'grid')[],
     onStyleTypesChange: vi.fn(),
     styleCounts: { paintCount: 5, textCount: 3, effectCount: 2, gridCount: 1 },
     stylesLoading: false,
+    nameFormatRules: [] as import('@figma-vex/shared').NameFormatRule[],
+    onNameFormatRulesChange: vi.fn(),
+    nameFormatCasing: 'kebab' as const,
+    onNameFormatCasingChange: vi.fn(),
+    nameFormatAdvanced: false,
+    onNameFormatAdvancedChange: vi.fn(),
+    syncCodeSyntax: true,
+    onSyncCodeSyntaxChange: vi.fn(),
+    activeSettingsTab: 'general',
+    onActiveSettingsTabChange: vi.fn(),
+    onExportSettings: vi.fn(),
+    onImportSettings: vi.fn(),
+    onResetSettings: vi.fn(),
   };
 
   it('should render prefix input', () => {
-    render(<SettingsTab {...defaultProps} />);
-    expect(screen.getByText('Variable Prefix (optional)')).toBeInTheDocument();
+    render(<SettingsTab {...defaultProps} activeSettingsTab="variables" />);
+    expect(screen.getByText('Name Prefix')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('e.g., ds, theme')).toBeInTheDocument();
   });
 
   it('should call onPrefixChange when prefix is updated', async () => {
     const onPrefixChange = vi.fn();
-    render(<SettingsTab {...defaultProps} onPrefixChange={onPrefixChange} />);
+    render(<SettingsTab {...defaultProps} activeSettingsTab="variables" onPrefixChange={onPrefixChange} />);
 
     const input = screen.getByPlaceholderText('e.g., ds, theme');
     await userEvent.type(input, 'ds');
@@ -74,7 +93,7 @@ describe('SettingsTab', () => {
   });
 
   it('should render include styles checkbox', () => {
-    render(<SettingsTab {...defaultProps} />);
+    render(<SettingsTab {...defaultProps} activeSettingsTab="styles" />);
     expect(screen.getByText(/Include styles/)).toBeInTheDocument();
   });
 });

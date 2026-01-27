@@ -36,7 +36,7 @@ export function formatForCss(
         const quotedPath = `'${pathRef}'`;
         formatted = formatted.split(quotedPath).join(`var(--${cssName})`);
       }
-    } catch (error) {
+    } catch {
       // Ambiguous path - keep original path reference
       // Error will be handled elsewhere
     }
@@ -115,7 +115,7 @@ export function formatForScss(
         const quotedPath = `'${pathRef}'`;
         formatted = formatted.split(quotedPath).join(`$${cssName}`);
       }
-    } catch (error) {
+    } catch {
       // Ambiguous path - keep original path reference
       // Error will be handled elsewhere
     }

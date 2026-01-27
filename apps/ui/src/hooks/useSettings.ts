@@ -10,13 +10,15 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   prefix: '',
   selectedCollections: [],
   includeCollectionComments: true,
+  includeModeComments: true, // Moved from CSS tab to global
+  headerBanner: undefined,
   syncCalculations: false,
   includeStyles: false,
   styleOutputMode: 'variables',
   styleTypes: ['paint', 'text', 'effect', 'grid'],
   cssSelector: ':root',
   cssUseModesAsSelectors: false,
-  cssIncludeModeComments: true,
+  cssIncludeModeComments: true, // Deprecated, kept for migration
   githubRepository: '',
   githubWorkflowFileName: 'update-variables.yml',
   githubExportTypes: ['css', 'json'],
@@ -29,6 +31,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   nameFormatCasing: 'kebab',
   nameFormatAdvanced: false,
   syncCodeSyntax: true,
+  activeSettingsTab: 'general',
 };
 
 interface UseSettingsReturn {
@@ -65,6 +68,10 @@ export function useSettings(): UseSettingsReturn {
           mergedSettings.nameFormatRules = (mergedSettings.nameFormatRules || []).filter(
             (r) => r.id !== '__default__'
           );
+          // Migrate cssIncludeModeComments to includeModeComments if needed
+          if (mergedSettings.includeModeComments === undefined && 'cssIncludeModeComments' in message.settings) {
+            mergedSettings.includeModeComments = message.settings.cssIncludeModeComments ?? true;
+          }
           setSettings(mergedSettings);
         } else {
           // No saved settings, use defaults

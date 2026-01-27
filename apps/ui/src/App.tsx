@@ -42,13 +42,16 @@ const TAB_DESCRIPTIONS: Record<string, string> = {
 
 export default function App() {
   // Load persisted settings
-  const { settings, loading: settingsLoading, updateSettings } = useSettings();
+  const { settings, updateSettings } = useSettings();
 
   // Use settings values with defaults for initial render
   const activeTab = settings?.activeTab ?? DEFAULT_SETTINGS.activeTab;
   const prefix = settings?.prefix ?? DEFAULT_SETTINGS.prefix;
   const includeCollectionComments =
     settings?.includeCollectionComments ?? DEFAULT_SETTINGS.includeCollectionComments;
+  const includeModeComments =
+    settings?.includeModeComments ?? DEFAULT_SETTINGS.includeModeComments;
+  const headerBanner = settings?.headerBanner ?? DEFAULT_SETTINGS.headerBanner;
   const syncCalculations = settings?.syncCalculations ?? DEFAULT_SETTINGS.syncCalculations;
   const includeStyles = settings?.includeStyles ?? DEFAULT_SETTINGS.includeStyles;
   const styleOutputMode = settings?.styleOutputMode ?? DEFAULT_SETTINGS.styleOutputMode;
@@ -63,6 +66,8 @@ export default function App() {
   const nameFormatCasing = settings?.nameFormatCasing ?? DEFAULT_SETTINGS.nameFormatCasing;
   const nameFormatAdvanced = settings?.nameFormatAdvanced ?? DEFAULT_SETTINGS.nameFormatAdvanced;
   const syncCodeSyntax = settings?.syncCodeSyntax ?? DEFAULT_SETTINGS.syncCodeSyntax;
+  const activeSettingsTab =
+    settings?.activeSettingsTab ?? DEFAULT_SETTINGS.activeSettingsTab ?? 'general';
 
   // Compute full rules including the default rule (for exports)
   const allNameFormatRules = getAllRulesWithDefault(nameFormatRules, prefix, nameFormatCasing);
@@ -110,8 +115,10 @@ export default function App() {
   const handlePrefixChange = (value: string) => updateSettings({ prefix: value });
   const handleIncludeCollectionCommentsChange = (value: boolean) =>
     updateSettings({ includeCollectionComments: value });
-  const handleSyncCalculationsChange = (value: boolean) =>
-    updateSettings({ syncCalculations: value });
+  const handleIncludeModeCommentsChange = (value: boolean) =>
+    updateSettings({ includeModeComments: value });
+  const handleHeaderBannerChange = (value: string) =>
+    updateSettings({ headerBanner: value || undefined });
   const handleIncludeStylesChange = (value: boolean) => updateSettings({ includeStyles: value });
   const handleStyleOutputModeChange = (value: StyleOutputMode) =>
     updateSettings({ styleOutputMode: value });
@@ -126,6 +133,8 @@ export default function App() {
     updateSettings({ nameFormatAdvanced: enabled });
   const handleSyncCodeSyntaxChange = (enabled: boolean) =>
     updateSettings({ syncCodeSyntax: enabled });
+  const handleActiveSettingsTabChange = (tab: string) =>
+    updateSettings({ activeSettingsTab: tab });
 
   // Handle collection toggle and persist
   const handleToggleCollection = (collectionId: string) => {
@@ -261,6 +270,8 @@ export default function App() {
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            includeModeComments={includeModeComments}
+            headerBanner={headerBanner}
             syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
@@ -270,7 +281,6 @@ export default function App() {
             syncCodeSyntax={syncCodeSyntax}
             initialSelector={settings?.cssSelector}
             initialUseModesAsSelectors={settings?.cssUseModesAsSelectors}
-            initialIncludeModeComments={settings?.cssIncludeModeComments}
             initialExportAsCalcExpressions={cssExportAsCalcExpressions}
             onSettingsChange={(cssSettings) => updateSettings(cssSettings)}
           />
@@ -283,6 +293,8 @@ export default function App() {
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            includeModeComments={includeModeComments}
+            headerBanner={headerBanner}
             syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
@@ -301,6 +313,7 @@ export default function App() {
           <JsonTab
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            includeModeComments={includeModeComments}
             syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
@@ -314,6 +327,7 @@ export default function App() {
           <TypeScriptTab
             prefix={prefix}
             selectedCollections={selectedCollections}
+            includeModeComments={includeModeComments}
             syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
@@ -328,6 +342,7 @@ export default function App() {
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            includeModeComments={includeModeComments}
             syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
@@ -353,6 +368,10 @@ export default function App() {
             collectionsLoading={collectionsLoading}
             includeCollectionComments={includeCollectionComments}
             onIncludeCollectionCommentsChange={handleIncludeCollectionCommentsChange}
+            includeModeComments={includeModeComments}
+            onIncludeModeCommentsChange={handleIncludeModeCommentsChange}
+            headerBanner={headerBanner}
+            onHeaderBannerChange={handleHeaderBannerChange}
             remBaseVariableId={remBaseVariableId}
             onRemBaseVariableChange={handleRemBaseVariableChange}
             includeStyles={includeStyles}
@@ -374,6 +393,8 @@ export default function App() {
             onExportSettings={handleExportSettings}
             onImportSettings={handleImportSettings}
             onResetSettings={handleResetSettings}
+            activeSettingsTab={activeSettingsTab}
+            onActiveSettingsTabChange={handleActiveSettingsTabChange}
           />
         </ErrorBoundary>
       </TabPanel>

@@ -38,7 +38,17 @@ describe('TypeScriptTab', () => {
   });
 
   it('should send export-typescript message when generate is clicked', async () => {
-    render(<TypeScriptTab prefix="ds" selectedCollections={['1']} />);
+    render(
+      <TypeScriptTab
+        prefix="ds"
+        selectedCollections={['1']}
+        includeModeComments={false}
+        syncCalculations={false}
+        includeStyles={false}
+        styleOutputMode="variables"
+        styleTypes={[]}
+      />
+    );
 
     const button = screen.getByRole('button', { name: 'Generate TypeScript' });
     await userEvent.click(button);
@@ -52,12 +62,26 @@ describe('TypeScriptTab', () => {
         includeCollectionComments: false,
         includeModeComments: false,
         selectedCollections: ['1'],
+        includeStyles: false,
+        styleOutputMode: 'variables',
+        styleTypes: [],
+        syncCalculations: false,
       },
     });
   });
 
   it('should display output when typescript-result message is received', async () => {
-    render(<TypeScriptTab prefix="" selectedCollections={[]} />);
+    render(
+      <TypeScriptTab
+        prefix=""
+        selectedCollections={[]}
+        includeModeComments={false}
+        syncCalculations={false}
+        includeStyles={false}
+        styleOutputMode="variables"
+        styleTypes={[]}
+      />
+    );
 
     act(() => {
       if (messageHandler) {
