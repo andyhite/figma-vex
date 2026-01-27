@@ -57,7 +57,6 @@ async function syncCalculatedValues(
           try {
             await variable.setValueForMode(mode.modeId, result.value);
             synced++;
-            console.log(`[sync] Updated ${variable.name} mode ${mode.name} to ${result.value}`);
           } catch (error) {
             failed++;
             const errorMsg = error instanceof Error ? error.message : String(error);
@@ -71,10 +70,6 @@ async function syncCalculatedValues(
         }
       }
     }
-  }
-
-  if (synced > 0 || failed > 0) {
-    console.log(`[sync] Completed: ${synced} synced, ${failed} failed`);
   }
 
   return { synced, failed, warnings };
@@ -94,6 +89,25 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       postToUI({
         type: 'collections-list',
         collections: collections.map((c) => ({ id: c.id, name: c.name })),
+      });
+      break;
+    }
+
+    case 'get-numeric-variables': {
+      const numericVars = variables
+        .filter((v) => v.resolvedType === 'FLOAT')
+        .map((v) => {
+          const collection = collections.find((c) => c.id === v.variableCollectionId);
+          const path = collection ? `${collection.name}/${v.name}` : v.name;
+          return {
+            id: v.id,
+            name: v.name,
+            path,
+          };
+        });
+      postToUI({
+        type: 'numeric-variables-list',
+        variables: numericVars,
       });
       break;
     }

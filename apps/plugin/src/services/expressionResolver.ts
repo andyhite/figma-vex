@@ -1,9 +1,8 @@
 import type { TokenConfig, Unit } from '@figma-vex/shared';
 import { RESOLUTION_CONFIG } from '@figma-vex/shared';
 import {
-  buildVariableLookup,
-  extractVarReferences,
-  lookupVariable,
+  extractPathReferences,
+  lookupByPath,
 } from '@plugin/utils/variableLookup';
 import {
   evaluateExpression,
@@ -72,14 +71,6 @@ async function resolveToNumber(
   // Find the correct mode ID for this variable
   const effectiveModeId = findMatchingModeId(variable, modeId, modeName, collections);
 
-  console.log('[calc:resolver] Mode resolution:', {
-    variableName: variable.name,
-    requestedModeId: modeId,
-    requestedModeName: modeName,
-    effectiveModeId,
-    availableModes: Object.keys(variable.valuesByMode),
-  });
-
   if (!effectiveModeId) {
     return { value: null, unit: 'px' };
   }
@@ -140,21 +131,21 @@ export async function resolveExpression(
     }
   }
 
-  console.log('[calc:resolver] Current mode:', { modeId, modeName: currentModeName });
-
-  const lookup = buildVariableLookup(variables, collections, prefix);
-  const varRefs = extractVarReferences(expression);
+  const pathRefs = extractPathReferences(expression);
   const context: EvaluationContext = {};
   const warnings: string[] = [];
 
-  console.log('[calc:resolver] Lookup map keys (first 20):', Array.from(lookup.keys()).slice(0, 20));
-  console.log('[calc:resolver] Extracted var refs:', varRefs);
-
-  // Resolve each variable reference
-  for (const varRef of varRefs) {
-    const entry = lookupVariable(varRef, lookup);
-
-    console.log('[calc:resolver] Looking up:', varRef, '-> found:', !!entry);
+  // Resolve each path reference
+  for (const pathRef of pathRefs) {
+    let entry;
+    try {
+      entry = lookupByPath(pathRef, variables, collections);
+    } catch (error) {
+      // Ambiguous path error
+      const message = error instanceof Error ? error.message : String(error);
+      warnings.push(message);
+      continue;
+    }
 
     if (!entry) {
       // Don't warn here - expressionEvaluator will report missing variables
@@ -163,33 +154,24 @@ export async function resolveExpression(
 
     const { variable } = entry;
 
-    console.log('[calc:resolver] Variable:', {
-      name: variable.name,
-      resolvedType: variable.resolvedType,
-      valuesByMode: variable.valuesByMode,
-    });
-
     // Check if variable is numeric
     if (variable.resolvedType !== 'FLOAT') {
       warnings.push(
-        `Variable '${varRef}' is not numeric (type: ${variable.resolvedType})`
+        `Variable '${pathRef}' is not numeric (type: ${variable.resolvedType})`
       );
       continue;
     }
 
     const resolved = await resolveToNumber(variable, modeId, currentModeName, variables, collections);
 
-    console.log('[calc:resolver] Resolved to number:', resolved);
-
     if (resolved.value === null) {
-      warnings.push(`Could not resolve value for '${varRef}'`);
+      warnings.push(`Could not resolve value for '${pathRef}'`);
       continue;
     }
 
-    context[varRef] = { value: resolved.value, unit: resolved.unit };
+    // Use path reference as key in context (evaluator will match against this)
+    context[`'${pathRef}'`] = { value: resolved.value, unit: resolved.unit };
   }
-
-  console.log('[calc:resolver] Final context:', context);
 
   // Evaluate the expression
   const result = evaluateExpression(expression, context);

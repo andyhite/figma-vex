@@ -67,3 +67,70 @@ export function extractVarReferences(expression: string): string[] {
   const regex = /var\(--[^)]+\)/g;
   return expression.match(regex) ?? [];
 }
+
+/**
+ * Extracts all path references from an expression.
+ * Path references are single-quoted strings like 'Spacing/base', 'base', or 'Collection/Path/Name'.
+ * Handles escaped quotes: 'Brand\'s Color/primary'
+ *
+ * @param expression - The expression string
+ * @returns Array of path references found (may contain duplicates)
+ */
+export function extractPathReferences(expression: string): string[] {
+  // Match single-quoted strings, handling escaped quotes
+  const regex = /'((?:[^'\\]|\\.)+)'/g;
+  const matches: string[] = [];
+  let match;
+  while ((match = regex.exec(expression)) !== null) {
+    // Unescape the path
+    const path = match[1].replace(/\\(.)/g, '$1');
+    matches.push(path);
+  }
+  return matches;
+}
+
+/**
+ * Looks up a variable by its Figma path (collection name + variable name).
+ * Supports both full paths (Collection/Group/Variable) and short paths (Variable).
+ * Throws an error if the path is ambiguous (found in multiple collections).
+ *
+ * @param path - The Figma path, e.g., "Spacing/base" or "Primitives/Spacing/base"
+ * @param variables - All available variables
+ * @param collections - All available collections
+ * @returns The variable entry or null if not found
+ * @throws Error if path is ambiguous (found in multiple collections)
+ */
+export function lookupByPath(
+  path: string,
+  variables: Variable[],
+  collections: VariableCollection[]
+): VariableLookupEntry | null {
+  const collectionMap = new Map(collections.map((c) => [c.id, c]));
+
+  const matches = variables
+    .map((variable) => {
+      const collection = collectionMap.get(variable.variableCollectionId);
+      if (!collection) return null;
+
+      // Build full path: CollectionName/VariableName
+      const fullPath = `${collection.name}/${variable.name}`;
+      const shortPath = variable.name;
+
+      // Check if path matches full path or short path
+      if (fullPath === path || shortPath === path) {
+        return { variable, collection };
+      }
+
+      return null;
+    })
+    .filter((entry): entry is VariableLookupEntry => entry !== null);
+
+  if (matches.length === 0) return null;
+  if (matches.length === 1) return matches[0];
+
+  // Ambiguous - multiple matches found
+  const collectionNames = matches.map((m) => m.collection.name).join(', ');
+  throw new Error(
+    `Ambiguous reference '${path}' found in collections: ${collectionNames}. Use 'CollectionName/${path}' to disambiguate.`
+  );
+}

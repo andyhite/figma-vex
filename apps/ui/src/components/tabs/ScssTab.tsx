@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '../common/Button';
 import { ButtonGroup } from '../common/ButtonGroup';
+import { Checkbox } from '../common/Checkbox';
 import { CopyIcon } from '../common/CopyIcon';
 import { DownloadIcon } from '../common/DownloadIcon';
+import { FormField } from '../common/FormField';
 import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
 import { useOutputActions } from '../../hooks/useOutputActions';
@@ -17,6 +19,12 @@ interface ScssTabProps {
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
+  remBaseVariableId: string | null;
+  // Persisted settings
+  initialExportAsCalcExpressions?: boolean;
+  onSettingsChange?: (settings: {
+    scssExportAsCalcExpressions: boolean;
+  }) => void;
 }
 
 export function ScssTab({
@@ -27,7 +35,11 @@ export function ScssTab({
   includeStyles,
   styleOutputMode,
   styleTypes,
+  remBaseVariableId,
+  initialExportAsCalcExpressions = false,
+  onSettingsChange,
 }: ScssTabProps) {
+  const [exportAsCalcExpressions, setExportAsCalcExpressions] = useState(initialExportAsCalcExpressions);
   const [output, setOutput] = useState('');
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
@@ -54,6 +66,13 @@ export function ScssTab({
     return cleanup;
   }, [listenToMessage, handleMessage]);
 
+  const handleExportAsCalcExpressionsChange = (value: boolean) => {
+    setExportAsCalcExpressions(value);
+    onSettingsChange?.({
+      scssExportAsCalcExpressions: value,
+    });
+  };
+
   const handleExport = useCallback(() => {
     const options: ExportOptions = {
       selector: ':root',
@@ -66,6 +85,8 @@ export function ScssTab({
       styleOutputMode,
       styleTypes,
       syncCalculations,
+      exportAsCalcExpressions,
+      remBaseVariableId: remBaseVariableId || undefined,
     };
 
     sendMessage({ type: 'export-scss', options });
@@ -78,12 +99,21 @@ export function ScssTab({
     styleOutputMode,
     styleTypes,
     syncCalculations,
+    exportAsCalcExpressions,
+    remBaseVariableId,
     sendMessage,
     setStatus,
   ]);
 
   return (
     <div>
+      <FormField>
+        <Checkbox
+          label="Export as calc() expressions"
+          checked={exportAsCalcExpressions}
+          onChange={(e) => handleExportAsCalcExpressionsChange(e.target.checked)}
+        />
+      </FormField>
       <ButtonGroup>
         <Button onClick={handleExport}>Generate SCSS</Button>
       </ButtonGroup>

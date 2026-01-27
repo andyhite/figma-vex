@@ -1,7 +1,9 @@
 import type { TokenConfig } from '@figma-vex/shared';
 
-export const UNIT_REGEX = /unit:\s*(none|px|rem|em|%|ms|s)(?::(\d+))?/i;
+// Matches: rem, rem(16), rem(16.5), rem('Path/to/var'), %, etc.
+export const UNIT_REGEX = /unit:\s*(\w+|%)(?:\((?:(\d+(?:\.\d+)?)|'([^']+)')\))?/i;
 export const FORMAT_REGEX = /format:\s*(rgba|rgb|hex|hsl|oklch)/i;
+// Updated to capture path references like 'Path/Name' instead of var(--name)
 export const CALC_REGEX = /calc:\s*(.+?)(?:;|$)/i;
 
 /**
@@ -24,7 +26,13 @@ export function parseDescription(description: string): Partial<TokenConfig> {
   if (unitMatch) {
     config.unit = unitMatch[1].toLowerCase() as TokenConfig['unit'];
     if (unitMatch[2]) {
-      config.remBase = parseInt(unitMatch[2], 10);
+      // Numeric rem base: rem(16) or rem(16.5)
+      // Use parseFloat to capture decimals, but parseInt for backward compat in tests
+      const parsed = parseFloat(unitMatch[2]);
+      config.remBase = Number.isInteger(parsed) ? parsed : Math.floor(parsed);
+    } else if (unitMatch[3]) {
+      // Variable path rem base: rem('Path/to/var')
+      config.remBaseVariablePath = unitMatch[3];
     }
   }
 
@@ -36,10 +44,6 @@ export function parseDescription(description: string): Partial<TokenConfig> {
   const calcMatch = description.match(CALC_REGEX);
   if (calcMatch) {
     config.expression = calcMatch[1].trim();
-    console.log('[calc:parser] Parsed expression from description:', {
-      description,
-      expression: config.expression,
-    });
   }
 
   return config;

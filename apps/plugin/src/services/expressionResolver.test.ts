@@ -54,7 +54,7 @@ describe('resolveExpression', () => {
   it('should resolve simple expression', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--spacing-base) * 2',
+      expression: "'spacing/base' * 2",
     };
     const result = await resolveExpression(
       config,
@@ -72,7 +72,7 @@ describe('resolveExpression', () => {
   it('should resolve expression with different mode values', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--spacing-base) * 2',
+      expression: "'spacing/base' * 2",
     };
 
     const result1 = await resolveExpression(
@@ -97,7 +97,7 @@ describe('resolveExpression', () => {
   it('should resolve aliases fully', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--alias-spacing) * 2',
+      expression: "'alias/spacing' * 2",
     };
     const result = await resolveExpression(
       config,
@@ -114,7 +114,7 @@ describe('resolveExpression', () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
       unit: 'rem',
-      expression: 'var(--spacing-base) * 2',
+      expression: "'spacing/base' * 2",
     };
     const result = await resolveExpression(
       config,
@@ -131,7 +131,7 @@ describe('resolveExpression', () => {
   it('should return warning for non-existent variable', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--nonexistent) * 2',
+      expression: "'nonexistent' * 2",
     };
     const result = await resolveExpression(
       config,
@@ -148,7 +148,7 @@ describe('resolveExpression', () => {
   it('should return warning for non-numeric variable', async () => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--colors-primary) * 2',
+      expression: "'colors/primary' * 2",
     };
     const result = await resolveExpression(
       config,
@@ -162,10 +162,11 @@ describe('resolveExpression', () => {
     expect(result.warnings[0]).toContain('not numeric');
   });
 
-  it('should handle prefix', async () => {
+  it('should handle prefix (prefix ignored for path lookup)', async () => {
+    // With path syntax, prefix doesn't affect lookup - it's only used for output formatting
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--ds-spacing-base) * 2',
+      expression: "'spacing/base' * 2",
     };
     const result = await resolveExpression(
       config,
@@ -197,7 +198,7 @@ describe('resolveExpression', () => {
     // spacing/base is in primitives (col-1), typography/font-lg is in tokens (col-2)
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
-      expression: 'var(--spacing-base) + var(--typography-font-lg)',
+      expression: "'spacing/base' + 'typography/font-lg'",
     };
     const result = await resolveExpression(
       config,

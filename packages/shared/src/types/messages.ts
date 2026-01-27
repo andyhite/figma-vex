@@ -36,6 +36,15 @@ export interface PluginSettings {
   githubExportTypes: ExportType[];
   githubCssSelector: string;
   githubUseModesAsSelectors: boolean;
+
+  // Rem base variable (global setting)
+  remBaseVariableId?: string;
+
+  // CSS tab settings
+  cssExportAsCalcExpressions: boolean;
+
+  // SCSS tab settings
+  scssExportAsCalcExpressions: boolean;
 }
 
 export interface ExportOptions {
@@ -51,6 +60,9 @@ export interface ExportOptions {
   styleTypes?: StyleType[];
   // Calculation settings
   syncCalculations?: boolean;
+  // Expression export mode
+  exportAsCalcExpressions?: boolean;
+  remBaseVariableId?: string;
 }
 
 export interface GitHubDispatchOptions {
@@ -70,6 +82,7 @@ export interface CollectionInfo {
 export type PluginMessage =
   | { type: 'get-collections' }
   | { type: 'get-styles' }
+  | { type: 'get-numeric-variables' }
   | { type: 'export-css'; options: ExportOptions }
   | { type: 'export-scss'; options: ExportOptions }
   | { type: 'export-json'; options: ExportOptions }
@@ -81,10 +94,17 @@ export type PluginMessage =
   | { type: 'load-settings' }
   | { type: 'sync-calculations'; options: ExportOptions };
 
+export interface NumericVariableInfo {
+  id: string;
+  name: string;
+  path: string; // Collection/Group/Variable format
+}
+
 // Messages from Plugin to UI
 export type UIMessage =
   | { type: 'collections-list'; collections: CollectionInfo[] }
   | { type: 'styles-list'; styles: StyleSummary }
+  | { type: 'numeric-variables-list'; variables: NumericVariableInfo[] }
   | { type: 'css-result'; css: string }
   | { type: 'scss-result'; scss: string }
   | { type: 'json-result'; json: string }

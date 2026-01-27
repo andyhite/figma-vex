@@ -4,6 +4,7 @@ import { toCssName, toPrefixedName } from '@plugin/formatters/nameFormatter';
 import { formatColor } from '@plugin/formatters/colorFormatter';
 import { formatNumber } from '@plugin/formatters/numberFormatter';
 import { resolveExpression } from './expressionResolver';
+import { formatForCss, formatForScss } from './expressionFormatter';
 
 /**
  * Resolves a variable value to its string representation.
@@ -18,6 +19,9 @@ import { resolveExpression } from './expressionResolver';
  * @param depth - Current resolution depth (for circular reference detection)
  * @param visited - Set of visited variable IDs
  * @param collections - All available collections (required for expression evaluation)
+ * @param exportAsCalcExpressions - If true, output expressions as calc() instead of resolved values
+ * @param remBaseVariableId - Optional rem base variable ID for unit conversion
+ * @param outputFormat - Output format: 'css' for CSS calc(), 'scss' for SCSS math, undefined for resolved
  */
 export async function resolveValue(
   value: VariableValue,
@@ -28,36 +32,48 @@ export async function resolveValue(
   prefix = '',
   depth = 0,
   visited = new Set<string>(),
-  collections?: VariableCollection[]
+  collections?: VariableCollection[],
+  exportAsCalcExpressions = false,
+  remBaseVariableId?: string | null,
+  outputFormat?: 'css' | 'scss'
 ): Promise<string> {
   // Prevent infinite recursion
   if (depth > RESOLUTION_CONFIG.MAX_ALIAS_DEPTH) return '/* circular reference */';
 
-  // Handle expression evaluation if present
+  // Handle expression formatting/evaluation if present
   if (config.expression && collections && resolvedType === 'FLOAT') {
-    console.log('[calc] Evaluating expression:', {
-      expression: config.expression,
-      modeId: _modeId,
-      prefix,
-      hasCollections: !!collections,
-      collectionsCount: collections?.length,
-      variablesCount: variables.length,
-    });
+    // If calc mode is enabled, format the expression instead of evaluating
+    if (exportAsCalcExpressions && outputFormat) {
+      if (outputFormat === 'css') {
+        const formatted = formatForCss(
+          config.expression,
+          variables,
+          collections,
+          prefix,
+          remBaseVariableId,
+          config.unit
+        );
+        return formatted;
+      } else if (outputFormat === 'scss') {
+        const formatted = formatForScss(
+          config.expression,
+          variables,
+          collections,
+          prefix,
+          remBaseVariableId,
+          config.unit
+        );
+        return formatted;
+      }
+    }
 
+    // Otherwise, evaluate the expression (resolved mode)
     const result = await resolveExpression(config, _modeId, variables, collections, prefix);
-
-    console.log('[calc] Expression result:', {
-      expression: config.expression,
-      value: result.value,
-      unit: result.unit,
-      warnings: result.warnings,
-    });
 
     if (result.value !== null && result.warnings.length === 0) {
       // Apply the configured unit/remBase to the evaluated result
       const effectiveConfig = { ...config, unit: result.unit };
       const formatted = formatNumber(result.value, effectiveConfig);
-      console.log('[calc] Formatted result:', formatted);
       return formatted;
     }
     // Fall through to normal resolution if expression failed

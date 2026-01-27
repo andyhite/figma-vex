@@ -1,6 +1,6 @@
 import { Parser } from 'expr-eval';
 import type { Unit } from '@figma-vex/shared';
-import { extractVarReferences } from '@plugin/utils/variableLookup';
+import { extractPathReferences } from '@plugin/utils/variableLookup';
 
 /**
  * Context for expression evaluation containing resolved variable values
@@ -32,8 +32,8 @@ const parser = new Parser();
  * - Parentheses: ()
  * - Functions: round(), floor(), ceil(), min(), max(), abs()
  *
- * @param expression - The expression to evaluate (e.g., "var(--spacing-base) * 2")
- * @param context - Map of var references to their resolved values
+ * @param expression - The expression to evaluate (e.g., "'Spacing/base' * 2")
+ * @param context - Map of path references (as 'Path/Name') to their resolved values
  * @returns Evaluation result with value, inferred unit, and any warnings
  */
 export function evaluateExpression(
@@ -43,19 +43,21 @@ export function evaluateExpression(
   const warnings: string[] = [];
   let inferredUnit: Unit = 'px';
 
-  // Extract all var() references
-  const varRefs = extractVarReferences(expression);
+  // Extract all path references (single-quoted strings)
+  const pathRefs = extractPathReferences(expression);
 
   // Build evaluation variables and check for missing refs
   const evalVars: Record<string, number> = {};
   let processedExpression = expression;
   let hasAllVariables = true;
 
-  for (const varRef of varRefs) {
-    const contextEntry = context[varRef];
+  for (const pathRef of pathRefs) {
+    // Context keys are stored as quoted paths: 'Spacing/base'
+    const contextKey = `'${pathRef}'`;
+    const contextEntry = context[contextKey];
 
     if (!contextEntry) {
-      warnings.push(`Variable '${varRef}' not found`);
+      warnings.push(`Variable '${pathRef}' not found`);
       hasAllVariables = false;
       continue;
     }
@@ -66,13 +68,15 @@ export function evaluateExpression(
     }
 
     // Create a safe variable name for expr-eval (replace special chars)
-    const safeVarName = varRef.replace(/[^a-zA-Z0-9]/g, '_');
+    const safeVarName = pathRef.replace(/[^a-zA-Z0-9]/g, '_');
     evalVars[safeVarName] = contextEntry.value;
-    processedExpression = processedExpression.split(varRef).join(safeVarName);
+    // Replace the quoted path reference in the expression
+    const quotedPath = `'${pathRef}'`;
+    processedExpression = processedExpression.split(quotedPath).join(safeVarName);
   }
 
   // If any required variables were missing, return null value
-  if (!hasAllVariables && varRefs.length > 0) {
+  if (!hasAllVariables && pathRefs.length > 0) {
     return { value: null, unit: inferredUnit, warnings };
   }
 

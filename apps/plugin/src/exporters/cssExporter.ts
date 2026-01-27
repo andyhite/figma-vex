@@ -63,7 +63,10 @@ export async function exportToCss(
       options.prefix,
       0,
       new Set(),
-      collections
+      collections,
+      options.exportAsCalcExpressions ?? false,
+      options.remBaseVariableId,
+      'css'
     );
 
     return `${indent}--${prefixedName}: ${cssValue};`;

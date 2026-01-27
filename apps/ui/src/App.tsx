@@ -47,6 +47,9 @@ export default function App() {
   const includeStyles = settings?.includeStyles ?? DEFAULT_SETTINGS.includeStyles;
   const styleOutputMode = settings?.styleOutputMode ?? DEFAULT_SETTINGS.styleOutputMode;
   const styleTypes = settings?.styleTypes ?? DEFAULT_SETTINGS.styleTypes;
+  const remBaseVariableId = settings?.remBaseVariableId ?? DEFAULT_SETTINGS.remBaseVariableId ?? null;
+  const cssExportAsCalcExpressions = settings?.cssExportAsCalcExpressions ?? DEFAULT_SETTINGS.cssExportAsCalcExpressions;
+  const scssExportAsCalcExpressions = settings?.scssExportAsCalcExpressions ?? DEFAULT_SETTINGS.scssExportAsCalcExpressions;
 
   // Collections with restored selections
   const { collections, selectedCollections, toggleCollection, loading: collectionsLoading } =
@@ -68,6 +71,7 @@ export default function App() {
   const handleStyleOutputModeChange = (value: StyleOutputMode) =>
     updateSettings({ styleOutputMode: value });
   const handleStyleTypesChange = (value: StyleType[]) => updateSettings({ styleTypes: value });
+  const handleRemBaseVariableChange = (id: string | null) => updateSettings({ remBaseVariableId: id || undefined });
 
   // Handle collection toggle and persist
   const handleToggleCollection = (collectionId: string) => {
@@ -100,9 +104,11 @@ export default function App() {
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
+            remBaseVariableId={remBaseVariableId}
             initialSelector={settings?.cssSelector}
             initialUseModesAsSelectors={settings?.cssUseModesAsSelectors}
             initialIncludeModeComments={settings?.cssIncludeModeComments}
+            initialExportAsCalcExpressions={cssExportAsCalcExpressions}
             onSettingsChange={(cssSettings) => updateSettings(cssSettings)}
           />
         </ErrorBoundary>
@@ -118,6 +124,9 @@ export default function App() {
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
+            remBaseVariableId={remBaseVariableId}
+            initialExportAsCalcExpressions={scssExportAsCalcExpressions}
+            onSettingsChange={(scssSettings) => updateSettings(scssSettings)}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -179,6 +188,8 @@ export default function App() {
             collectionsLoading={collectionsLoading}
             includeCollectionComments={includeCollectionComments}
             onIncludeCollectionCommentsChange={handleIncludeCollectionCommentsChange}
+            remBaseVariableId={remBaseVariableId}
+            onRemBaseVariableChange={handleRemBaseVariableChange}
             includeStyles={includeStyles}
             onIncludeStylesChange={handleIncludeStylesChange}
             styleOutputMode={styleOutputMode}

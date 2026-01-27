@@ -104,7 +104,10 @@ export async function exportToScss(
       options.prefix,
       0,
       new Set(),
-      collections
+      collections,
+      options.exportAsCalcExpressions ?? false,
+      options.remBaseVariableId,
+      'scss'
     );
 
     // Convert var() references to SCSS variable references

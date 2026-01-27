@@ -3,6 +3,7 @@ import { FormField } from '../common/FormField';
 import { FormGroup } from '../common/FormGroup';
 import { Input } from '../common/Input';
 import { StyleOptions } from '../common/StyleOptions';
+import { useNumericVariables } from '../../hooks/useNumericVariables';
 import type { StyleType, StyleOutputMode, StyleSummary } from '@figma-vex/shared';
 
 interface Collection {
@@ -25,6 +26,10 @@ interface SettingsTabProps {
   includeCollectionComments: boolean;
   onIncludeCollectionCommentsChange: (value: boolean) => void;
 
+  // Rem base variable
+  remBaseVariableId: string | null;
+  onRemBaseVariableChange: (id: string | null) => void;
+
   // Style options
   includeStyles: boolean;
   onIncludeStylesChange: (value: boolean) => void;
@@ -45,6 +50,8 @@ export function SettingsTab({
   collectionsLoading,
   includeCollectionComments,
   onIncludeCollectionCommentsChange,
+  remBaseVariableId,
+  onRemBaseVariableChange,
   includeStyles,
   onIncludeStylesChange,
   styleOutputMode,
@@ -54,6 +61,21 @@ export function SettingsTab({
   styleCounts,
   stylesLoading,
 }: SettingsTabProps) {
+  const { variables: numericVariables, loading: numericVariablesLoading } = useNumericVariables();
+
+  // Group numeric variables by collection name for the dropdown
+  const groupedVariables = numericVariables.reduce(
+    (groups, variable) => {
+      const parts = variable.path.split('/');
+      const collectionName = parts[0] || 'Other';
+      if (!groups[collectionName]) {
+        groups[collectionName] = [];
+      }
+      groups[collectionName].push(variable);
+      return groups;
+    },
+    {} as Record<string, typeof numericVariables>
+  );
   return (
     <div>
       <Input
@@ -90,6 +112,32 @@ export function SettingsTab({
           checked={includeCollectionComments}
           onChange={(e) => onIncludeCollectionCommentsChange(e.target.checked)}
         />
+      </FormField>
+
+      <FormField>
+        <label className="block text-xs font-medium text-figma-text mb-1">
+          Rem Base Variable
+        </label>
+        <select
+          className="w-full px-2 py-1.5 text-xs border border-figma-border rounded bg-figma-bg text-figma-text focus:outline-none focus:ring-1 focus:ring-figma-border-focus"
+          value={remBaseVariableId || ''}
+          onChange={(e) => onRemBaseVariableChange(e.target.value || null)}
+          disabled={numericVariablesLoading}
+        >
+          <option value="">None (use default)</option>
+          {Object.entries(groupedVariables).map(([collectionName, variables]) => (
+            <optgroup key={collectionName} label={collectionName}>
+              {variables.map((variable) => (
+                <option key={variable.id} value={variable.id}>
+                  {variable.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        {numericVariablesLoading && (
+          <div className="text-xs text-figma-text-tertiary mt-1">Loading variables...</div>
+        )}
       </FormField>
 
       <StyleOptions

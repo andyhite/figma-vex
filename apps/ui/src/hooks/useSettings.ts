@@ -22,6 +22,9 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   githubExportTypes: ['css', 'json'],
   githubCssSelector: ':root',
   githubUseModesAsSelectors: false,
+  remBaseVariableId: undefined,
+  cssExportAsCalcExpressions: false,
+  scssExportAsCalcExpressions: false,
 };
 
 interface UseSettingsReturn {

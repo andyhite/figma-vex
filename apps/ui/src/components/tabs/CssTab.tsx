@@ -20,14 +20,17 @@ interface CssTabProps {
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
+  remBaseVariableId: string | null;
   // Persisted settings
   initialSelector?: string;
   initialUseModesAsSelectors?: boolean;
   initialIncludeModeComments?: boolean;
+  initialExportAsCalcExpressions?: boolean;
   onSettingsChange?: (settings: {
     cssSelector: string;
     cssUseModesAsSelectors: boolean;
     cssIncludeModeComments: boolean;
+    cssExportAsCalcExpressions: boolean;
   }) => void;
 }
 
@@ -39,14 +42,17 @@ export function CssTab({
   includeStyles,
   styleOutputMode,
   styleTypes,
+  remBaseVariableId,
   initialSelector = ':root',
   initialUseModesAsSelectors = false,
   initialIncludeModeComments = true,
+  initialExportAsCalcExpressions = false,
   onSettingsChange,
 }: CssTabProps) {
   const [selector, setSelector] = useState(initialSelector);
   const [useModesAsSelectors, setUseModesAsSelectors] = useState(initialUseModesAsSelectors);
   const [includeModeComments, setIncludeModeComments] = useState(initialIncludeModeComments);
+  const [exportAsCalcExpressions, setExportAsCalcExpressions] = useState(initialExportAsCalcExpressions);
   const [output, setOutput] = useState('');
 
   // Persist settings changes
@@ -56,6 +62,7 @@ export function CssTab({
       cssSelector: value,
       cssUseModesAsSelectors: useModesAsSelectors,
       cssIncludeModeComments: includeModeComments,
+      cssExportAsCalcExpressions: exportAsCalcExpressions,
     });
   };
 
@@ -65,6 +72,7 @@ export function CssTab({
       cssSelector: selector,
       cssUseModesAsSelectors: value,
       cssIncludeModeComments: includeModeComments,
+      cssExportAsCalcExpressions: exportAsCalcExpressions,
     });
   };
 
@@ -74,6 +82,17 @@ export function CssTab({
       cssSelector: selector,
       cssUseModesAsSelectors: useModesAsSelectors,
       cssIncludeModeComments: value,
+      cssExportAsCalcExpressions: exportAsCalcExpressions,
+    });
+  };
+
+  const handleExportAsCalcExpressionsChange = (value: boolean) => {
+    setExportAsCalcExpressions(value);
+    onSettingsChange?.({
+      cssSelector: selector,
+      cssUseModesAsSelectors: useModesAsSelectors,
+      cssIncludeModeComments: includeModeComments,
+      cssExportAsCalcExpressions: value,
     });
   };
   const { sendMessage, listenToMessage } = usePluginMessage();
@@ -113,6 +132,8 @@ export function CssTab({
       styleOutputMode,
       styleTypes,
       syncCalculations,
+      exportAsCalcExpressions,
+      remBaseVariableId: remBaseVariableId || undefined,
     };
 
     sendMessage({ type: 'export-css', options });
@@ -128,6 +149,8 @@ export function CssTab({
     styleOutputMode,
     styleTypes,
     syncCalculations,
+    exportAsCalcExpressions,
+    remBaseVariableId,
     sendMessage,
     setStatus,
   ]);
@@ -151,6 +174,13 @@ export function CssTab({
           label="Include mode comments"
           checked={includeModeComments}
           onChange={(e) => handleIncludeModeCommentsChange(e.target.checked)}
+        />
+      </FormField>
+      <FormField>
+        <Checkbox
+          label="Export as calc() expressions"
+          checked={exportAsCalcExpressions}
+          onChange={(e) => handleExportAsCalcExpressionsChange(e.target.checked)}
         />
       </FormField>
       <ButtonGroup>

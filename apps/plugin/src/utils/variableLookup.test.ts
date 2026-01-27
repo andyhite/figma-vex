@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { buildVariableLookup, lookupVariable, extractVarReferences } from './variableLookup';
+import {
+  buildVariableLookup,
+  lookupVariable,
+  extractVarReferences,
+  extractPathReferences,
+  lookupByPath,
+} from './variableLookup';
 
 const mockVariables = [
   {
@@ -111,5 +117,116 @@ describe('extractVarReferences', () => {
   it('should handle duplicate references', () => {
     const refs = extractVarReferences('var(--x) + var(--x)');
     expect(refs).toEqual(['var(--x)', 'var(--x)']);
+  });
+});
+
+describe('extractPathReferences', () => {
+  it('should extract single path reference', () => {
+    const refs = extractPathReferences("'Spacing/base' * 2");
+    expect(refs).toEqual(['Spacing/base']);
+  });
+
+  it('should extract multiple path references', () => {
+    const refs = extractPathReferences("'Spacing/a' + 'Spacing/b'");
+    expect(refs).toEqual(['Spacing/a', 'Spacing/b']);
+  });
+
+  it('should extract path references from function calls', () => {
+    const refs = extractPathReferences("max('Spacing/min', 'Spacing/max')");
+    expect(refs).toEqual(['Spacing/min', 'Spacing/max']);
+  });
+
+  it('should return empty array for no references', () => {
+    const refs = extractPathReferences('10 * 2');
+    expect(refs).toEqual([]);
+  });
+
+  it('should handle complex nested expressions', () => {
+    const refs = extractPathReferences("round(('Spacing/a' + 'Spacing/b') / 'Spacing/c')");
+    expect(refs).toEqual(['Spacing/a', 'Spacing/b', 'Spacing/c']);
+  });
+
+  it('should handle empty string', () => {
+    expect(extractPathReferences('')).toEqual([]);
+  });
+
+  it('should handle collection-prefixed paths', () => {
+    const refs = extractPathReferences("'Primitives/Spacing/base' * 2");
+    expect(refs).toEqual(['Primitives/Spacing/base']);
+  });
+
+  it('should handle escaped quotes in paths', () => {
+    const refs = extractPathReferences("'Brand\\'s Colors/primary' * 0.5");
+    expect(refs).toEqual(["Brand's Colors/primary"]);
+  });
+
+  it('should handle paths with spaces', () => {
+    const refs = extractPathReferences("'Brand Colors/Primary 100' * 2");
+    expect(refs).toEqual(['Brand Colors/Primary 100']);
+  });
+});
+
+describe('lookupByPath', () => {
+  const mockVariablesForPath = [
+    {
+      id: 'var-1',
+      name: 'Spacing/base',
+      resolvedType: 'FLOAT',
+      variableCollectionId: 'col-1',
+    },
+    {
+      id: 'var-2',
+      name: 'Spacing/large',
+      resolvedType: 'FLOAT',
+      variableCollectionId: 'col-1',
+    },
+    {
+      id: 'var-3',
+      name: 'Spacing/base',
+      resolvedType: 'FLOAT',
+      variableCollectionId: 'col-2', // Same name in different collection
+    },
+  ] as unknown as Variable[];
+
+  const mockCollectionsForPath = [
+    { id: 'col-1', name: 'Primitives' },
+    { id: 'col-2', name: 'Semantic' },
+  ] as unknown as VariableCollection[];
+
+  it('should find variable by short path when unique', () => {
+    const result = lookupByPath('Spacing/large', mockVariablesForPath, mockCollectionsForPath);
+    expect(result?.variable.id).toBe('var-2');
+  });
+
+  it('should find variable by full path with collection', () => {
+    const result = lookupByPath('Primitives/Spacing/base', mockVariablesForPath, mockCollectionsForPath);
+    expect(result?.variable.id).toBe('var-1');
+  });
+
+  it('should find variable in other collection by full path', () => {
+    const result = lookupByPath('Semantic/Spacing/base', mockVariablesForPath, mockCollectionsForPath);
+    expect(result?.variable.id).toBe('var-3');
+  });
+
+  it('should return null for non-existent path', () => {
+    const result = lookupByPath('Spacing/nonexistent', mockVariablesForPath, mockCollectionsForPath);
+    expect(result).toBeNull();
+  });
+
+  it('should throw error for ambiguous path', () => {
+    expect(() => {
+      lookupByPath('Spacing/base', mockVariablesForPath, mockCollectionsForPath);
+    }).toThrow(/Ambiguous reference/);
+  });
+
+  it('should include collection names in ambiguity error', () => {
+    expect(() => {
+      lookupByPath('Spacing/base', mockVariablesForPath, mockCollectionsForPath);
+    }).toThrow(/Primitives.*Semantic|Semantic.*Primitives/);
+  });
+
+  it('should include collection in result', () => {
+    const result = lookupByPath('Spacing/large', mockVariablesForPath, mockCollectionsForPath);
+    expect(result?.collection.name).toBe('Primitives');
   });
 });

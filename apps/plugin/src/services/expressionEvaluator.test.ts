@@ -5,9 +5,9 @@ describe('evaluateExpression', () => {
   describe('basic arithmetic', () => {
     it('should evaluate simple multiplication', () => {
       const context: EvaluationContext = {
-        'var(--spacing-base)': { value: 8, unit: 'px' },
+        "'Spacing/base'": { value: 8, unit: 'px' },
       };
-      const result = evaluateExpression('var(--spacing-base) * 2', context);
+      const result = evaluateExpression("'Spacing/base' * 2", context);
       expect(result.value).toBe(16);
       expect(result.unit).toBe('px');
       expect(result.warnings).toEqual([]);
@@ -15,45 +15,45 @@ describe('evaluateExpression', () => {
 
     it('should evaluate addition', () => {
       const context: EvaluationContext = {
-        'var(--a)': { value: 10, unit: 'px' },
-        'var(--b)': { value: 5, unit: 'px' },
+        "'Spacing/a'": { value: 10, unit: 'px' },
+        "'Spacing/b'": { value: 5, unit: 'px' },
       };
-      const result = evaluateExpression('var(--a) + var(--b)', context);
+      const result = evaluateExpression("'Spacing/a' + 'Spacing/b'", context);
       expect(result.value).toBe(15);
     });
 
     it('should evaluate division', () => {
       const context: EvaluationContext = {
-        'var(--total)': { value: 100, unit: 'px' },
+        "'Spacing/total'": { value: 100, unit: 'px' },
       };
-      const result = evaluateExpression('var(--total) / 4', context);
+      const result = evaluateExpression("'Spacing/total' / 4", context);
       expect(result.value).toBe(25);
     });
 
     it('should evaluate subtraction', () => {
       const context: EvaluationContext = {
-        'var(--large)': { value: 24, unit: 'rem' },
+        "'Text/Size/large'": { value: 24, unit: 'rem' },
       };
-      const result = evaluateExpression('var(--large) - 8', context);
+      const result = evaluateExpression("'Text/Size/large' - 8", context);
       expect(result.value).toBe(16);
       expect(result.unit).toBe('rem');
     });
 
     it('should respect operator precedence', () => {
       const context: EvaluationContext = {
-        'var(--a)': { value: 2, unit: 'px' },
-        'var(--b)': { value: 3, unit: 'px' },
+        "'Spacing/a'": { value: 2, unit: 'px' },
+        "'Spacing/b'": { value: 3, unit: 'px' },
       };
-      const result = evaluateExpression('var(--a) + var(--b) * 4', context);
+      const result = evaluateExpression("'Spacing/a' + 'Spacing/b' * 4", context);
       expect(result.value).toBe(14); // 2 + (3 * 4)
     });
 
     it('should handle parentheses', () => {
       const context: EvaluationContext = {
-        'var(--a)': { value: 2, unit: 'px' },
-        'var(--b)': { value: 3, unit: 'px' },
+        "'Spacing/a'": { value: 2, unit: 'px' },
+        "'Spacing/b'": { value: 3, unit: 'px' },
       };
-      const result = evaluateExpression('(var(--a) + var(--b)) * 4', context);
+      const result = evaluateExpression("('Spacing/a' + 'Spacing/b') * 4", context);
       expect(result.value).toBe(20); // (2 + 3) * 4
     });
   });
@@ -61,51 +61,51 @@ describe('evaluateExpression', () => {
   describe('math functions', () => {
     it('should evaluate round()', () => {
       const context: EvaluationContext = {
-        'var(--base)': { value: 10, unit: 'px' },
+        "'Spacing/base'": { value: 10, unit: 'px' },
       };
-      const result = evaluateExpression('round(var(--base) * 1.5)', context);
+      const result = evaluateExpression("round('Spacing/base' * 1.5)", context);
       expect(result.value).toBe(15);
     });
 
     it('should evaluate floor()', () => {
       const context: EvaluationContext = {
-        'var(--base)': { value: 10, unit: 'px' },
+        "'Spacing/base'": { value: 10, unit: 'px' },
       };
-      const result = evaluateExpression('floor(var(--base) * 1.7)', context);
+      const result = evaluateExpression("floor('Spacing/base' * 1.7)", context);
       expect(result.value).toBe(17);
     });
 
     it('should evaluate ceil()', () => {
       const context: EvaluationContext = {
-        'var(--base)': { value: 10, unit: 'px' },
+        "'Spacing/base'": { value: 10, unit: 'px' },
       };
-      const result = evaluateExpression('ceil(var(--base) * 1.3)', context);
+      const result = evaluateExpression("ceil('Spacing/base' * 1.3)", context);
       expect(result.value).toBe(13); // ceil(10 * 1.3) = ceil(13) = 13
     });
 
     it('should evaluate min()', () => {
       const context: EvaluationContext = {
-        'var(--a)': { value: 10, unit: 'px' },
-        'var(--b)': { value: 20, unit: 'px' },
+        "'Spacing/a'": { value: 10, unit: 'px' },
+        "'Spacing/b'": { value: 20, unit: 'px' },
       };
-      const result = evaluateExpression('min(var(--a), var(--b))', context);
+      const result = evaluateExpression("min('Spacing/a', 'Spacing/b')", context);
       expect(result.value).toBe(10);
     });
 
     it('should evaluate max()', () => {
       const context: EvaluationContext = {
-        'var(--a)': { value: 10, unit: 'px' },
-        'var(--b)': { value: 20, unit: 'px' },
+        "'Spacing/a'": { value: 10, unit: 'px' },
+        "'Spacing/b'": { value: 20, unit: 'px' },
       };
-      const result = evaluateExpression('max(var(--a), var(--b))', context);
+      const result = evaluateExpression("max('Spacing/a', 'Spacing/b')", context);
       expect(result.value).toBe(20);
     });
 
     it('should evaluate abs()', () => {
       const context: EvaluationContext = {
-        'var(--x)': { value: -10, unit: 'px' },
+        "'Spacing/x'": { value: -10, unit: 'px' },
       };
-      const result = evaluateExpression('abs(var(--x))', context);
+      const result = evaluateExpression("abs('Spacing/x')", context);
       expect(result.value).toBe(10);
     });
   });
@@ -113,18 +113,18 @@ describe('evaluateExpression', () => {
   describe('unit inference', () => {
     it('should use unit from first variable reference', () => {
       const context: EvaluationContext = {
-        'var(--rem-value)': { value: 16, unit: 'rem' },
+        "'Text/rem-value'": { value: 16, unit: 'rem' },
       };
-      const result = evaluateExpression('var(--rem-value) * 2', context);
+      const result = evaluateExpression("'Text/rem-value' * 2", context);
       expect(result.unit).toBe('rem');
     });
 
     it('should use first non-px unit', () => {
       const context: EvaluationContext = {
-        'var(--a)': { value: 10, unit: 'px' },
-        'var(--b)': { value: 20, unit: 'em' },
+        "'Spacing/a'": { value: 10, unit: 'px' },
+        "'Spacing/b'": { value: 20, unit: 'em' },
       };
-      const result = evaluateExpression('var(--a) + var(--b)', context);
+      const result = evaluateExpression("'Spacing/a' + 'Spacing/b'", context);
       expect(result.unit).toBe('em');
     });
 
@@ -137,14 +137,14 @@ describe('evaluateExpression', () => {
 
   describe('error handling', () => {
     it('should return warning for missing variable', () => {
-      const result = evaluateExpression('var(--missing) * 2', {});
+      const result = evaluateExpression("'Spacing/missing' * 2", {});
       expect(result.value).toBeNull();
-      expect(result.warnings).toContain("Variable 'var(--missing)' not found");
+      expect(result.warnings).toContain("Variable 'Spacing/missing' not found");
     });
 
     it('should return warning for syntax error', () => {
-      const result = evaluateExpression('var(--x) * * 2', {
-        'var(--x)': { value: 10, unit: 'px' },
+      const result = evaluateExpression("'Spacing/x' * * 2", {
+        "'Spacing/x'": { value: 10, unit: 'px' },
       });
       expect(result.warnings.length).toBeGreaterThan(0);
       expect(result.warnings[0]).toMatch(/syntax/i);
@@ -152,9 +152,9 @@ describe('evaluateExpression', () => {
 
     it('should return warning for division by zero', () => {
       const context: EvaluationContext = {
-        'var(--zero)': { value: 0, unit: 'px' },
+        "'Spacing/zero'": { value: 0, unit: 'px' },
       };
-      const result = evaluateExpression('10 / var(--zero)', context);
+      const result = evaluateExpression("10 / 'Spacing/zero'", context);
       expect(result.value).toBe(Infinity);
       expect(result.warnings).toContain('Division by zero');
     });
@@ -163,17 +163,17 @@ describe('evaluateExpression', () => {
   describe('edge cases', () => {
     it('should handle negative numbers', () => {
       const context: EvaluationContext = {
-        'var(--x)': { value: 10, unit: 'px' },
+        "'Spacing/x'": { value: 10, unit: 'px' },
       };
-      const result = evaluateExpression('var(--x) * -1', context);
+      const result = evaluateExpression("'Spacing/x' * -1", context);
       expect(result.value).toBe(-10);
     });
 
     it('should handle decimal numbers', () => {
       const context: EvaluationContext = {
-        'var(--x)': { value: 10, unit: 'px' },
+        "'Spacing/x'": { value: 10, unit: 'px' },
       };
-      const result = evaluateExpression('var(--x) * 1.618', context);
+      const result = evaluateExpression("'Spacing/x' * 1.618", context);
       expect(result.value).toBeCloseTo(16.18);
     });
 
@@ -184,18 +184,26 @@ describe('evaluateExpression', () => {
 
     it('should handle zero values', () => {
       const context: EvaluationContext = {
-        'var(--x)': { value: 0, unit: 'px' },
+        "'Spacing/x'": { value: 0, unit: 'px' },
       };
-      const result = evaluateExpression('var(--x) + 5', context);
+      const result = evaluateExpression("'Spacing/x' + 5", context);
       expect(result.value).toBe(5);
     });
 
     it('should handle negative source values', () => {
       const context: EvaluationContext = {
-        'var(--x)': { value: -10, unit: 'px' },
+        "'Spacing/x'": { value: -10, unit: 'px' },
       };
-      const result = evaluateExpression('var(--x) * 2', context);
+      const result = evaluateExpression("'Spacing/x' * 2", context);
       expect(result.value).toBe(-20);
+    });
+
+    it('should handle paths with collection prefix', () => {
+      const context: EvaluationContext = {
+        "'Primitives/Spacing/base'": { value: 8, unit: 'px' },
+      };
+      const result = evaluateExpression("'Primitives/Spacing/base' * 2", context);
+      expect(result.value).toBe(16);
     });
   });
 });

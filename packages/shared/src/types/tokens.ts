@@ -8,8 +8,10 @@ export type ColorFormat = 'hex' | 'rgb' | 'rgba' | 'hsl' | 'oklch';
 export interface TokenConfig {
   unit: Unit;
   remBase: number;
+  /** Optional variable path for rem base (e.g., "Typography/base") */
+  remBaseVariablePath?: string;
   colorFormat: ColorFormat;
-  /** Optional calculation expression (e.g., "var(--spacing-base) * 2") */
+  /** Optional calculation expression (e.g., "'Spacing/base' * 2") */
   expression?: string;
 }
 
