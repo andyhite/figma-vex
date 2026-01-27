@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePluginMessage } from './usePluginMessage';
-import type { PluginSettings, ExportType, StyleType, StyleOutputMode } from '@figma-vex/shared';
+import type { PluginSettings } from '@figma-vex/shared';
 
 /**
  * Default settings used when no saved settings exist.
@@ -25,6 +25,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   remBaseVariableId: undefined,
   cssExportAsCalcExpressions: false,
   scssExportAsCalcExpressions: false,
+  nameFormatRules: [],
+  syncCodeSyntax: true,
 };
 
 interface UseSettingsReturn {

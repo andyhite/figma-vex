@@ -9,7 +9,13 @@ import { IconButton } from '../common/IconButton';
 import { OutputArea } from '../common/OutputArea';
 import { useOutputActions } from '../../hooks/useOutputActions';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
-import type { ExportOptions, UIMessage, StyleType, StyleOutputMode } from '@figma-vex/shared';
+import type {
+  ExportOptions,
+  UIMessage,
+  StyleType,
+  StyleOutputMode,
+  NameFormatRule,
+} from '@figma-vex/shared';
 
 interface ScssTabProps {
   prefix: string;
@@ -20,11 +26,11 @@ interface ScssTabProps {
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
   remBaseVariableId: string | null;
+  nameFormatRules: NameFormatRule[];
+  syncCodeSyntax: boolean;
   // Persisted settings
   initialExportAsCalcExpressions?: boolean;
-  onSettingsChange?: (settings: {
-    scssExportAsCalcExpressions: boolean;
-  }) => void;
+  onSettingsChange?: (settings: { scssExportAsCalcExpressions: boolean }) => void;
 }
 
 export function ScssTab({
@@ -36,10 +42,14 @@ export function ScssTab({
   styleOutputMode,
   styleTypes,
   remBaseVariableId,
+  nameFormatRules,
+  syncCodeSyntax,
   initialExportAsCalcExpressions = false,
   onSettingsChange,
 }: ScssTabProps) {
-  const [exportAsCalcExpressions, setExportAsCalcExpressions] = useState(initialExportAsCalcExpressions);
+  const [exportAsCalcExpressions, setExportAsCalcExpressions] = useState(
+    initialExportAsCalcExpressions
+  );
   const [output, setOutput] = useState('');
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
@@ -87,6 +97,8 @@ export function ScssTab({
       syncCalculations,
       exportAsCalcExpressions,
       remBaseVariableId: remBaseVariableId || undefined,
+      nameFormatRules: nameFormatRules.length > 0 ? nameFormatRules : undefined,
+      syncCodeSyntax,
     };
 
     sendMessage({ type: 'export-scss', options });
@@ -101,6 +113,8 @@ export function ScssTab({
     syncCalculations,
     exportAsCalcExpressions,
     remBaseVariableId,
+    nameFormatRules,
+    syncCodeSyntax,
     sendMessage,
     setStatus,
   ]);

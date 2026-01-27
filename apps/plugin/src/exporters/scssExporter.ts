@@ -1,6 +1,6 @@
 import type { ExportOptions, TokenConfig, StyleCollection } from '@figma-vex/shared';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
-import { toCssName } from '@plugin/formatters/nameFormatter';
+import { getVariableCssName } from '@plugin/formatters/nameFormatter';
 import { parseDescription } from '@plugin/utils/descriptionParser';
 import { resolveValue } from '@plugin/services/valueResolver';
 import { filterCollections, getCollectionVariables } from '@plugin/utils/collectionUtils';
@@ -93,8 +93,8 @@ export async function exportToScss(
     const value = variable.valuesByMode[modeId];
     if (value === undefined) return '';
 
-    const scssName = toCssName(variable.name);
-    const prefixedName = options.prefix ? `$${options.prefix}-${scssName}` : `$${scssName}`;
+    const cssName = getVariableCssName(variable, options.prefix, options.nameFormatRules);
+    const prefixedName = `$${cssName}`;
     const scssValue = await resolveValue(
       value,
       modeId,

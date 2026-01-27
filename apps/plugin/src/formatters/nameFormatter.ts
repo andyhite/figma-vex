@@ -1,3 +1,6 @@
+import type { NameFormatRule } from '@figma-vex/shared';
+import { toCustomCssName } from '../utils/globMatcher';
+
 /**
  * Converts a variable name to a valid CSS custom property name.
  * Handles slashes, spaces, and camelCase conversion.
@@ -23,4 +26,38 @@ export function toCssName(name: string): string {
 export function toPrefixedName(cssName: string, prefix?: string): string {
   if (!prefix) return cssName;
   return `${prefix}-${cssName}`;
+}
+
+/**
+ * Gets the CSS variable name for a Figma variable, checking codeSyntax.WEB first,
+ * then matching rules, then falling back to default transformation.
+ *
+ * @param variable - The Figma variable
+ * @param prefix - Optional CSS variable prefix
+ * @param rules - Optional array of name format rules
+ * @returns CSS variable name (without -- prefix)
+ */
+export function getVariableCssName(
+  variable: Variable,
+  prefix?: string,
+  rules?: NameFormatRule[]
+): string {
+  // 1. Check for codeSyntax.WEB first (set by our sync or manually by user)
+  if (variable.codeSyntax?.WEB) {
+    // Already includes -- prefix, so remove it if present
+    const name = variable.codeSyntax.WEB.replace(/^--/, '');
+    return prefix ? `${prefix}-${name}` : name;
+  }
+
+  // 2. Check for matching rule (fallback if not synced yet)
+  if (rules?.length) {
+    const customName = toCustomCssName(variable.name, rules);
+    if (customName) {
+      return prefix ? `${prefix}-${customName}` : customName;
+    }
+  }
+
+  // 3. Fall back to default transformation
+  const cssName = toCssName(variable.name);
+  return prefix ? `${prefix}-${cssName}` : cssName;
 }

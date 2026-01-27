@@ -1,7 +1,7 @@
-import type { TokenConfig, Unit } from '@figma-vex/shared';
+import type { Unit } from '@figma-vex/shared';
 import { extractPathReferences } from '@plugin/utils/variableLookup';
 import { lookupByPath } from '@plugin/utils/variableLookup';
-import { toCssName, toPrefixedName } from '@plugin/formatters/nameFormatter';
+import { getVariableCssName } from '@plugin/formatters/nameFormatter';
 
 /**
  * Formats an expression for CSS calc() output.
@@ -31,10 +31,10 @@ export function formatForCss(
     try {
       const entry = lookupByPath(pathRef, variables, collections);
       if (entry) {
-        const cssName = toCssName(entry.variable.name);
-        const prefixedName = toPrefixedName(cssName, prefix);
+        // Use codeSyntax.WEB if available, otherwise use default transformation
+        const cssName = getVariableCssName(entry.variable, prefix);
         const quotedPath = `'${pathRef}'`;
-        formatted = formatted.split(quotedPath).join(`var(--${prefixedName})`);
+        formatted = formatted.split(quotedPath).join(`var(--${cssName})`);
       }
     } catch (error) {
       // Ambiguous path - keep original path reference
@@ -48,9 +48,8 @@ export function formatForCss(
       // Find the rem base variable
       const remBaseVar = variables.find((v) => v.id === remBaseVarId);
       if (remBaseVar) {
-        const remBaseCssName = toCssName(remBaseVar.name);
-        const remBasePrefixed = toPrefixedName(remBaseCssName, prefix);
-        formatted = `${formatted} / var(--${remBasePrefixed}) * 1${unit}`;
+        const remBaseCssName = getVariableCssName(remBaseVar, prefix);
+        formatted = `${formatted} / var(--${remBaseCssName}) * 1${unit}`;
       } else {
         // Rem base variable not found - output without conversion
         formatted = `${formatted} * 1${unit}`;
@@ -69,9 +68,13 @@ export function formatForCss(
 
   // Wrap in calc() if the expression contains operations or var() references
   // Only wrap if we actually modified the expression or it contains operations
-  const hasOperations = formatted.includes('*') || formatted.includes('/') || formatted.includes('+') || formatted.includes('-');
+  const hasOperations =
+    formatted.includes('*') ||
+    formatted.includes('/') ||
+    formatted.includes('+') ||
+    formatted.includes('-');
   const hasVarRefs = formatted.includes('var(');
-  
+
   if (hasOperations || hasVarRefs) {
     return `calc(${formatted})`;
   }
@@ -107,10 +110,10 @@ export function formatForScss(
     try {
       const entry = lookupByPath(pathRef, variables, collections);
       if (entry) {
-        const scssName = toCssName(entry.variable.name);
-        const prefixedName = prefix ? `${prefix}-${scssName}` : scssName;
+        // Use codeSyntax.WEB if available, otherwise use default transformation
+        const cssName = getVariableCssName(entry.variable, prefix);
         const quotedPath = `'${pathRef}'`;
-        formatted = formatted.split(quotedPath).join(`$${prefixedName}`);
+        formatted = formatted.split(quotedPath).join(`$${cssName}`);
       }
     } catch (error) {
       // Ambiguous path - keep original path reference
@@ -124,9 +127,8 @@ export function formatForScss(
       // Find the rem base variable
       const remBaseVar = variables.find((v) => v.id === remBaseVarId);
       if (remBaseVar) {
-        const remBaseScssName = toCssName(remBaseVar.name);
-        const remBasePrefixed = prefix ? `${prefix}-${remBaseScssName}` : remBaseScssName;
-        formatted = `${formatted} / $${remBasePrefixed} * 1${unit}`;
+        const remBaseCssName = getVariableCssName(remBaseVar, prefix);
+        formatted = `${formatted} / $${remBaseCssName} * 1${unit}`;
       } else {
         // Rem base variable not found - output without conversion
         formatted = `${formatted} * 1${unit}`;

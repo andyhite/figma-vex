@@ -12,7 +12,7 @@ import { useAutoResize } from './hooks/useAutoResize';
 import { useCollections } from './hooks/useCollections';
 import { useStyles } from './hooks/useStyles';
 import { useSettings, DEFAULT_SETTINGS } from './hooks/useSettings';
-import type { StyleType, StyleOutputMode, PluginSettings } from '@figma-vex/shared';
+import type { StyleType, StyleOutputMode } from '@figma-vex/shared';
 
 const TABS = [
   { id: 'css', label: 'CSS' },
@@ -47,15 +47,24 @@ export default function App() {
   const includeStyles = settings?.includeStyles ?? DEFAULT_SETTINGS.includeStyles;
   const styleOutputMode = settings?.styleOutputMode ?? DEFAULT_SETTINGS.styleOutputMode;
   const styleTypes = settings?.styleTypes ?? DEFAULT_SETTINGS.styleTypes;
-  const remBaseVariableId = settings?.remBaseVariableId ?? DEFAULT_SETTINGS.remBaseVariableId ?? null;
-  const cssExportAsCalcExpressions = settings?.cssExportAsCalcExpressions ?? DEFAULT_SETTINGS.cssExportAsCalcExpressions;
-  const scssExportAsCalcExpressions = settings?.scssExportAsCalcExpressions ?? DEFAULT_SETTINGS.scssExportAsCalcExpressions;
+  const remBaseVariableId =
+    settings?.remBaseVariableId ?? DEFAULT_SETTINGS.remBaseVariableId ?? null;
+  const cssExportAsCalcExpressions =
+    settings?.cssExportAsCalcExpressions ?? DEFAULT_SETTINGS.cssExportAsCalcExpressions;
+  const scssExportAsCalcExpressions =
+    settings?.scssExportAsCalcExpressions ?? DEFAULT_SETTINGS.scssExportAsCalcExpressions;
+  const nameFormatRules = settings?.nameFormatRules ?? DEFAULT_SETTINGS.nameFormatRules;
+  const syncCodeSyntax = settings?.syncCodeSyntax ?? DEFAULT_SETTINGS.syncCodeSyntax;
 
   // Collections with restored selections
-  const { collections, selectedCollections, toggleCollection, loading: collectionsLoading } =
-    useCollections({
-      initialSelectedCollections: settings?.selectedCollections,
-    });
+  const {
+    collections,
+    selectedCollections,
+    toggleCollection,
+    loading: collectionsLoading,
+  } = useCollections({
+    initialSelectedCollections: settings?.selectedCollections,
+  });
 
   const containerRef = useAutoResize([activeTab]);
   const { styleCounts, loading: stylesLoading } = useStyles();
@@ -71,7 +80,12 @@ export default function App() {
   const handleStyleOutputModeChange = (value: StyleOutputMode) =>
     updateSettings({ styleOutputMode: value });
   const handleStyleTypesChange = (value: StyleType[]) => updateSettings({ styleTypes: value });
-  const handleRemBaseVariableChange = (id: string | null) => updateSettings({ remBaseVariableId: id || undefined });
+  const handleRemBaseVariableChange = (id: string | null) =>
+    updateSettings({ remBaseVariableId: id || undefined });
+  const handleNameFormatRulesChange = (rules: import('@figma-vex/shared').NameFormatRule[]) =>
+    updateSettings({ nameFormatRules: rules });
+  const handleSyncCodeSyntaxChange = (enabled: boolean) =>
+    updateSettings({ syncCodeSyntax: enabled });
 
   // Handle collection toggle and persist
   const handleToggleCollection = (collectionId: string) => {
@@ -83,13 +97,12 @@ export default function App() {
     updateSettings({ selectedCollections: newSelected });
   };
 
-
   return (
     <div ref={containerRef} className="bg-figma-bg text-figma-text">
       <TabBar tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
       {activeTab !== 'help' && (
-        <div className="px-4 pb-4 text-xs text-figma-text-secondary">
+        <div className="text-figma-text-secondary px-4 pb-4 text-xs">
           {TAB_DESCRIPTIONS[activeTab]}
         </div>
       )}
@@ -105,6 +118,8 @@ export default function App() {
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
             remBaseVariableId={remBaseVariableId}
+            nameFormatRules={nameFormatRules}
+            syncCodeSyntax={syncCodeSyntax}
             initialSelector={settings?.cssSelector}
             initialUseModesAsSelectors={settings?.cssUseModesAsSelectors}
             initialIncludeModeComments={settings?.cssIncludeModeComments}
@@ -125,6 +140,8 @@ export default function App() {
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
             remBaseVariableId={remBaseVariableId}
+            nameFormatRules={nameFormatRules}
+            syncCodeSyntax={syncCodeSyntax}
             initialExportAsCalcExpressions={scssExportAsCalcExpressions}
             onSettingsChange={(scssSettings) => updateSettings(scssSettings)}
           />
@@ -198,6 +215,10 @@ export default function App() {
             onStyleTypesChange={handleStyleTypesChange}
             styleCounts={styleCounts}
             stylesLoading={stylesLoading}
+            nameFormatRules={nameFormatRules}
+            onNameFormatRulesChange={handleNameFormatRulesChange}
+            syncCodeSyntax={syncCodeSyntax}
+            onSyncCodeSyntaxChange={handleSyncCodeSyntaxChange}
           />
         </ErrorBoundary>
       </TabPanel>

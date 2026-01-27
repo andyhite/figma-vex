@@ -1,6 +1,6 @@
 import type { ExportOptions, TokenConfig, StyleCollection } from '@figma-vex/shared';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
-import { toCssName, toPrefixedName } from '@plugin/formatters/nameFormatter';
+import { getVariableCssName } from '@plugin/formatters/nameFormatter';
 import { parseDescription } from '@plugin/utils/descriptionParser';
 import { resolveValue } from '@plugin/services/valueResolver';
 import { filterCollections, getCollectionVariables } from '@plugin/utils/collectionUtils';
@@ -52,8 +52,7 @@ export async function exportToCss(
     const value = variable.valuesByMode[modeId];
     if (value === undefined) return '';
 
-    const cssName = toCssName(variable.name);
-    const prefixedName = toPrefixedName(cssName, options.prefix);
+    const cssName = getVariableCssName(variable, options.prefix, options.nameFormatRules);
     const cssValue = await resolveValue(
       value,
       modeId,
@@ -69,7 +68,7 @@ export async function exportToCss(
       'css'
     );
 
-    return `${indent}--${prefixedName}: ${cssValue};`;
+    return `${indent}--${cssName}: ${cssValue};`;
   };
 
   if (options.useModesAsSelectors) {

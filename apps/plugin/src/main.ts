@@ -2,8 +2,6 @@
 
 import type { PluginMessage, UIMessage, StyleCollection, PluginSettings } from '@figma-vex/shared';
 import { UI_CONFIG } from '@figma-vex/shared';
-
-const SETTINGS_KEY = 'figma-vex-settings';
 import { exportToCss } from './exporters/cssExporter';
 import { exportToScss } from './exporters/scssExporter';
 import { exportToJson } from './exporters/jsonExporter';
@@ -12,6 +10,10 @@ import { sendGitHubDispatch, generateExports, fetchAllStyles, resolveExpression 
 import { mergeWithDefaults } from './utils/optionDefaults';
 import { parseDescription } from './utils/descriptionParser';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
+import { toCustomCssName } from './utils/globMatcher';
+import type { NameFormatRule } from '@figma-vex/shared';
+
+const SETTINGS_KEY = 'figma-vex-settings';
 
 /**
  * Sends a message to the UI.
@@ -34,9 +36,7 @@ async function syncCalculatedValues(
   const warnings: string[] = [];
 
   for (const collection of collections) {
-    const collectionVars = variables.filter(
-      (v) => v.variableCollectionId === collection.id
-    );
+    const collectionVars = variables.filter((v) => v.variableCollectionId === collection.id);
 
     for (const variable of collectionVars) {
       const descConfig = parseDescription(variable.description);
@@ -45,13 +45,7 @@ async function syncCalculatedValues(
       const config = { ...DEFAULT_CONFIG, ...descConfig };
 
       for (const mode of collection.modes) {
-        const result = await resolveExpression(
-          config,
-          mode.modeId,
-          variables,
-          collections,
-          prefix
-        );
+        const result = await resolveExpression(config, mode.modeId, variables, collections, prefix);
 
         if (result.value !== null && result.warnings.length === 0) {
           try {
@@ -64,9 +58,7 @@ async function syncCalculatedValues(
           }
         } else if (result.warnings.length > 0) {
           failed++;
-          warnings.push(
-            ...result.warnings.map((w) => `${variable.name}: ${w}`)
-          );
+          warnings.push(...result.warnings.map((w) => `${variable.name}: ${w}`));
         }
       }
     }
@@ -75,6 +67,44 @@ async function syncCalculatedValues(
   return { synced, failed, warnings };
 }
 
+/**
+ * Syncs variable code syntax (CSS variable names) to Figma's codeSyntax.WEB field.
+ * Transforms variable names using matching rules and writes them to Figma.
+ *
+ * @param variables - All variables to sync
+ * @param rules - Name format rules to apply
+ * @param prefix - Optional CSS variable prefix
+ * @returns Counts of synced and skipped variables
+ */
+async function syncVariableCodeSyntax(
+  variables: Variable[],
+  rules: NameFormatRule[],
+  prefix?: string
+): Promise<{ synced: number; skipped: number }> {
+  let synced = 0;
+  let skipped = 0;
+
+  for (const variable of variables) {
+    const customName = toCustomCssName(variable.name, rules);
+
+    if (customName) {
+      // Apply prefix if set, add -- for CSS custom property
+      const cssVarName = prefix ? `--${prefix}-${customName}` : `--${customName}`;
+
+      try {
+        variable.setVariableCodeSyntax('WEB', cssVarName);
+        synced++;
+      } catch (error) {
+        // Silently skip on error (e.g., variable is read-only)
+        skipped++;
+      }
+    } else {
+      skipped++; // No matching rule, leave codeSyntax unchanged
+    }
+  }
+
+  return { synced, skipped };
+}
 
 /**
  * Main message handler.
@@ -132,6 +162,10 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       if (options.syncCalculations) {
         await syncCalculatedValues(variables, collections, options.prefix ?? '');
       }
+      // Sync code syntax to Figma if enabled
+      if (options.syncCodeSyntax && options.nameFormatRules?.length) {
+        await syncVariableCodeSyntax(variables, options.nameFormatRules, options.prefix);
+      }
       let styles: StyleCollection | undefined;
       if (options.includeStyles) {
         styles = await fetchAllStyles();
@@ -146,6 +180,10 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       // Sync calculated values to Figma if enabled
       if (options.syncCalculations) {
         await syncCalculatedValues(variables, collections, options.prefix ?? '');
+      }
+      // Sync code syntax to Figma if enabled
+      if (options.syncCodeSyntax && options.nameFormatRules?.length) {
+        await syncVariableCodeSyntax(variables, options.nameFormatRules, options.prefix);
       }
       let styles: StyleCollection | undefined;
       if (options.includeStyles) {
@@ -181,7 +219,13 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       if (options.includeStyles) {
         styles = await fetchAllStyles();
       }
-      const typescript = await exportToTypeScript(variables, collections, fileName, options, styles);
+      const typescript = await exportToTypeScript(
+        variables,
+        collections,
+        fileName,
+        options,
+        styles
+      );
       postToUI({ type: 'typescript-result', typescript });
       break;
     }
@@ -248,9 +292,7 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       const warnings: string[] = [];
 
       for (const collection of collections) {
-        const collectionVars = variables.filter(
-          (v) => v.variableCollectionId === collection.id
-        );
+        const collectionVars = variables.filter((v) => v.variableCollectionId === collection.id);
 
         for (const variable of collectionVars) {
           const descConfig = parseDescription(variable.description);
@@ -278,15 +320,27 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
               }
             } else {
               failed++;
-              warnings.push(
-                ...result.warnings.map((w) => `${variable.name}: ${w}`)
-              );
+              warnings.push(...result.warnings.map((w) => `${variable.name}: ${w}`));
             }
           }
         }
       }
 
       postToUI({ type: 'sync-result', synced, failed, warnings });
+      break;
+    }
+
+    case 'sync-code-syntax': {
+      const result = await syncVariableCodeSyntax(
+        variables,
+        msg.options.nameFormatRules,
+        msg.options.prefix
+      );
+      postToUI({
+        type: 'sync-code-syntax-result',
+        synced: result.synced,
+        skipped: result.skipped,
+      });
       break;
     }
 

@@ -7,6 +7,16 @@ import type { StyleType, StyleOutputMode, StyleSummary } from './styles';
 export type ExportType = 'css' | 'scss' | 'json' | 'typescript';
 
 /**
+ * Pattern-based rule for transforming Figma variable names to custom CSS variable names.
+ */
+export interface NameFormatRule {
+  id: string; // Unique identifier for reordering/deletion
+  pattern: string; // Glob pattern, e.g., "color/*/alpha/*"
+  replacement: string; // Template, e.g., "color-$1-a$2"
+  enabled: boolean; // Allow toggling rules on/off
+}
+
+/**
  * Plugin settings that get persisted to the document.
  * Note: GitHub token is intentionally excluded for security.
  */
@@ -45,6 +55,10 @@ export interface PluginSettings {
 
   // SCSS tab settings
   scssExportAsCalcExpressions: boolean;
+
+  // Name format override settings (global)
+  nameFormatRules: NameFormatRule[];
+  syncCodeSyntax: boolean;
 }
 
 export interface ExportOptions {
@@ -63,6 +77,10 @@ export interface ExportOptions {
   // Expression export mode
   exportAsCalcExpressions?: boolean;
   remBaseVariableId?: string;
+  // Name format override rules
+  nameFormatRules?: NameFormatRule[];
+  // Sync code syntax to Figma before export
+  syncCodeSyntax?: boolean;
 }
 
 export interface GitHubDispatchOptions {
@@ -92,7 +110,8 @@ export type PluginMessage =
   | { type: 'cancel' }
   | { type: 'save-settings'; settings: PluginSettings }
   | { type: 'load-settings' }
-  | { type: 'sync-calculations'; options: ExportOptions };
+  | { type: 'sync-calculations'; options: ExportOptions }
+  | { type: 'sync-code-syntax'; options: { nameFormatRules: NameFormatRule[]; prefix?: string } };
 
 export interface NumericVariableInfo {
   id: string;
@@ -112,4 +131,5 @@ export type UIMessage =
   | { type: 'github-dispatch-success'; message: string }
   | { type: 'error'; message: string }
   | { type: 'settings-loaded'; settings: PluginSettings | null }
-  | { type: 'sync-result'; synced: number; failed: number; warnings: string[] };
+  | { type: 'sync-result'; synced: number; failed: number; warnings: string[] }
+  | { type: 'sync-code-syntax-result'; synced: number; skipped: number };

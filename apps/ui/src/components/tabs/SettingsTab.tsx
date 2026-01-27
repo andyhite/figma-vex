@@ -3,8 +3,17 @@ import { FormField } from '../common/FormField';
 import { FormGroup } from '../common/FormGroup';
 import { Input } from '../common/Input';
 import { StyleOptions } from '../common/StyleOptions';
+import { NameFormatRules } from '../settings/NameFormatRules';
 import { useNumericVariables } from '../../hooks/useNumericVariables';
-import type { StyleType, StyleOutputMode, StyleSummary } from '@figma-vex/shared';
+import { usePluginMessage } from '../../hooks/usePluginMessage';
+import { useCallback, useEffect, useState } from 'react';
+import type {
+  StyleType,
+  StyleOutputMode,
+  StyleSummary,
+  NameFormatRule,
+  UIMessage,
+} from '@figma-vex/shared';
 
 interface Collection {
   id: string;
@@ -39,6 +48,12 @@ interface SettingsTabProps {
   onStyleTypesChange: (types: StyleType[]) => void;
   styleCounts: StyleSummary | null;
   stylesLoading: boolean;
+
+  // Name format rules
+  nameFormatRules: NameFormatRule[];
+  onNameFormatRulesChange: (rules: NameFormatRule[]) => void;
+  syncCodeSyntax: boolean;
+  onSyncCodeSyntaxChange: (enabled: boolean) => void;
 }
 
 export function SettingsTab({
@@ -60,8 +75,37 @@ export function SettingsTab({
   onStyleTypesChange,
   styleCounts,
   stylesLoading,
+  nameFormatRules,
+  onNameFormatRulesChange,
+  syncCodeSyntax,
+  onSyncCodeSyntaxChange,
 }: SettingsTabProps) {
   const { variables: numericVariables, loading: numericVariablesLoading } = useNumericVariables();
+  const { sendMessage, listenToMessage } = usePluginMessage();
+  const [syncStatus, setSyncStatus] = useState<{ synced: number; skipped: number } | null>(null);
+
+  // Handle sync result messages
+  useEffect(() => {
+    const cleanup = listenToMessage((message: UIMessage) => {
+      if (message.type === 'sync-code-syntax-result') {
+        setSyncStatus({ synced: message.synced, skipped: message.skipped });
+        // Clear status after 3 seconds
+        setTimeout(() => setSyncStatus(null), 3000);
+      }
+    });
+    return cleanup;
+  }, [listenToMessage]);
+
+  const handleSyncNow = useCallback(() => {
+    sendMessage({
+      type: 'sync-code-syntax',
+      options: {
+        nameFormatRules: nameFormatRules.filter((r) => r.enabled),
+        prefix: prefix || undefined,
+      },
+    });
+    setSyncStatus(null); // Clear previous status
+  }, [sendMessage, nameFormatRules, prefix]);
 
   // Group numeric variables by collection name for the dropdown
   const groupedVariables = numericVariables.reduce(
@@ -86,11 +130,11 @@ export function SettingsTab({
       />
 
       <FormGroup label="Collections">
-        <div className="max-h-[150px] overflow-y-auto rounded border border-figma-border bg-figma-bg-secondary p-2">
+        <div className="border-figma-border bg-figma-bg-secondary max-h-[150px] overflow-y-auto rounded border p-2">
           {collectionsLoading ? (
-            <div className="text-xs text-figma-text-tertiary">Loading collections...</div>
+            <div className="text-figma-text-tertiary text-xs">Loading collections...</div>
           ) : collections.length === 0 ? (
-            <div className="text-xs text-figma-text-tertiary">No collections found</div>
+            <div className="text-figma-text-tertiary text-xs">No collections found</div>
           ) : (
             <div className="space-y-2">
               {collections.map((collection) => (
@@ -115,11 +159,9 @@ export function SettingsTab({
       </FormField>
 
       <FormField>
-        <label className="block text-xs font-medium text-figma-text mb-1">
-          Rem Base Variable
-        </label>
+        <label className="text-figma-text mb-1 block text-xs font-medium">Rem Base Variable</label>
         <select
-          className="w-full px-2 py-1.5 text-xs border border-figma-border rounded bg-figma-bg text-figma-text focus:outline-none focus:ring-1 focus:ring-figma-border-focus"
+          className="border-figma-border bg-figma-bg text-figma-text focus:ring-figma-border-focus w-full rounded border px-2 py-1.5 text-xs focus:outline-none focus:ring-1"
           value={remBaseVariableId || ''}
           onChange={(e) => onRemBaseVariableChange(e.target.value || null)}
           disabled={numericVariablesLoading}
@@ -136,7 +178,7 @@ export function SettingsTab({
           ))}
         </select>
         {numericVariablesLoading && (
-          <div className="text-xs text-figma-text-tertiary mt-1">Loading variables...</div>
+          <div className="text-figma-text-tertiary mt-1 text-xs">Loading variables...</div>
         )}
       </FormField>
 
@@ -150,6 +192,22 @@ export function SettingsTab({
         styleCounts={styleCounts}
         loading={stylesLoading}
       />
+
+      <NameFormatRules
+        rules={nameFormatRules}
+        syncCodeSyntax={syncCodeSyntax}
+        onRulesChange={onNameFormatRulesChange}
+        onSyncCodeSyntaxChange={onSyncCodeSyntaxChange}
+        onSyncNow={handleSyncNow}
+        prefix={prefix}
+      />
+
+      {syncStatus && (
+        <div className="text-figma-text-secondary mt-2 text-xs">
+          Synced {syncStatus.synced} variable{syncStatus.synced !== 1 ? 's' : ''}
+          {syncStatus.skipped > 0 && `, skipped ${syncStatus.skipped}`}
+        </div>
+      )}
     </div>
   );
 }
