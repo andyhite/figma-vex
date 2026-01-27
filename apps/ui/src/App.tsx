@@ -45,6 +45,7 @@ export default function App() {
   const prefix = settings?.prefix ?? DEFAULT_SETTINGS.prefix;
   const includeCollectionComments =
     settings?.includeCollectionComments ?? DEFAULT_SETTINGS.includeCollectionComments;
+  const syncCalculations = settings?.syncCalculations ?? DEFAULT_SETTINGS.syncCalculations;
   const includeStyles = settings?.includeStyles ?? DEFAULT_SETTINGS.includeStyles;
   const styleOutputMode = settings?.styleOutputMode ?? DEFAULT_SETTINGS.styleOutputMode;
   const styleTypes = settings?.styleTypes ?? DEFAULT_SETTINGS.styleTypes;
@@ -63,6 +64,8 @@ export default function App() {
   const handlePrefixChange = (value: string) => updateSettings({ prefix: value });
   const handleIncludeCollectionCommentsChange = (value: boolean) =>
     updateSettings({ includeCollectionComments: value });
+  const handleSyncCalculationsChange = (value: boolean) =>
+    updateSettings({ syncCalculations: value });
   const handleIncludeStylesChange = (value: boolean) => updateSettings({ includeStyles: value });
   const handleStyleOutputModeChange = (value: StyleOutputMode) =>
     updateSettings({ styleOutputMode: value });
@@ -128,6 +131,14 @@ export default function App() {
               />
             </FormField>
 
+            <FormField>
+              <Checkbox
+                label="Sync calculated values to Figma on export"
+                checked={syncCalculations}
+                onChange={(e) => handleSyncCalculationsChange(e.target.checked)}
+              />
+            </FormField>
+
             <StyleOptions
               includeStyles={includeStyles}
               onIncludeStylesChange={handleIncludeStylesChange}
@@ -148,6 +159,7 @@ export default function App() {
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
@@ -165,6 +177,7 @@ export default function App() {
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
@@ -177,6 +190,7 @@ export default function App() {
           <JsonTab
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
@@ -189,6 +203,7 @@ export default function App() {
           <TypeScriptTab
             prefix={prefix}
             selectedCollections={selectedCollections}
+            syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
@@ -202,6 +217,7 @@ export default function App() {
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
+            syncCalculations={syncCalculations}
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}

@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   prefix: '',
   selectedCollections: [],
   includeCollectionComments: true,
+  syncCalculations: false,
   includeStyles: false,
   styleOutputMode: 'variables',
   styleTypes: ['paint', 'text', 'effect', 'grid'],

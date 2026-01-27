@@ -20,6 +20,7 @@ interface GitHubTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
@@ -42,6 +43,7 @@ export function GitHubTab({
   prefix,
   selectedCollections,
   includeCollectionComments,
+  syncCalculations,
   includeStyles,
   styleOutputMode,
   styleTypes,
@@ -181,6 +183,7 @@ export function GitHubTab({
       includeStyles,
       styleOutputMode,
       styleTypes,
+      syncCalculations,
     };
 
     const githubOptions: GitHubDispatchOptions = {
@@ -206,6 +209,7 @@ export function GitHubTab({
     includeStyles,
     styleOutputMode,
     styleTypes,
+    syncCalculations,
     sendMessage,
   ]);
 

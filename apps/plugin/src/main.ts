@@ -20,6 +20,66 @@ function postToUI(message: UIMessage): void {
   figma.ui.postMessage(message);
 }
 
+/**
+ * Syncs calculated values back to Figma variables.
+ * Called when syncCalculations option is enabled during export.
+ */
+async function syncCalculatedValues(
+  variables: Variable[],
+  collections: VariableCollection[],
+  prefix: string
+): Promise<{ synced: number; failed: number; warnings: string[] }> {
+  let synced = 0;
+  let failed = 0;
+  const warnings: string[] = [];
+
+  for (const collection of collections) {
+    const collectionVars = variables.filter(
+      (v) => v.variableCollectionId === collection.id
+    );
+
+    for (const variable of collectionVars) {
+      const descConfig = parseDescription(variable.description);
+      if (!descConfig.expression) continue;
+
+      const config = { ...DEFAULT_CONFIG, ...descConfig };
+
+      for (const mode of collection.modes) {
+        const result = await resolveExpression(
+          config,
+          mode.modeId,
+          variables,
+          collections,
+          prefix
+        );
+
+        if (result.value !== null && result.warnings.length === 0) {
+          try {
+            await variable.setValueForMode(mode.modeId, result.value);
+            synced++;
+            console.log(`[sync] Updated ${variable.name} mode ${mode.name} to ${result.value}`);
+          } catch (error) {
+            failed++;
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            warnings.push(`Failed to update ${variable.name}: ${errorMsg}`);
+          }
+        } else if (result.warnings.length > 0) {
+          failed++;
+          warnings.push(
+            ...result.warnings.map((w) => `${variable.name}: ${w}`)
+          );
+        }
+      }
+    }
+  }
+
+  if (synced > 0 || failed > 0) {
+    console.log(`[sync] Completed: ${synced} synced, ${failed} failed`);
+  }
+
+  return { synced, failed, warnings };
+}
+
 
 /**
  * Main message handler.
@@ -54,6 +114,10 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
 
     case 'export-css': {
       const options = mergeWithDefaults('css', msg.options);
+      // Sync calculated values to Figma if enabled
+      if (options.syncCalculations) {
+        await syncCalculatedValues(variables, collections, options.prefix ?? '');
+      }
       let styles: StyleCollection | undefined;
       if (options.includeStyles) {
         styles = await fetchAllStyles();
@@ -65,6 +129,10 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
 
     case 'export-scss': {
       const options = mergeWithDefaults('scss', msg.options);
+      // Sync calculated values to Figma if enabled
+      if (options.syncCalculations) {
+        await syncCalculatedValues(variables, collections, options.prefix ?? '');
+      }
       let styles: StyleCollection | undefined;
       if (options.includeStyles) {
         styles = await fetchAllStyles();
@@ -76,6 +144,10 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
 
     case 'export-json': {
       const options = mergeWithDefaults('json', msg.options);
+      // Sync calculated values to Figma if enabled
+      if (options.syncCalculations) {
+        await syncCalculatedValues(variables, collections, options.prefix ?? '');
+      }
       let styles: StyleCollection | undefined;
       if (options.includeStyles) {
         styles = await fetchAllStyles();
@@ -87,6 +159,10 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
 
     case 'export-typescript': {
       const options = mergeWithDefaults('typescript', msg.options);
+      // Sync calculated values to Figma if enabled
+      if (options.syncCalculations) {
+        await syncCalculatedValues(variables, collections, options.prefix ?? '');
+      }
       let styles: StyleCollection | undefined;
       if (options.includeStyles) {
         styles = await fetchAllStyles();

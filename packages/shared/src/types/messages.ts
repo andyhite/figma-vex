@@ -17,6 +17,9 @@ export interface PluginSettings {
   selectedCollections: string[];
   includeCollectionComments: boolean;
 
+  // Calculation settings
+  syncCalculations: boolean;
+
   // Style export options
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
@@ -46,6 +49,8 @@ export interface ExportOptions {
   includeStyles?: boolean;
   styleOutputMode?: StyleOutputMode;
   styleTypes?: StyleType[];
+  // Calculation settings
+  syncCalculations?: boolean;
 }
 
 export interface GitHubDispatchOptions {

@@ -16,6 +16,7 @@ interface CssTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
@@ -34,6 +35,7 @@ export function CssTab({
   prefix,
   selectedCollections,
   includeCollectionComments,
+  syncCalculations,
   includeStyles,
   styleOutputMode,
   styleTypes,
@@ -110,6 +112,7 @@ export function CssTab({
       includeStyles,
       styleOutputMode,
       styleTypes,
+      syncCalculations,
     };
 
     sendMessage({ type: 'export-css', options });
@@ -124,6 +127,7 @@ export function CssTab({
     includeStyles,
     styleOutputMode,
     styleTypes,
+    syncCalculations,
     sendMessage,
     setStatus,
   ]);

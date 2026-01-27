@@ -13,6 +13,7 @@ interface ScssTabProps {
   prefix: string;
   selectedCollections: string[];
   includeCollectionComments: boolean;
+  syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
@@ -22,6 +23,7 @@ export function ScssTab({
   prefix,
   selectedCollections,
   includeCollectionComments,
+  syncCalculations,
   includeStyles,
   styleOutputMode,
   styleTypes,
@@ -63,6 +65,7 @@ export function ScssTab({
       includeStyles,
       styleOutputMode,
       styleTypes,
+      syncCalculations,
     };
 
     sendMessage({ type: 'export-scss', options });
@@ -74,6 +77,7 @@ export function ScssTab({
     includeStyles,
     styleOutputMode,
     styleTypes,
+    syncCalculations,
     sendMessage,
     setStatus,
   ]);

@@ -12,6 +12,7 @@ import type { ExportOptions, UIMessage, StyleType, StyleOutputMode } from '@figm
 interface TypeScriptTabProps {
   prefix: string;
   selectedCollections: string[];
+  syncCalculations: boolean;
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
@@ -20,6 +21,7 @@ interface TypeScriptTabProps {
 export function TypeScriptTab({
   prefix,
   selectedCollections,
+  syncCalculations,
   includeStyles,
   styleOutputMode,
   styleTypes,
@@ -61,11 +63,12 @@ export function TypeScriptTab({
       includeStyles,
       styleOutputMode,
       styleTypes,
+      syncCalculations,
     };
 
     sendMessage({ type: 'export-typescript', options });
     setStatus({ message: 'Generating...', type: 'info' });
-  }, [prefix, selectedCollections, includeStyles, styleOutputMode, styleTypes, sendMessage, setStatus]);
+  }, [prefix, selectedCollections, includeStyles, styleOutputMode, styleTypes, syncCalculations, sendMessage, setStatus]);
 
   return (
     <div>
