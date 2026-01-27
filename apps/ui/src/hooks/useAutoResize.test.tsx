@@ -93,30 +93,30 @@ describe('useAutoResize', () => {
     Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
   });
 
-  it('should cap height at MAX_HEIGHT (800px)', () => {
+  it('should cap height at MAX_HEIGHT (1280px)', () => {
     // Mock getBoundingClientRect on Element prototype with height > MAX_HEIGHT
     const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = vi.fn().mockReturnValue({
-      height: 1000,
+      height: 1500,
       width: 300,
       top: 0,
       left: 0,
-      bottom: 1000,
+      bottom: 1500,
       right: 300,
       x: 0,
       y: 0,
       toJSON: vi.fn(),
     } as DOMRect);
 
-    render(<TestComponent height={1000} />);
+    render(<TestComponent height={1500} />);
 
     // Advance timers to trigger initial measurement (100ms delay)
     act(() => {
       vi.advanceTimersByTime(200);
     });
 
-    // Should be capped at 800
-    expect(mockResizeWindow).toHaveBeenCalledWith(800);
+    // Should be capped at 1280
+    expect(mockResizeWindow).toHaveBeenCalledWith(1280);
 
     // Restore
     Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;

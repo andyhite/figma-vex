@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { TabBar } from './components/tabs/TabBar';
 import { TabPanel } from './components/tabs/TabPanel';
 import { CssTab } from './components/tabs/CssTab';
@@ -16,7 +15,8 @@ import { StyleOptions } from './components/common/StyleOptions';
 import { useAutoResize } from './hooks/useAutoResize';
 import { useCollections } from './hooks/useCollections';
 import { useStyles } from './hooks/useStyles';
-import type { StyleType, StyleOutputMode } from '@figma-vex/shared';
+import { useSettings, DEFAULT_SETTINGS } from './hooks/useSettings';
+import type { StyleType, StyleOutputMode, PluginSettings } from '@figma-vex/shared';
 
 const TABS = [
   { id: 'css', label: 'CSS' },
@@ -37,23 +37,53 @@ const TAB_DESCRIPTIONS: Record<string, string> = {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('css');
-  const [prefix, setPrefix] = useState('');
-  const [includeCollectionComments, setIncludeCollectionComments] = useState(true);
-  const { collections, selectedCollections, toggleCollection, loading } = useCollections();
-  const containerRef = useAutoResize([activeTab]);
+  // Load persisted settings
+  const { settings, loading: settingsLoading, updateSettings } = useSettings();
 
-  // Style export options
-  const [includeStyles, setIncludeStyles] = useState(false);
-  const [styleOutputMode, setStyleOutputMode] = useState<StyleOutputMode>('variables');
-  const [styleTypes, setStyleTypes] = useState<StyleType[]>(['paint', 'text', 'effect', 'grid']);
+  // Use settings values with defaults for initial render
+  const activeTab = settings?.activeTab ?? DEFAULT_SETTINGS.activeTab;
+  const prefix = settings?.prefix ?? DEFAULT_SETTINGS.prefix;
+  const includeCollectionComments =
+    settings?.includeCollectionComments ?? DEFAULT_SETTINGS.includeCollectionComments;
+  const includeStyles = settings?.includeStyles ?? DEFAULT_SETTINGS.includeStyles;
+  const styleOutputMode = settings?.styleOutputMode ?? DEFAULT_SETTINGS.styleOutputMode;
+  const styleTypes = settings?.styleTypes ?? DEFAULT_SETTINGS.styleTypes;
+
+  // Collections with restored selections
+  const { collections, selectedCollections, toggleCollection, loading: collectionsLoading } =
+    useCollections({
+      initialSelectedCollections: settings?.selectedCollections,
+    });
+
+  const containerRef = useAutoResize([activeTab]);
   const { styleCounts, loading: stylesLoading } = useStyles();
 
+  // Update handlers that persist to settings
+  const handleTabChange = (tab: string) => updateSettings({ activeTab: tab });
+  const handlePrefixChange = (value: string) => updateSettings({ prefix: value });
+  const handleIncludeCollectionCommentsChange = (value: boolean) =>
+    updateSettings({ includeCollectionComments: value });
+  const handleIncludeStylesChange = (value: boolean) => updateSettings({ includeStyles: value });
+  const handleStyleOutputModeChange = (value: StyleOutputMode) =>
+    updateSettings({ styleOutputMode: value });
+  const handleStyleTypesChange = (value: StyleType[]) => updateSettings({ styleTypes: value });
+
+  // Handle collection toggle and persist
+  const handleToggleCollection = (collectionId: string) => {
+    toggleCollection(collectionId);
+    // Update settings with new selection
+    const newSelected = selectedCollections.includes(collectionId)
+      ? selectedCollections.filter((id) => id !== collectionId)
+      : [...selectedCollections, collectionId];
+    updateSettings({ selectedCollections: newSelected });
+  };
+
   const showCommonOptions = activeTab !== 'help';
+  const loading = settingsLoading || collectionsLoading;
 
   return (
     <div ref={containerRef} className="bg-figma-bg text-figma-text">
-      <TabBar tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabBar tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
       {showCommonOptions && (
         <>
@@ -65,7 +95,7 @@ export default function App() {
             <Input
               label="Variable Prefix (optional)"
               value={prefix}
-              onChange={(e) => setPrefix(e.target.value)}
+              onChange={(e) => handlePrefixChange(e.target.value)}
               placeholder="e.g., ds, theme"
             />
 
@@ -82,7 +112,7 @@ export default function App() {
                         key={collection.id}
                         label={collection.name}
                         checked={selectedCollections.includes(collection.id)}
-                        onChange={() => toggleCollection(collection.id)}
+                        onChange={() => handleToggleCollection(collection.id)}
                       />
                     ))}
                   </div>
@@ -94,17 +124,17 @@ export default function App() {
               <Checkbox
                 label="Include collection comments"
                 checked={includeCollectionComments}
-                onChange={(e) => setIncludeCollectionComments(e.target.checked)}
+                onChange={(e) => handleIncludeCollectionCommentsChange(e.target.checked)}
               />
             </FormField>
 
             <StyleOptions
               includeStyles={includeStyles}
-              onIncludeStylesChange={setIncludeStyles}
+              onIncludeStylesChange={handleIncludeStylesChange}
               styleOutputMode={styleOutputMode}
-              onStyleOutputModeChange={setStyleOutputMode}
+              onStyleOutputModeChange={handleStyleOutputModeChange}
               styleTypes={styleTypes}
-              onStyleTypesChange={setStyleTypes}
+              onStyleTypesChange={handleStyleTypesChange}
               styleCounts={styleCounts}
               loading={stylesLoading}
             />
@@ -121,6 +151,10 @@ export default function App() {
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
+            initialSelector={settings?.cssSelector}
+            initialUseModesAsSelectors={settings?.cssUseModesAsSelectors}
+            initialIncludeModeComments={settings?.cssIncludeModeComments}
+            onSettingsChange={(cssSettings) => updateSettings(cssSettings)}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -171,6 +205,12 @@ export default function App() {
             includeStyles={includeStyles}
             styleOutputMode={styleOutputMode}
             styleTypes={styleTypes}
+            initialRepository={settings?.githubRepository}
+            initialWorkflowFileName={settings?.githubWorkflowFileName}
+            initialExportTypes={settings?.githubExportTypes}
+            initialCssSelector={settings?.githubCssSelector}
+            initialUseModesAsSelectors={settings?.githubUseModesAsSelectors}
+            onSettingsChange={(githubSettings) => updateSettings(githubSettings)}
           />
         </ErrorBoundary>
       </TabPanel>

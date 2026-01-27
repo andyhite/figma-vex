@@ -19,6 +19,15 @@ interface CssTabProps {
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
+  // Persisted settings
+  initialSelector?: string;
+  initialUseModesAsSelectors?: boolean;
+  initialIncludeModeComments?: boolean;
+  onSettingsChange?: (settings: {
+    cssSelector: string;
+    cssUseModesAsSelectors: boolean;
+    cssIncludeModeComments: boolean;
+  }) => void;
 }
 
 export function CssTab({
@@ -28,11 +37,43 @@ export function CssTab({
   includeStyles,
   styleOutputMode,
   styleTypes,
+  initialSelector = ':root',
+  initialUseModesAsSelectors = false,
+  initialIncludeModeComments = true,
+  onSettingsChange,
 }: CssTabProps) {
-  const [selector, setSelector] = useState(':root');
-  const [useModesAsSelectors, setUseModesAsSelectors] = useState(false);
-  const [includeModeComments, setIncludeModeComments] = useState(true);
+  const [selector, setSelector] = useState(initialSelector);
+  const [useModesAsSelectors, setUseModesAsSelectors] = useState(initialUseModesAsSelectors);
+  const [includeModeComments, setIncludeModeComments] = useState(initialIncludeModeComments);
   const [output, setOutput] = useState('');
+
+  // Persist settings changes
+  const handleSelectorChange = (value: string) => {
+    setSelector(value);
+    onSettingsChange?.({
+      cssSelector: value,
+      cssUseModesAsSelectors: useModesAsSelectors,
+      cssIncludeModeComments: includeModeComments,
+    });
+  };
+
+  const handleUseModesAsSelectorChange = (value: boolean) => {
+    setUseModesAsSelectors(value);
+    onSettingsChange?.({
+      cssSelector: selector,
+      cssUseModesAsSelectors: value,
+      cssIncludeModeComments: includeModeComments,
+    });
+  };
+
+  const handleIncludeModeCommentsChange = (value: boolean) => {
+    setIncludeModeComments(value);
+    onSettingsChange?.({
+      cssSelector: selector,
+      cssUseModesAsSelectors: useModesAsSelectors,
+      cssIncludeModeComments: value,
+    });
+  };
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { handleCopy, handleDownload, status, setStatus } = useOutputActions({
     filename: 'variables.css',
@@ -89,19 +130,23 @@ export function CssTab({
 
   return (
     <div>
-      <Input label="CSS Selector" value={selector} onChange={(e) => setSelector(e.target.value)} />
+      <Input
+        label="CSS Selector"
+        value={selector}
+        onChange={(e) => handleSelectorChange(e.target.value)}
+      />
       <FormField>
         <Checkbox
           label="Export modes as separate selectors"
           checked={useModesAsSelectors}
-          onChange={(e) => setUseModesAsSelectors(e.target.checked)}
+          onChange={(e) => handleUseModesAsSelectorChange(e.target.checked)}
         />
       </FormField>
       <FormField>
         <Checkbox
           label="Include mode comments"
           checked={includeModeComments}
-          onChange={(e) => setIncludeModeComments(e.target.checked)}
+          onChange={(e) => handleIncludeModeCommentsChange(e.target.checked)}
         />
       </FormField>
       <ButtonGroup>

@@ -1,7 +1,9 @@
 /// <reference types="@figma/plugin-typings" />
 
-import type { PluginMessage, UIMessage, StyleCollection } from '@figma-vex/shared';
+import type { PluginMessage, UIMessage, StyleCollection, PluginSettings } from '@figma-vex/shared';
 import { UI_CONFIG } from '@figma-vex/shared';
+
+const SETTINGS_KEY = 'figma-vex-settings';
 import { exportToCss } from './exporters/cssExporter';
 import { exportToScss } from './exporters/scssExporter';
 import { exportToJson } from './exporters/jsonExporter';
@@ -122,6 +124,26 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
 
     case 'cancel': {
       figma.closePlugin();
+      break;
+    }
+
+    case 'save-settings': {
+      const settingsJson = JSON.stringify(msg.settings);
+      figma.root.setPluginData(SETTINGS_KEY, settingsJson);
+      break;
+    }
+
+    case 'load-settings': {
+      const settingsJson = figma.root.getPluginData(SETTINGS_KEY);
+      let settings: PluginSettings | null = null;
+      if (settingsJson) {
+        try {
+          settings = JSON.parse(settingsJson) as PluginSettings;
+        } catch {
+          console.warn('Failed to parse saved settings');
+        }
+      }
+      postToUI({ type: 'settings-loaded', settings });
       break;
     }
 

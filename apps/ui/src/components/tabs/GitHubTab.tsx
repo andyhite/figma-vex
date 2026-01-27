@@ -23,6 +23,19 @@ interface GitHubTabProps {
   includeStyles: boolean;
   styleOutputMode: StyleOutputMode;
   styleTypes: StyleType[];
+  // Persisted settings (token excluded for security)
+  initialRepository?: string;
+  initialWorkflowFileName?: string;
+  initialExportTypes?: ExportType[];
+  initialCssSelector?: string;
+  initialUseModesAsSelectors?: boolean;
+  onSettingsChange?: (settings: {
+    githubRepository: string;
+    githubWorkflowFileName: string;
+    githubExportTypes: ExportType[];
+    githubCssSelector: string;
+    githubUseModesAsSelectors: boolean;
+  }) => void;
 }
 
 export function GitHubTab({
@@ -32,18 +45,67 @@ export function GitHubTab({
   includeStyles,
   styleOutputMode,
   styleTypes,
+  initialRepository = '',
+  initialWorkflowFileName = 'update-variables.yml',
+  initialExportTypes = ['css', 'json'],
+  initialCssSelector = ':root',
+  initialUseModesAsSelectors = false,
+  onSettingsChange,
 }: GitHubTabProps) {
-  const [repository, setRepository] = useState('');
-  const [token, setToken] = useState('');
-  const [workflowFileName, setWorkflowFileName] = useState('update-variables.yml');
-  const [exportTypes, setExportTypes] = useState<Set<ExportType>>(new Set(['css', 'json']));
-  const [cssSelector, setCssSelector] = useState(':root');
-  const [useModesAsSelectors, setUseModesAsSelectors] = useState(false);
+  const [repository, setRepository] = useState(initialRepository);
+  const [token, setToken] = useState(''); // Never persisted for security
+  const [workflowFileName, setWorkflowFileName] = useState(initialWorkflowFileName);
+  const [exportTypes, setExportTypes] = useState<Set<ExportType>>(new Set(initialExportTypes));
+  const [cssSelector, setCssSelector] = useState(initialCssSelector);
+  const [useModesAsSelectors, setUseModesAsSelectors] = useState(initialUseModesAsSelectors);
   const [status, setStatus] = useState<{ message: string; type: 'success' | 'error' | 'info' }>({
     message: '',
     type: 'info',
   });
   const { sendMessage, listenToMessage } = usePluginMessage();
+
+  // Helper to persist current settings
+  const persistSettings = (updates: Partial<{
+    repository: string;
+    workflowFileName: string;
+    exportTypes: Set<ExportType>;
+    cssSelector: string;
+    useModesAsSelectors: boolean;
+  }>) => {
+    const currentRepository = updates.repository ?? repository;
+    const currentWorkflowFileName = updates.workflowFileName ?? workflowFileName;
+    const currentExportTypes = updates.exportTypes ?? exportTypes;
+    const currentCssSelector = updates.cssSelector ?? cssSelector;
+    const currentUseModesAsSelectors = updates.useModesAsSelectors ?? useModesAsSelectors;
+
+    onSettingsChange?.({
+      githubRepository: currentRepository,
+      githubWorkflowFileName: currentWorkflowFileName,
+      githubExportTypes: Array.from(currentExportTypes),
+      githubCssSelector: currentCssSelector,
+      githubUseModesAsSelectors: currentUseModesAsSelectors,
+    });
+  };
+
+  const handleRepositoryChange = (value: string) => {
+    setRepository(value);
+    persistSettings({ repository: value });
+  };
+
+  const handleWorkflowFileNameChange = (value: string) => {
+    setWorkflowFileName(value);
+    persistSettings({ workflowFileName: value });
+  };
+
+  const handleCssSelectorChange = (value: string) => {
+    setCssSelector(value);
+    persistSettings({ cssSelector: value });
+  };
+
+  const handleUseModesAsSelectorChange = (value: boolean) => {
+    setUseModesAsSelectors(value);
+    persistSettings({ useModesAsSelectors: value });
+  };
 
   // Listen for GitHub dispatch results
   const handleMessage = useCallback((message: UIMessage) => {
@@ -59,17 +121,28 @@ export function GitHubTab({
     return cleanup;
   }, [listenToMessage, handleMessage]);
 
-  const toggleExportType = useCallback((type: ExportType) => {
-    setExportTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) {
-        next.delete(type);
-      } else {
-        next.add(type);
-      }
-      return next;
-    });
-  }, []);
+  const toggleExportType = useCallback(
+    (type: ExportType) => {
+      setExportTypes((prev) => {
+        const next = new Set(prev);
+        if (next.has(type)) {
+          next.delete(type);
+        } else {
+          next.add(type);
+        }
+        // Persist with updated export types
+        onSettingsChange?.({
+          githubRepository: repository,
+          githubWorkflowFileName: workflowFileName,
+          githubExportTypes: Array.from(next),
+          githubCssSelector: cssSelector,
+          githubUseModesAsSelectors: useModesAsSelectors,
+        });
+        return next;
+      });
+    },
+    [repository, workflowFileName, cssSelector, useModesAsSelectors, onSettingsChange]
+  );
 
   const handleDispatch = useCallback(() => {
     // Validate inputs
@@ -141,7 +214,7 @@ export function GitHubTab({
       <Input
         label="GitHub Repository"
         value={repository}
-        onChange={(e) => setRepository(e.target.value)}
+        onChange={(e) => handleRepositoryChange(e.target.value)}
         placeholder="owner/repo (e.g., octocat/Hello-World)"
       />
       <FormHelpText>Format: owner/repository-name</FormHelpText>
@@ -171,7 +244,7 @@ export function GitHubTab({
       <Input
         label="Workflow File Name (optional)"
         value={workflowFileName}
-        onChange={(e) => setWorkflowFileName(e.target.value)}
+        onChange={(e) => handleWorkflowFileNameChange(e.target.value)}
         placeholder="update-variables.yml"
       />
       <FormHelpText>
@@ -206,13 +279,13 @@ export function GitHubTab({
           <Input
             label="CSS Selector"
             value={cssSelector}
-            onChange={(e) => setCssSelector(e.target.value)}
+            onChange={(e) => handleCssSelectorChange(e.target.value)}
             className="w-[200px]"
           />
           <Checkbox
             label="Export modes as separate selectors"
             checked={useModesAsSelectors}
-            onChange={(e) => setUseModesAsSelectors(e.target.checked)}
+            onChange={(e) => handleUseModesAsSelectorChange(e.target.checked)}
           />
         </FormGroup>
       )}

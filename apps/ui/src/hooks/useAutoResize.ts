@@ -21,8 +21,8 @@ export function useAutoResize(deps: unknown[] = []) {
       const rect = container.getBoundingClientRect();
       const contentHeight = Math.ceil(rect.height);
 
-      // Set a reasonable maximum height (800px) - beyond this, scrolling will be required
-      const MAX_HEIGHT = 800;
+      // Set a reasonable maximum height (1280px) - beyond this, scrolling will be required
+      const MAX_HEIGHT = 1280;
       const height = Math.min(contentHeight, MAX_HEIGHT);
 
       // Only resize if the height actually changed (prevents infinite loops)

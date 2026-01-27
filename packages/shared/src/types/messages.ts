@@ -6,6 +6,35 @@ import type { StyleType, StyleOutputMode, StyleSummary } from './styles';
 
 export type ExportType = 'css' | 'scss' | 'json' | 'typescript';
 
+/**
+ * Plugin settings that get persisted to the document.
+ * Note: GitHub token is intentionally excluded for security.
+ */
+export interface PluginSettings {
+  // Global settings
+  activeTab: string;
+  prefix: string;
+  selectedCollections: string[];
+  includeCollectionComments: boolean;
+
+  // Style export options
+  includeStyles: boolean;
+  styleOutputMode: StyleOutputMode;
+  styleTypes: StyleType[];
+
+  // CSS tab settings
+  cssSelector: string;
+  cssUseModesAsSelectors: boolean;
+  cssIncludeModeComments: boolean;
+
+  // GitHub tab settings (excluding token for security)
+  githubRepository: string;
+  githubWorkflowFileName: string;
+  githubExportTypes: ExportType[];
+  githubCssSelector: string;
+  githubUseModesAsSelectors: boolean;
+}
+
 export interface ExportOptions {
   includeCollectionComments: boolean;
   includeModeComments: boolean;
@@ -42,7 +71,9 @@ export type PluginMessage =
   | { type: 'export-typescript'; options: ExportOptions }
   | { type: 'github-dispatch'; githubOptions: GitHubDispatchOptions }
   | { type: 'resize-window'; width?: number; height: number }
-  | { type: 'cancel' };
+  | { type: 'cancel' }
+  | { type: 'save-settings'; settings: PluginSettings }
+  | { type: 'load-settings' };
 
 // Messages from Plugin to UI
 export type UIMessage =
@@ -53,4 +84,5 @@ export type UIMessage =
   | { type: 'json-result'; json: string }
   | { type: 'typescript-result'; typescript: string }
   | { type: 'github-dispatch-success'; message: string }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+  | { type: 'settings-loaded'; settings: PluginSettings | null };
