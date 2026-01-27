@@ -5,13 +5,9 @@ import { ScssTab } from './components/tabs/ScssTab';
 import { JsonTab } from './components/tabs/JsonTab';
 import { TypeScriptTab } from './components/tabs/TypeScriptTab';
 import { GitHubTab } from './components/tabs/GitHubTab';
+import { SettingsTab } from './components/tabs/SettingsTab';
 import { HelpTab } from './components/tabs/HelpTab';
-import { Checkbox } from './components/common/Checkbox';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { FormField } from './components/common/FormField';
-import { FormGroup } from './components/common/FormGroup';
-import { Input } from './components/common/Input';
-import { StyleOptions } from './components/common/StyleOptions';
 import { useAutoResize } from './hooks/useAutoResize';
 import { useCollections } from './hooks/useCollections';
 import { useStyles } from './hooks/useStyles';
@@ -24,6 +20,7 @@ const TABS = [
   { id: 'json', label: 'JSON' },
   { id: 'typescript', label: 'TypeScript' },
   { id: 'github', label: 'GitHub' },
+  { id: 'settings', label: 'Settings' },
   { id: 'help', label: 'Help' },
 ];
 
@@ -33,6 +30,7 @@ const TAB_DESCRIPTIONS: Record<string, string> = {
   json: 'Export as JSON for use with Style Dictionary or other token tools.',
   typescript: 'Generate TypeScript type definitions for CSS custom properties.',
   github: 'Send generated exports to GitHub via repository_dispatch event.',
+  settings: 'Configure global export settings that apply to all export formats.',
   help: 'Learn how to configure variable exports using description fields.',
 };
 
@@ -81,76 +79,15 @@ export default function App() {
     updateSettings({ selectedCollections: newSelected });
   };
 
-  const showCommonOptions = activeTab !== 'help';
-  const loading = settingsLoading || collectionsLoading;
 
   return (
     <div ref={containerRef} className="bg-figma-bg text-figma-text">
       <TabBar tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
-      {showCommonOptions && (
-        <>
-          <div className="px-4 pb-4 text-xs text-figma-text-secondary">
-            {TAB_DESCRIPTIONS[activeTab]}
-          </div>
-
-          <div className="px-4">
-            <Input
-              label="Variable Prefix (optional)"
-              value={prefix}
-              onChange={(e) => handlePrefixChange(e.target.value)}
-              placeholder="e.g., ds, theme"
-            />
-
-            <FormGroup label="Collections">
-              <div className="max-h-[150px] overflow-y-auto rounded border border-figma-border bg-figma-bg-secondary p-2">
-                {loading ? (
-                  <div className="text-xs text-figma-text-tertiary">Loading collections...</div>
-                ) : collections.length === 0 ? (
-                  <div className="text-xs text-figma-text-tertiary">No collections found</div>
-                ) : (
-                  <div className="space-y-2">
-                    {collections.map((collection) => (
-                      <Checkbox
-                        key={collection.id}
-                        label={collection.name}
-                        checked={selectedCollections.includes(collection.id)}
-                        onChange={() => handleToggleCollection(collection.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </FormGroup>
-
-            <FormField>
-              <Checkbox
-                label="Include collection comments"
-                checked={includeCollectionComments}
-                onChange={(e) => handleIncludeCollectionCommentsChange(e.target.checked)}
-              />
-            </FormField>
-
-            <FormField>
-              <Checkbox
-                label="Sync calculated values to Figma on export"
-                checked={syncCalculations}
-                onChange={(e) => handleSyncCalculationsChange(e.target.checked)}
-              />
-            </FormField>
-
-            <StyleOptions
-              includeStyles={includeStyles}
-              onIncludeStylesChange={handleIncludeStylesChange}
-              styleOutputMode={styleOutputMode}
-              onStyleOutputModeChange={handleStyleOutputModeChange}
-              styleTypes={styleTypes}
-              onStyleTypesChange={handleStyleTypesChange}
-              styleCounts={styleCounts}
-              loading={stylesLoading}
-            />
-          </div>
-        </>
+      {activeTab !== 'help' && (
+        <div className="px-4 pb-4 text-xs text-figma-text-secondary">
+          {TAB_DESCRIPTIONS[activeTab]}
+        </div>
       )}
 
       <TabPanel id="css" activeTab={activeTab}>
@@ -227,6 +164,29 @@ export default function App() {
             initialCssSelector={settings?.githubCssSelector}
             initialUseModesAsSelectors={settings?.githubUseModesAsSelectors}
             onSettingsChange={(githubSettings) => updateSettings(githubSettings)}
+          />
+        </ErrorBoundary>
+      </TabPanel>
+
+      <TabPanel id="settings" activeTab={activeTab}>
+        <ErrorBoundary>
+          <SettingsTab
+            prefix={prefix}
+            onPrefixChange={handlePrefixChange}
+            collections={collections}
+            selectedCollections={selectedCollections}
+            onToggleCollection={handleToggleCollection}
+            collectionsLoading={collectionsLoading}
+            includeCollectionComments={includeCollectionComments}
+            onIncludeCollectionCommentsChange={handleIncludeCollectionCommentsChange}
+            includeStyles={includeStyles}
+            onIncludeStylesChange={handleIncludeStylesChange}
+            styleOutputMode={styleOutputMode}
+            onStyleOutputModeChange={handleStyleOutputModeChange}
+            styleTypes={styleTypes}
+            onStyleTypesChange={handleStyleTypesChange}
+            styleCounts={styleCounts}
+            stylesLoading={stylesLoading}
           />
         </ErrorBoundary>
       </TabPanel>
