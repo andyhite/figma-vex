@@ -153,7 +153,7 @@ describe('DTCG TypeScript Converter', () => {
       },
     };
     const result = convertToTypeScript(document, options);
-    expect(result).toContain('"--styles-paint-bg-primary"');
+    expect(result).toContain('"--paint-bg-primary"');
   });
 
   it('should include style class names when styleOutputMode is classes', () => {

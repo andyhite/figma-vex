@@ -128,7 +128,16 @@ export async function prepareGitHubPayload(
     styles
   );
 
+  // Map options to settings
   const settings = mapOptionsToSettings(options.exportOptions);
+
+  // Convert collection IDs to names for the settings, since the document uses
+  // collection names as keys and the converters filter by name
+  if (settings.selectedCollections && settings.selectedCollections.length > 0) {
+    settings.selectedCollections = settings.selectedCollections
+      .map((id) => collections.find((c) => c.id === id)?.name)
+      .filter((name): name is string => name !== undefined);
+  }
 
   return {
     document,

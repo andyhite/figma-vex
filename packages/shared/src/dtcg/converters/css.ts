@@ -2,7 +2,13 @@
  * DTCG to CSS converter
  */
 
-import type { DTCGDocument, DTCGConversionSettings, DTCGToken, DTCGValue, DTCGReference } from '../types';
+import type {
+  DTCGDocument,
+  DTCGConversionSettings,
+  DTCGToken,
+  DTCGValue,
+  DTCGReference,
+} from '../types';
 import { formatCssName } from '../transforms/names';
 import { formatColor } from '../transforms/colors';
 import { formatNumberWithUnit, formatCalcExpression } from '../transforms/units';
@@ -223,7 +229,7 @@ export function convertToCss(document: DTCGDocument, options: DTCGConversionSett
             if (styleGroup) {
               const styleTokens = convertTokenGroup(
                 styleGroup as Record<string, DTCGToken | Record<string, unknown>>,
-                ['styles', styleType],
+                [styleType],
                 options,
                 document
               );
@@ -240,7 +246,12 @@ export function convertToCss(document: DTCGDocument, options: DTCGConversionSett
       }
 
       // If no default mode was found, add styles to a separate :root block
-      if (!stylesAdded && options.includeStyles && document.$styles && options.styleOutputMode !== 'classes') {
+      if (
+        !stylesAdded &&
+        options.includeStyles &&
+        document.$styles &&
+        options.styleOutputMode !== 'classes'
+      ) {
         lines.push(`${selector} {`);
         const styleTypes = options.styleTypes || ['paint', 'text', 'effect', 'grid'];
         for (const styleType of styleTypes) {
@@ -248,7 +259,7 @@ export function convertToCss(document: DTCGDocument, options: DTCGConversionSett
           if (styleGroup) {
             const styleTokens = convertTokenGroup(
               styleGroup as Record<string, DTCGToken | Record<string, unknown>>,
-              ['styles', styleType],
+              [styleType],
               options,
               document
             );
@@ -275,7 +286,7 @@ export function convertToCss(document: DTCGDocument, options: DTCGConversionSett
         options,
         document
       );
-      
+
       // Convert tokens to CSS lines (use default mode or first mode value)
       for (const token of tokens) {
         if (token.modes) {
@@ -296,21 +307,21 @@ export function convertToCss(document: DTCGDocument, options: DTCGConversionSett
     // Add styles if included
     if (options.includeStyles && document.$styles) {
       const styleTypes = options.styleTypes || ['paint', 'text', 'effect', 'grid'];
-      
+
       for (const styleType of styleTypes) {
         const styleGroup = document.$styles[styleType as keyof typeof document.$styles];
         if (styleGroup) {
-      const styleTokens = convertTokenGroup(
-        styleGroup as Record<string, DTCGToken | Record<string, unknown>>,
-        ['styles', styleType],
-        options,
-        document
-      );
-      
-      for (const token of styleTokens) {
-        const value = token.modes ? Object.values(token.modes)[0] : token.value;
-        lines.push(`  --${token.name}: ${value};`);
-      }
+          const styleTokens = convertTokenGroup(
+            styleGroup as Record<string, DTCGToken | Record<string, unknown>>,
+            [styleType],
+            options,
+            document
+          );
+
+          for (const token of styleTokens) {
+            const value = token.modes ? Object.values(token.modes)[0] : token.value;
+            lines.push(`  --${token.name}: ${value};`);
+          }
         }
       }
     }

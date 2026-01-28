@@ -122,7 +122,7 @@ export interface DTCGConversionSettings {
   styleOutputMode?: StyleOutputMode;
   styleTypes?: StyleType[];
 
-  // Collection filtering
+  // Collection filtering (uses collection names, not IDs, for portability)
   selectedCollections?: string[];
 
   // Custom header banner

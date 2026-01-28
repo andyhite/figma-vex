@@ -54,17 +54,37 @@ jobs:
           typescript-path: 'test-output/tokens.ts'
 
       - name: Generate output files
-        env:
-          PAYLOAD: ${{ toJson(github.event.client_payload) }}
         run: |
           mkdir -p test-output
+          # Copy event payload for debugging (the full payload is at $GITHUB_EVENT_PATH)
+          cp "$GITHUB_EVENT_PATH" test-output/event.json
           pnpm dlx tsx -e "
             import { convertToCss, convertToTypeScript } from './packages/shared/src/index.ts';
             import * as fs from 'fs';
 
-            const payload = JSON.parse(process.env.PAYLOAD);
+            // Read from the event file that GitHub Actions provides
+            const eventPath = process.env.GITHUB_EVENT_PATH;
+            const eventText = fs.readFileSync(eventPath, 'utf8');
+            const event = JSON.parse(eventText);
+            const payload = event.client_payload;
+
+            if (!payload) {
+              console.error('No client_payload found in event');
+              console.error('Event keys:', Object.keys(event));
+              process.exit(1);
+            }
+
             const document = payload.document;
             const settings = payload.settings || { colorFormat: 'hex', defaultUnit: 'px', remBase: 16 };
+
+            console.log('Document collections:', Object.keys(document?.collections || {}));
+            console.log('Document styles:', Object.keys(document?.['\$styles'] || {}));
+            console.log('Settings:', JSON.stringify(settings, null, 2));
+
+            if (!document) {
+              console.error('No document found in payload');
+              process.exit(1);
+            }
 
             fs.writeFileSync('test-output/tokens.css', convertToCss(document, settings));
             fs.writeFileSync('test-output/tokens.json', JSON.stringify(document, null, 2));

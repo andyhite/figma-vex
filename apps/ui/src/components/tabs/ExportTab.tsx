@@ -326,6 +326,7 @@ export function ExportTab({
     if (sendToGitHub && isGitHubConfigured) {
       setGithubStatus({ message: 'Sending to GitHub...', type: 'sending', visible: true });
 
+      // Use all export options so GitHub action generates identical output
       const githubExportOptions: ExportOptions = {
         selector: selector.trim() || ':root',
         prefix: prefix.trim() || undefined,
@@ -338,6 +339,12 @@ export function ExportTab({
         styleTypes,
         syncCalculations,
         numberPrecision,
+        exportAsCalcExpressions,
+        nameFormatRules: nameFormatRules?.length > 0 ? nameFormatRules : undefined,
+        headerBanner,
+        // These use defaults from shared/src/config.ts
+        colorFormat: 'hex',
+        remBase: 16,
       };
 
       const githubOptions: GitHubDispatchOptions = {
@@ -368,6 +375,9 @@ export function ExportTab({
     styleTypes,
     syncCalculations,
     numberPrecision,
+    exportAsCalcExpressions,
+    nameFormatRules,
+    headerBanner,
   ]);
 
   // Copy handler

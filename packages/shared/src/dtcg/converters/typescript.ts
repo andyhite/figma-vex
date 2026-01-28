@@ -40,12 +40,7 @@ function collectVariableNames(
       names.push(`  | "--${cssName}"`);
     } else if (value && typeof value === 'object') {
       // It's a nested group - recurse
-      collectVariableNames(
-        value as Record<string, unknown>,
-        currentPath,
-        options,
-        names
-      );
+      collectVariableNames(value as Record<string, unknown>, currentPath, options, names);
     }
   }
 }
@@ -58,7 +53,10 @@ export function convertToTypeScript(
   options: DTCGConversionSettings
 ): string {
   const fileName = document.$metadata?.figmaFile || 'Figma';
-  const lines: string[] = [generateTypeScriptHeader(fileName, options.headerBanner), 'export type CSSVariableName ='];
+  const lines: string[] = [
+    generateTypeScriptHeader(fileName, options.headerBanner),
+    'export type CSSVariableName =',
+  ];
 
   const variableNames: string[] = [];
 
@@ -90,7 +88,7 @@ export function convertToTypeScript(
       if (styleGroup) {
         collectVariableNames(
           styleGroup as Record<string, unknown>,
-          ['styles', styleType],
+          [styleType],
           options,
           variableNames
         );
@@ -122,7 +120,7 @@ export function convertToTypeScript(
       if (styleGroup) {
         collectVariableNames(
           styleGroup as Record<string, unknown>,
-          ['styles', styleType],
+          [styleType],
           options,
           classNames
         );
