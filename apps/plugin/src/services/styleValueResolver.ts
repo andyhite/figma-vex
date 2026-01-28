@@ -4,42 +4,64 @@ import type {
   ResolvedTextStyle,
   ResolvedEffectStyle,
   ResolvedGridStyle,
+  EffectBoundVariables,
 } from '@figma-vex/shared';
 import { formatColor } from '@plugin/formatters/colorFormatter';
 import { formatNumber, cleanNumber } from '@plugin/formatters/numberFormatter';
 
 /**
- * Resolves a paint style to its CSS value
+ * Map from variable ID to CSS variable name (without --)
  */
-export function resolvePaintValue(style: ResolvedPaintStyle, config: TokenConfig): string {
+export type VariableCssNameMap = Map<string, string>;
+
+/**
+ * Resolves a paint style to its CSS value
+ * @param style The resolved paint style
+ * @param config Token configuration
+ * @param variableCssNames Optional map from variable ID to CSS name for resolving bound variables
+ */
+export function resolvePaintValue(
+  style: ResolvedPaintStyle,
+  config: TokenConfig,
+  variableCssNames?: VariableCssNameMap
+): string {
   if (style.paints.length === 0) {
     return 'transparent';
   }
 
   // Cast to Paint type since we know it's a Figma Paint in the plugin context
   const paint = style.paints[0] as Paint;
+  const boundVars = style.paintBoundVariables?.[0];
 
   if (paint.type === 'SOLID') {
+    // Check if color is bound to a variable
+    if (boundVars?.color && variableCssNames) {
+      const cssName = variableCssNames.get(boundVars.color.variableId);
+      if (cssName) {
+        return `var(--${cssName})`;
+      }
+    }
+
     const color = paint.color;
     const alpha = paint.opacity ?? 1;
     return formatColor({ r: color.r, g: color.g, b: color.b, a: alpha }, config.colorFormat);
   }
 
   if (paint.type === 'GRADIENT_LINEAR') {
-    return resolveLinearGradient(paint as GradientPaint, config);
+    return resolveLinearGradient(paint as GradientPaint, config, variableCssNames);
   }
 
   if (paint.type === 'GRADIENT_RADIAL') {
-    return resolveRadialGradient(paint as GradientPaint, config);
+    return resolveRadialGradient(paint as GradientPaint, config, variableCssNames);
   }
 
   if (paint.type === 'GRADIENT_ANGULAR') {
-    return resolveConicGradient(paint as GradientPaint, config);
+    return resolveConicGradient(paint as GradientPaint, config, variableCssNames);
   }
 
   if (paint.type === 'GRADIENT_DIAMOND') {
     // Diamond gradient doesn't have a CSS equivalent, approximate with radial
-    return resolveRadialGradient(paint as GradientPaint, config);
+    return resolveRadialGradient(paint as GradientPaint, config, variableCssNames);
   }
 
   return '/* unsupported paint type */';
@@ -48,8 +70,12 @@ export function resolvePaintValue(style: ResolvedPaintStyle, config: TokenConfig
 /**
  * Resolves a linear gradient to CSS
  */
-function resolveLinearGradient(paint: GradientPaint, config: TokenConfig): string {
-  const stops = formatGradientStops(paint.gradientStops, config);
+function resolveLinearGradient(
+  paint: GradientPaint,
+  config: TokenConfig,
+  variableCssNames?: VariableCssNameMap
+): string {
+  const stops = formatGradientStops(paint.gradientStops, config, variableCssNames);
   const angle = calculateGradientAngle(paint.gradientTransform);
   return `linear-gradient(${angle}deg, ${stops})`;
 }
@@ -57,34 +83,69 @@ function resolveLinearGradient(paint: GradientPaint, config: TokenConfig): strin
 /**
  * Resolves a radial gradient to CSS
  */
-function resolveRadialGradient(paint: GradientPaint, config: TokenConfig): string {
-  const stops = formatGradientStops(paint.gradientStops, config);
+function resolveRadialGradient(
+  paint: GradientPaint,
+  config: TokenConfig,
+  variableCssNames?: VariableCssNameMap
+): string {
+  const stops = formatGradientStops(paint.gradientStops, config, variableCssNames);
   return `radial-gradient(${stops})`;
 }
 
 /**
  * Resolves an angular/conic gradient to CSS
  */
-function resolveConicGradient(paint: GradientPaint, config: TokenConfig): string {
-  const stops = formatGradientStops(paint.gradientStops, config);
+function resolveConicGradient(
+  paint: GradientPaint,
+  config: TokenConfig,
+  variableCssNames?: VariableCssNameMap
+): string {
+  const stops = formatGradientStops(paint.gradientStops, config, variableCssNames);
   return `conic-gradient(${stops})`;
 }
 
 /**
  * Formats gradient stops to CSS
  */
-function formatGradientStops(stops: readonly ColorStop[], config: TokenConfig): string {
+function formatGradientStops(
+  stops: readonly ColorStop[],
+  config: TokenConfig,
+  variableCssNames?: VariableCssNameMap
+): string {
   return stops
     .map((stop) => {
-      const color = formatColor(
-        {
-          r: stop.color.r,
-          g: stop.color.g,
-          b: stop.color.b,
-          a: stop.color.a,
-        },
-        config.colorFormat
-      );
+      // Check if color stop has a bound variable
+      const boundVarId = (stop as ColorStop & { boundVariables?: { color?: { id: string } } })
+        .boundVariables?.color?.id;
+      let color: string;
+
+      if (boundVarId && variableCssNames) {
+        const cssName = variableCssNames.get(boundVarId);
+        if (cssName) {
+          color = `var(--${cssName})`;
+        } else {
+          color = formatColor(
+            {
+              r: stop.color.r,
+              g: stop.color.g,
+              b: stop.color.b,
+              a: stop.color.a,
+            },
+            config.colorFormat
+          );
+        }
+      } else {
+        color = formatColor(
+          {
+            r: stop.color.r,
+            g: stop.color.g,
+            b: stop.color.b,
+            a: stop.color.a,
+          },
+          config.colorFormat
+        );
+      }
+
       return `${color} ${cleanNumber(stop.position * 100, config.precision)}%`;
     })
     .join(', ');
@@ -155,25 +216,67 @@ export function resolveTextProperties(
 
 /**
  * Resolves an effect style to CSS value (box-shadow or filter)
+ * @param style The resolved effect style
+ * @param config Token configuration
+ * @param variableCssNames Optional map from variable ID to CSS name for resolving bound variables
  */
-export function resolveEffectValue(style: ResolvedEffectStyle, config: TokenConfig): string {
+export function resolveEffectValue(
+  style: ResolvedEffectStyle,
+  config: TokenConfig,
+  variableCssNames?: VariableCssNameMap
+): string {
   const shadows: string[] = [];
   const filters: string[] = [];
 
   // Cast to Effect[] since we know it's Figma Effects in the plugin context
   const effects = style.effects as Effect[];
 
-  for (const effect of effects) {
+  for (let i = 0; i < effects.length; i++) {
+    const effect = effects[i];
     if (!effect.visible) continue;
 
+    const boundVars = style.effectBoundVariables?.[i];
+
     if (effect.type === 'DROP_SHADOW' || effect.type === 'INNER_SHADOW') {
-      const shadow = resolveShadow(effect as DropShadowEffect | InnerShadowEffect, config);
+      const shadow = resolveShadow(
+        effect as DropShadowEffect | InnerShadowEffect,
+        config,
+        boundVars,
+        variableCssNames
+      );
       shadows.push(shadow);
     } else if (effect.type === 'LAYER_BLUR') {
-      filters.push(`blur(${(effect as BlurEffect).radius}px)`);
+      const blurEffect = effect as BlurEffect;
+      let radiusValue: string;
+
+      if (boundVars?.radius && variableCssNames) {
+        const cssName = variableCssNames.get(boundVars.radius.variableId);
+        if (cssName) {
+          radiusValue = `var(--${cssName})`;
+        } else {
+          radiusValue = `${blurEffect.radius}px`;
+        }
+      } else {
+        radiusValue = `${blurEffect.radius}px`;
+      }
+
+      filters.push(`blur(${radiusValue})`);
     } else if (effect.type === 'BACKGROUND_BLUR') {
-      // Background blur uses backdrop-filter in CSS
-      filters.push(`blur(${(effect as BlurEffect).radius}px)`);
+      const blurEffect = effect as BlurEffect;
+      let radiusValue: string;
+
+      if (boundVars?.radius && variableCssNames) {
+        const cssName = variableCssNames.get(boundVars.radius.variableId);
+        if (cssName) {
+          radiusValue = `var(--${cssName})`;
+        } else {
+          radiusValue = `${blurEffect.radius}px`;
+        }
+      } else {
+        radiusValue = `${blurEffect.radius}px`;
+      }
+
+      filters.push(`blur(${radiusValue})`);
     }
   }
 
@@ -215,23 +318,80 @@ export function hasBackdropFilter(style: ResolvedEffectStyle): boolean {
 /**
  * Resolves a shadow effect to CSS
  */
-function resolveShadow(effect: DropShadowEffect | InnerShadowEffect, config: TokenConfig): string {
-  const x = effect.offset.x;
-  const y = effect.offset.y;
-  const blur = effect.radius;
+function resolveShadow(
+  effect: DropShadowEffect | InnerShadowEffect,
+  config: TokenConfig,
+  boundVars?: EffectBoundVariables,
+  variableCssNames?: VariableCssNameMap
+): string {
+  // Resolve offset X
+  let xValue: string;
+  if (boundVars?.offsetX && variableCssNames) {
+    const cssName = variableCssNames.get(boundVars.offsetX.variableId);
+    xValue = cssName ? `var(--${cssName})` : `${effect.offset.x}px`;
+  } else {
+    xValue = `${effect.offset.x}px`;
+  }
+
+  // Resolve offset Y
+  let yValue: string;
+  if (boundVars?.offsetY && variableCssNames) {
+    const cssName = variableCssNames.get(boundVars.offsetY.variableId);
+    yValue = cssName ? `var(--${cssName})` : `${effect.offset.y}px`;
+  } else {
+    yValue = `${effect.offset.y}px`;
+  }
+
+  // Resolve blur radius
+  let blurValue: string;
+  if (boundVars?.radius && variableCssNames) {
+    const cssName = variableCssNames.get(boundVars.radius.variableId);
+    blurValue = cssName ? `var(--${cssName})` : `${effect.radius}px`;
+  } else {
+    blurValue = `${effect.radius}px`;
+  }
+
+  // Resolve spread
+  let spreadValue: string;
   const spread = effect.spread ?? 0;
-  const color = formatColor(
-    {
-      r: effect.color.r,
-      g: effect.color.g,
-      b: effect.color.b,
-      a: effect.color.a,
-    },
-    config.colorFormat
-  );
+  if (boundVars?.spread && variableCssNames) {
+    const cssName = variableCssNames.get(boundVars.spread.variableId);
+    spreadValue = cssName ? `var(--${cssName})` : `${spread}px`;
+  } else {
+    spreadValue = `${spread}px`;
+  }
+
+  // Resolve color
+  let colorValue: string;
+  if (boundVars?.color && variableCssNames) {
+    const cssName = variableCssNames.get(boundVars.color.variableId);
+    if (cssName) {
+      colorValue = `var(--${cssName})`;
+    } else {
+      colorValue = formatColor(
+        {
+          r: effect.color.r,
+          g: effect.color.g,
+          b: effect.color.b,
+          a: effect.color.a,
+        },
+        config.colorFormat
+      );
+    }
+  } else {
+    colorValue = formatColor(
+      {
+        r: effect.color.r,
+        g: effect.color.g,
+        b: effect.color.b,
+        a: effect.color.a,
+      },
+      config.colorFormat
+    );
+  }
 
   const inset = effect.type === 'INNER_SHADOW' ? 'inset ' : '';
-  return `${inset}${x}px ${y}px ${blur}px ${spread}px ${color}`;
+  return `${inset}${xValue} ${yValue} ${blurValue} ${spreadValue} ${colorValue}`;
 }
 
 /**

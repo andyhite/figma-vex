@@ -20,6 +20,32 @@ export interface StyleSummary {
 }
 
 /**
+ * Represents a variable binding - stores the variable ID so we can resolve to var() reference
+ */
+export interface BoundVariableInfo {
+  /** The Figma variable ID */
+  variableId: string;
+}
+
+/**
+ * Bound variables for a paint (solid color)
+ */
+export interface PaintBoundVariables {
+  color?: BoundVariableInfo;
+}
+
+/**
+ * Bound variables for an effect (shadow, blur)
+ */
+export interface EffectBoundVariables {
+  color?: BoundVariableInfo;
+  radius?: BoundVariableInfo;
+  spread?: BoundVariableInfo;
+  offsetX?: BoundVariableInfo;
+  offsetY?: BoundVariableInfo;
+}
+
+/**
  * Resolved paint style data - paints stored as serializable format
  */
 export interface ResolvedPaintStyle {
@@ -28,6 +54,8 @@ export interface ResolvedPaintStyle {
   description: string;
   /** Paints stored as unknown[] since Figma Paint type isn't available in shared package */
   paints: unknown[];
+  /** Bound variables for each paint in the array */
+  paintBoundVariables?: PaintBoundVariables[];
 }
 
 /**
@@ -72,6 +100,8 @@ export interface ResolvedEffectStyle {
   description: string;
   /** Effects stored as unknown[] since Figma Effect type isn't available in shared package */
   effects: unknown[];
+  /** Bound variables for each effect in the array */
+  effectBoundVariables?: EffectBoundVariables[];
 }
 
 /**

@@ -6,6 +6,8 @@ import type {
   ResolvedGridStyle,
   SerializedLineHeight,
   SerializedLetterSpacing,
+  PaintBoundVariables,
+  EffectBoundVariables,
 } from '@figma-vex/shared';
 
 /**
@@ -31,11 +33,30 @@ export async function fetchAllStyles(): Promise<StyleCollection> {
  * Resolves a Figma PaintStyle to our internal format
  */
 function resolvePaintStyle(style: PaintStyle): ResolvedPaintStyle {
+  // Extract bound variables from each paint
+  const paintBoundVariables: PaintBoundVariables[] = style.paints.map((paint) => {
+    const boundVars: PaintBoundVariables = {};
+
+    // Check if paint has bound variables (only SolidPaint supports this)
+    if (paint.type === 'SOLID') {
+      const solidPaint = paint as SolidPaint;
+      if (solidPaint.boundVariables?.color) {
+        boundVars.color = { variableId: solidPaint.boundVariables.color.id };
+      }
+    }
+
+    return boundVars;
+  });
+
+  // Only include paintBoundVariables if at least one paint has bindings
+  const hasBoundVariables = paintBoundVariables.some((bv) => Object.keys(bv).length > 0);
+
   return {
     id: style.id,
     name: style.name,
     description: style.description,
     paints: [...style.paints],
+    ...(hasBoundVariables && { paintBoundVariables }),
   };
 }
 
@@ -74,11 +95,49 @@ function resolveTextStyle(style: TextStyle): ResolvedTextStyle {
  * Resolves a Figma EffectStyle to our internal format
  */
 function resolveEffectStyle(style: EffectStyle): ResolvedEffectStyle {
+  // Extract bound variables from each effect
+  const effectBoundVariables: EffectBoundVariables[] = style.effects.map((effect) => {
+    const boundVars: EffectBoundVariables = {};
+
+    // Check if effect has bound variables (shadows have color, radius, spread, offset)
+    if (effect.type === 'DROP_SHADOW' || effect.type === 'INNER_SHADOW') {
+      const shadowEffect = effect as DropShadowEffect | InnerShadowEffect;
+      const bv = shadowEffect.boundVariables;
+      if (bv?.color) {
+        boundVars.color = { variableId: bv.color.id };
+      }
+      if (bv?.radius) {
+        boundVars.radius = { variableId: bv.radius.id };
+      }
+      if (bv?.spread) {
+        boundVars.spread = { variableId: bv.spread.id };
+      }
+      if (bv?.offsetX) {
+        boundVars.offsetX = { variableId: bv.offsetX.id };
+      }
+      if (bv?.offsetY) {
+        boundVars.offsetY = { variableId: bv.offsetY.id };
+      }
+    } else if (effect.type === 'LAYER_BLUR' || effect.type === 'BACKGROUND_BLUR') {
+      const blurEffect = effect as BlurEffect;
+      const bv = blurEffect.boundVariables;
+      if (bv?.radius) {
+        boundVars.radius = { variableId: bv.radius.id };
+      }
+    }
+
+    return boundVars;
+  });
+
+  // Only include effectBoundVariables if at least one effect has bindings
+  const hasBoundVariables = effectBoundVariables.some((bv) => Object.keys(bv).length > 0);
+
   return {
     id: style.id,
     name: style.name,
     description: style.description,
     effects: [...style.effects],
+    ...(hasBoundVariables && { effectBoundVariables }),
   };
 }
 

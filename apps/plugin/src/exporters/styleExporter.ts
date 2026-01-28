@@ -18,6 +18,7 @@ import {
   hasBoxShadow,
   hasFilter,
   hasBackdropFilter,
+  VariableCssNameMap,
 } from '@plugin/services/styleValueResolver';
 
 /**
@@ -26,7 +27,8 @@ import {
 export function exportPaintStylesToCss(
   styles: ResolvedPaintStyle[],
   options: ExportOptions,
-  indent = '  '
+  indent = '  ',
+  variableCssNames?: VariableCssNameMap
 ): string[] {
   const lines: string[] = [];
 
@@ -42,7 +44,7 @@ export function exportPaintStylesToCss(
       ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
 
-    const value = resolvePaintValue(style, config);
+    const value = resolvePaintValue(style, config, variableCssNames);
     const varName = toStyleVarName(style.name, options.prefix);
     lines.push(`${indent}${varName}: ${value};`);
   }
@@ -89,7 +91,8 @@ export function exportTextStylesToCss(
 export function exportEffectStylesToCss(
   styles: ResolvedEffectStyle[],
   options: ExportOptions,
-  indent = '  '
+  indent = '  ',
+  variableCssNames?: VariableCssNameMap
 ): string[] {
   const lines: string[] = [];
 
@@ -105,7 +108,7 @@ export function exportEffectStylesToCss(
       ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
 
-    const value = resolveEffectValue(style, config);
+    const value = resolveEffectValue(style, config, variableCssNames);
     const varName = toStyleVarName(style.name, options.prefix);
     lines.push(`${indent}${varName}: ${value};`);
   }
@@ -141,7 +144,8 @@ export function exportGridStylesToCss(
  */
 export function exportStylesAsCssClasses(
   styles: StyleCollection,
-  options: ExportOptions
+  options: ExportOptions,
+  variableCssNames?: VariableCssNameMap
 ): string[] {
   const lines: string[] = [];
   const styleTypes = options.styleTypes || ['paint', 'text', 'effect', 'grid'];
@@ -158,7 +162,7 @@ export function exportStylesAsCssClasses(
         ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
       };
       const className = toStyleClassName(style.name, options.prefix);
-      const value = resolvePaintValue(style, config);
+      const value = resolvePaintValue(style, config, variableCssNames);
 
       lines.push(`.${className} {`);
       lines.push(`  color: ${value};`);
@@ -208,7 +212,7 @@ export function exportStylesAsCssClasses(
         ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
       };
       const className = toStyleClassName(style.name, options.prefix);
-      const value = resolveEffectValue(style, config);
+      const value = resolveEffectValue(style, config, variableCssNames);
 
       lines.push(`.${className} {`);
 
@@ -252,7 +256,8 @@ export function exportStylesAsCssClasses(
 export function exportStylesToCssVariables(
   styles: StyleCollection,
   options: ExportOptions,
-  indent = '  '
+  indent = '  ',
+  variableCssNames?: VariableCssNameMap
 ): string[] {
   const lines: string[] = [];
   const styleTypes = options.styleTypes || ['paint', 'text', 'effect', 'grid'];
@@ -269,13 +274,13 @@ export function exportStylesToCssVariables(
   lines.push(`${indent}/* ═══ Figma Styles ═══ */`);
 
   if (styleTypes.includes('paint')) {
-    lines.push(...exportPaintStylesToCss(styles.paint, options, indent));
+    lines.push(...exportPaintStylesToCss(styles.paint, options, indent, variableCssNames));
   }
   if (styleTypes.includes('text')) {
     lines.push(...exportTextStylesToCss(styles.text, options, indent));
   }
   if (styleTypes.includes('effect')) {
-    lines.push(...exportEffectStylesToCss(styles.effect, options, indent));
+    lines.push(...exportEffectStylesToCss(styles.effect, options, indent, variableCssNames));
   }
   if (styleTypes.includes('grid')) {
     lines.push(...exportGridStylesToCss(styles.grid, options, indent));

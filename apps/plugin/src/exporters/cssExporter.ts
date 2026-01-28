@@ -5,6 +5,25 @@ import { parseDescription } from '@plugin/utils/descriptionParser';
 import { resolveValue } from '@plugin/services/valueResolver';
 import { filterCollections, getCollectionVariables } from '@plugin/utils/collectionUtils';
 import { exportStylesToCssVariables, exportStylesAsCssClasses } from './styleExporter';
+import type { VariableCssNameMap } from '@plugin/services/styleValueResolver';
+
+/**
+ * Builds a map from variable ID to CSS variable name for resolving bound variables
+ */
+function buildVariableCssNameMap(
+  variables: Variable[],
+  prefix?: string,
+  nameFormatRules?: ExportOptions['nameFormatRules']
+): VariableCssNameMap {
+  const map: VariableCssNameMap = new Map();
+
+  for (const variable of variables) {
+    const cssName = getVariableCssName(variable, prefix, nameFormatRules);
+    map.set(variable.id, cssName);
+  }
+
+  return map;
+}
 
 /**
  * Generates the CSS file header comment.
@@ -39,6 +58,13 @@ export async function exportToCss(
 
   const filteredCollections = filterCollections(collections, options.selectedCollections);
   const selector = (options.selector != null ? options.selector.trim() : null) || ':root';
+
+  // Build variable CSS name map for resolving bound variables in styles
+  const variableCssNames = buildVariableCssNameMap(
+    variables,
+    options.prefix,
+    options.nameFormatRules
+  );
 
   const lines: string[] = [generateCssHeader(fileName, options.headerBanner)];
 
@@ -112,7 +138,7 @@ export async function exportToCss(
           styles &&
           options.styleOutputMode !== 'classes'
         ) {
-          const styleLines = exportStylesToCssVariables(styles, options, '  ');
+          const styleLines = exportStylesToCssVariables(styles, options, '  ', variableCssNames);
           lines.push(...styleLines);
           stylesAdded = true;
         }
@@ -124,7 +150,7 @@ export async function exportToCss(
     // If no default mode was found, add styles to a separate :root block
     if (!stylesAdded && options.includeStyles && styles && options.styleOutputMode !== 'classes') {
       lines.push(`${selector} {`);
-      const styleLines = exportStylesToCssVariables(styles, options, '  ');
+      const styleLines = exportStylesToCssVariables(styles, options, '  ', variableCssNames);
       lines.push(...styleLines);
       lines.push('}', '');
     }
@@ -150,7 +176,7 @@ export async function exportToCss(
 
     // Add style variables inside the selector block
     if (options.includeStyles && styles && options.styleOutputMode !== 'classes') {
-      const styleLines = exportStylesToCssVariables(styles, options, '  ');
+      const styleLines = exportStylesToCssVariables(styles, options, '  ', variableCssNames);
       lines.push(...styleLines);
     }
 
@@ -160,7 +186,7 @@ export async function exportToCss(
   // Add style classes outside the selector block
   if (options.includeStyles && styles && options.styleOutputMode === 'classes') {
     lines.push('');
-    const styleClasses = exportStylesAsCssClasses(styles, options);
+    const styleClasses = exportStylesAsCssClasses(styles, options, variableCssNames);
     lines.push(...styleClasses);
   }
 
