@@ -104,6 +104,7 @@ export interface PluginSettings {
   selectedCollections: string[];
   includeCollectionComments: boolean;
   includeModeComments: boolean; // Moved from CSS tab to global settings
+  includeCollectionName: boolean; // Include collection name in variable names (e.g., --color-blue vs --blue)
   headerBanner?: string; // Custom header banner text for exports
 
   // Export format selection
@@ -148,6 +149,7 @@ export interface PluginSettings {
 export interface ExportOptions {
   includeCollectionComments: boolean;
   includeModeComments: boolean;
+  includeCollectionName?: boolean; // Include collection name in variable names
   selector: string;
   useModesAsSelectors: boolean;
   prefix?: string;

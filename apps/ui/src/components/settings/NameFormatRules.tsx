@@ -54,6 +54,9 @@ interface NameFormatRulesProps {
   variableNames?: string[];
   collections?: Collection[];
   selectedCollections?: string[];
+
+  // Include collection name in output
+  includeCollectionName?: boolean;
 }
 
 /**
@@ -132,16 +135,23 @@ export function NameFormatRules({
   variableNames = [],
   collections = [],
   selectedCollections = [],
+  includeCollectionName = true,
 }: NameFormatRulesProps) {
   const [testInput, setTestInput] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [showUnmatchedList, setShowUnmatchedList] = useState(false);
 
   // Computed default replacement
-  const defaultReplacement = useMemo(() => computeDefaultReplacement(prefix, casing), [prefix, casing]);
+  const defaultReplacement = useMemo(
+    () => computeDefaultReplacement(prefix, casing),
+    [prefix, casing]
+  );
 
   // All rules including computed default
-  const allRules = useMemo(() => getAllRulesWithDefault(rules, prefix, casing), [rules, prefix, casing]);
+  const allRules = useMemo(
+    () => getAllRulesWithDefault(rules, prefix, casing),
+    [rules, prefix, casing]
+  );
 
   // Filter variable names by selected collections
   const filteredVariableNames = useMemo(() => {
@@ -171,21 +181,34 @@ export function NameFormatRules({
 
   // Preview sample transformation
   const previewSample = useMemo(() => {
-    const sampleInput = 'color/brand/primary';
+    const fullPath = 'color/brand/primary';
+    // Strip collection name if not included in output
+    const sampleInput = includeCollectionName ? fullPath : fullPath.split('/').slice(1).join('/');
     const result = toCustomCssName(sampleInput, allRules);
-    return { input: sampleInput, output: result || sampleInput };
-  }, [allRules]);
+    return { input: fullPath, output: result || sampleInput };
+  }, [allRules, includeCollectionName]);
+
+  // Compute the effective test input (strips collection name if not included)
+  const effectiveTestInput = useMemo(() => {
+    if (!testInput.trim()) return '';
+    if (includeCollectionName) return testInput;
+    // Strip the collection name (first segment)
+    return testInput.split('/').slice(1).join('/');
+  }, [testInput, includeCollectionName]);
 
   // Test a pattern against the test input
   const testPattern = useCallback(
-    (pattern: string, replacement: string): { matched: boolean; result: string | null; error: string | null } => {
-      if (!testInput.trim()) {
+    (
+      pattern: string,
+      replacement: string
+    ): { matched: boolean; result: string | null; error: string | null } => {
+      if (!effectiveTestInput.trim()) {
         return { matched: false, result: null, error: null };
       }
 
       try {
         const regex = globToRegex(pattern);
-        const match = testInput.match(regex);
+        const match = effectiveTestInput.match(regex);
 
         if (match) {
           const captures = match.slice(1);
@@ -195,14 +218,22 @@ export function NameFormatRules({
 
         return { matched: false, result: null, error: null };
       } catch (e) {
-        return { matched: false, result: null, error: e instanceof Error ? e.message : 'Invalid pattern' };
+        return {
+          matched: false,
+          result: null,
+          error: e instanceof Error ? e.message : 'Invalid pattern',
+        };
       }
     },
-    [testInput]
+    [effectiveTestInput]
   );
 
   // Find which rule matches the test input
-  const findMatchingRule = useCallback((): { index: number; result: string; isDefault: boolean } | null => {
+  const findMatchingRule = useCallback((): {
+    index: number;
+    result: string;
+    isDefault: boolean;
+  } | null => {
     for (let i = 0; i < allRules.length; i++) {
       const rule = allRules[i];
       if (!rule.enabled) continue;
@@ -321,7 +352,8 @@ export function NameFormatRules({
               className="text-figma-warning flex items-center gap-1 text-xs hover:underline"
             >
               <WarningIcon />
-              {unmatchedVariables.length} unmatched variable{unmatchedVariables.length !== 1 ? 's' : ''}
+              {unmatchedVariables.length} unmatched variable
+              {unmatchedVariables.length !== 1 ? 's' : ''}
             </button>
             {showUnmatchedList && (
               <div className="border-figma-border bg-figma-bg-secondary mt-2 max-h-32 overflow-y-auto rounded border p-2 text-xs">
@@ -332,7 +364,9 @@ export function NameFormatRules({
                     </li>
                   ))}
                   {unmatchedVariables.length > 20 && (
-                    <li className="text-figma-text-secondary italic">...and {unmatchedVariables.length - 20} more</li>
+                    <li className="text-figma-text-secondary italic">
+                      ...and {unmatchedVariables.length - 20} more
+                    </li>
                   )}
                 </ul>
               </div>
@@ -353,7 +387,8 @@ export function NameFormatRules({
         {advancedMode && (
           <div className="mt-3 space-y-3">
             <div className="text-figma-text-secondary text-xs">
-              Custom rules are checked first. The default rule (shown below) catches any unmatched variables.
+              Custom rules are checked first. The default rule (shown below) catches any unmatched
+              variables.
             </div>
 
             {/* Rules list (custom rules + default rule at bottom) */}
@@ -399,12 +434,7 @@ export function NameFormatRules({
               <div className="border-figma-border bg-figma-bg-secondary flex items-center gap-2 rounded border px-2 py-1 opacity-60">
                 <div className="flex items-center" style={{ width: 12 }} />
 
-                <input
-                  className="input flex-1 text-xs"
-                  value="**"
-                  disabled
-                  readOnly
-                />
+                <input className="input flex-1 text-xs" value="**" disabled readOnly />
                 <span className="text-figma-text-tertiary">→</span>
                 <input
                   className="input flex-1 text-xs"
@@ -415,7 +445,6 @@ export function NameFormatRules({
 
                 <div style={{ width: 24 }} />
               </div>
-
             </div>
 
             <ButtonGroup>

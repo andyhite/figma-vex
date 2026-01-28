@@ -81,6 +81,9 @@ interface ExportTabProps {
   syncCodeSyntax: boolean;
   numberPrecision: number;
 
+  // Variable name options
+  includeCollectionName: boolean;
+
   // CSS-specific options
   useModesAsSelectors: boolean;
   exportAsCalcExpressions: boolean;
@@ -107,6 +110,7 @@ export function ExportTab({
   nameFormatRules,
   syncCodeSyntax,
   numberPrecision,
+  includeCollectionName,
   useModesAsSelectors,
   exportAsCalcExpressions,
   selector,
@@ -268,6 +272,7 @@ export function ExportTab({
         useModesAsSelectors: format === 'css' ? useModesAsSelectors : false,
         includeCollectionComments: format !== 'typescript' ? includeCollectionComments : false,
         includeModeComments,
+        includeCollectionName,
         selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
         includeStyles,
         styleOutputMode,
@@ -293,6 +298,7 @@ export function ExportTab({
       useModesAsSelectors,
       includeCollectionComments,
       includeModeComments,
+      includeCollectionName,
       selectedCollections,
       includeStyles,
       styleOutputMode,
@@ -333,6 +339,7 @@ export function ExportTab({
         useModesAsSelectors,
         includeCollectionComments,
         includeModeComments,
+        includeCollectionName,
         selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
         includeStyles,
         styleOutputMode,
@@ -369,6 +376,7 @@ export function ExportTab({
     useModesAsSelectors,
     includeCollectionComments,
     includeModeComments,
+    includeCollectionName,
     selectedCollections,
     includeStyles,
     styleOutputMode,

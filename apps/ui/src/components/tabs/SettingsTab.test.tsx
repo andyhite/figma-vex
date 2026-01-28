@@ -46,6 +46,8 @@ describe('SettingsTab', () => {
     onNameFormatAdvancedChange: vi.fn(),
     syncCodeSyntax: true,
     onSyncCodeSyntaxChange: vi.fn(),
+    includeCollectionName: true,
+    onIncludeCollectionNameChange: vi.fn(),
     debugMode: false,
     onDebugModeChange: vi.fn(),
     activeSettingsTab: 'general',

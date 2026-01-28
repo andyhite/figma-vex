@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   selectedCollections: [],
   includeCollectionComments: true,
   includeModeComments: true, // Moved from CSS tab to global
+  includeCollectionName: true, // Include collection name in variable names by default
   headerBanner: undefined,
   exportFormats: ['css', 'json', 'typescript'], // All formats selected by default
   syncCalculations: false,

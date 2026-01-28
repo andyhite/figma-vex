@@ -51,6 +51,8 @@ export default function App() {
   const nameFormatCasing = settings?.nameFormatCasing ?? DEFAULT_SETTINGS.nameFormatCasing;
   const nameFormatAdvanced = settings?.nameFormatAdvanced ?? DEFAULT_SETTINGS.nameFormatAdvanced;
   const syncCodeSyntax = settings?.syncCodeSyntax ?? DEFAULT_SETTINGS.syncCodeSyntax;
+  const includeCollectionName =
+    settings?.includeCollectionName ?? DEFAULT_SETTINGS.includeCollectionName;
   const numberPrecision = settings?.numberPrecision ?? DEFAULT_SETTINGS.numberPrecision;
   const debugMode = settings?.debugMode ?? DEFAULT_SETTINGS.debugMode;
   const exportFormats = settings?.exportFormats ?? DEFAULT_SETTINGS.exportFormats;
@@ -122,6 +124,8 @@ export default function App() {
     updateSettings({ nameFormatAdvanced: enabled });
   const handleSyncCodeSyntaxChange = (enabled: boolean) =>
     updateSettings({ syncCodeSyntax: enabled });
+  const handleIncludeCollectionNameChange = (enabled: boolean) =>
+    updateSettings({ includeCollectionName: enabled });
   const handleNumberPrecisionChange = (precision: number) =>
     updateSettings({ numberPrecision: precision });
   const handleCssExportAsCalcExpressionsChange = (value: boolean) =>
@@ -279,6 +283,7 @@ export default function App() {
             nameFormatRules={allNameFormatRules}
             syncCodeSyntax={syncCodeSyntax}
             numberPrecision={numberPrecision}
+            includeCollectionName={includeCollectionName}
             useModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
             exportAsCalcExpressions={cssExportAsCalcExpressions}
             selector={settings?.cssSelector ?? ':root'}
@@ -329,6 +334,8 @@ export default function App() {
             onNameFormatAdvancedChange={handleNameFormatAdvancedChange}
             syncCodeSyntax={syncCodeSyntax}
             onSyncCodeSyntaxChange={handleSyncCodeSyntaxChange}
+            includeCollectionName={includeCollectionName}
+            onIncludeCollectionNameChange={handleIncludeCollectionNameChange}
             debugMode={debugMode}
             onDebugModeChange={handleDebugModeChange}
             initialGithubRepository={settings?.githubRepository}

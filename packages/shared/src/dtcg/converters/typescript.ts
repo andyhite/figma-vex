@@ -69,11 +69,14 @@ export function convertToTypeScript(
       )
     : document.collections;
 
+  // Determine whether to include collection name in path
+  const includeCollectionName = options.includeCollectionName ?? true;
+
   // Collect variable names from collections
   for (const [collectionName, collectionGroup] of Object.entries(collections)) {
     collectVariableNames(
       collectionGroup as Record<string, unknown>,
-      [collectionName],
+      includeCollectionName ? [collectionName] : [],
       options,
       variableNames
     );

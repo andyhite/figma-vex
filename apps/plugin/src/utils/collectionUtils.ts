@@ -8,9 +8,22 @@ export function filterCollections(
   collections: VariableCollection[],
   selectedCollectionIds?: string[]
 ): VariableCollection[] {
+  console.log(
+    '[filterCollections] Input collections:',
+    collections.map((c) => `${c.name} (${c.id})`)
+  );
+  console.log('[filterCollections] Selected IDs:', selectedCollectionIds);
+
   if (selectedCollectionIds && selectedCollectionIds.length > 0) {
-    return collections.filter((c) => selectedCollectionIds.includes(c.id));
+    const filtered = collections.filter((c) => selectedCollectionIds.includes(c.id));
+    console.log(
+      '[filterCollections] Filtered result:',
+      filtered.map((c) => c.name)
+    );
+    return filtered;
   }
+
+  console.log('[filterCollections] No filter applied, returning all collections');
   return collections;
 }
 

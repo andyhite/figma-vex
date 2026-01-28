@@ -25,6 +25,7 @@ describe('ExportTab', () => {
     nameFormatRules: [],
     syncCodeSyntax: false,
     numberPrecision: 4,
+    includeCollectionName: true,
     useModesAsSelectors: false,
     exportAsCalcExpressions: false,
     selector: ':root',

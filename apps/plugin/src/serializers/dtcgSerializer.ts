@@ -126,7 +126,12 @@ function serializeVariable(
     const modeValues: Record<string, DTCGValue> = {};
     for (const mode of collection.modes) {
       const value = variable.valuesByMode[mode.modeId];
-      modeValues[mode.name] = convertVariableValue(value, variable.resolvedType, variables, collections);
+      modeValues[mode.name] = convertVariableValue(
+        value,
+        variable.resolvedType,
+        variables,
+        collections
+      );
     }
     tokenValue = modeValues;
   }
@@ -169,39 +174,54 @@ function serializeVariable(
 /**
  * Builds a nested token group structure from a flat variable name path.
  */
-function buildTokenGroup(
-  pathParts: string[],
-  token: DTCGToken,
-  group: DTCGTokenGroup
-): void {
+function buildTokenGroup(pathParts: string[], token: DTCGToken, group: DTCGTokenGroup): void {
   let current = group;
 
   // Navigate/create nested structure
   for (let i = 0; i < pathParts.length - 1; i++) {
     const part = pathParts[i];
-    if (!current[part] || typeof current[part] === 'object' && !('$type' in current[part])) {
+    const existing = current[part];
+
+    if (!existing) {
+      // Part doesn't exist, create it
+      current[part] = {};
+    } else if (typeof existing === 'object' && '$type' in existing) {
+      // Part exists as a TOKEN - this is a path conflict!
+      console.warn(
+        `[buildTokenGroup] Path conflict: "${pathParts.slice(0, i + 1).join('/')}" is a token, but "${pathParts.join('/')}" needs it as a group`
+      );
+      // Convert token to group, preserving the token under a special key
+      current[part] = { _value: existing };
+    } else if (typeof existing !== 'object') {
+      // Part exists but is not an object - shouldn't happen
+      console.warn(
+        `[buildTokenGroup] Unexpected type at "${pathParts.slice(0, i + 1).join('/')}": ${typeof existing}`
+      );
       current[part] = {};
     }
+    // If it's an object without $type, it's already a group - use it
+
     current = current[part] as DTCGTokenGroup;
   }
 
   // Set the token at the leaf
   const leafName = pathParts[pathParts.length - 1];
+  if (current[leafName]) {
+    console.warn(`[buildTokenGroup] Overwriting existing entry at "${pathParts.join('/')}"`);
+  }
   current[leafName] = token;
 }
 
 /**
  * Serializes paint styles to DTCG tokens.
  */
-function serializePaintStyles(
-  styles: StyleCollection['paint']
-): DTCGTokenGroup {
+function serializePaintStyles(styles: StyleCollection['paint']): DTCGTokenGroup {
   const group: DTCGTokenGroup = {};
 
   for (const style of styles) {
     const config = { ...DEFAULT_CONFIG, ...parseDescription(style.description) };
     const pathParts = style.name.split('/');
-    
+
     // For DTCG, we want hex format for colors
     const hexConfig = { ...config, colorFormat: 'hex' as const };
     const value = resolvePaintValue(style, hexConfig);
@@ -397,7 +417,17 @@ export async function serializeToDTCG(
   options: SerializationOptions,
   styles?: StyleCollection
 ): Promise<DTCGDocument> {
+  console.log('[serializeToDTCG] Starting...');
+  console.log('[serializeToDTCG] Input variables:', variables.length);
+  console.log('[serializeToDTCG] Input collections:', collections.length);
+  console.log('[serializeToDTCG] selectedCollections option:', options.selectedCollections);
+
   const filteredCollections = filterCollections(collections, options.selectedCollections);
+  console.log(
+    '[serializeToDTCG] Filtered collections:',
+    filteredCollections.map((c) => c.name)
+  );
+
   const document: DTCGDocument = {
     $schema: 'https://design-tokens.github.io/format/',
     collections: {},
@@ -411,36 +441,85 @@ export async function serializeToDTCG(
   for (const collection of filteredCollections) {
     const collectionGroup: DTCGTokenGroup = {};
     const collectionVars = getCollectionVariablesByName(variables, collection.id);
+    console.log(
+      `[serializeToDTCG] Collection "${collection.name}" has ${collectionVars.length} variables`
+    );
 
+    // Log first 5 variable names for debugging
+    if (collectionVars.length > 0) {
+      console.log(
+        `[serializeToDTCG] First 5 variables in "${collection.name}":`,
+        collectionVars.slice(0, 5).map((v) => v.name)
+      );
+    }
+
+    let addedCount = 0;
     for (const variable of collectionVars) {
       const token = serializeVariable(variable, collection, variables, collections);
       const pathParts = variable.name.split('/');
       buildTokenGroup(pathParts, token, collectionGroup);
+      addedCount++;
     }
+
+    console.log(`[serializeToDTCG] Added ${addedCount} tokens to "${collection.name}"`);
+
+    // Count actual tokens in the group for verification
+    const countTokensInGroup = (obj: Record<string, unknown>): number => {
+      let count = 0;
+      for (const value of Object.values(obj)) {
+        if (value && typeof value === 'object' && '$type' in value) {
+          count++;
+        } else if (value && typeof value === 'object') {
+          count += countTokensInGroup(value as Record<string, unknown>);
+        }
+      }
+      return count;
+    };
+    console.log(
+      `[serializeToDTCG] Actual token count in "${collection.name}":`,
+      countTokensInGroup(collectionGroup)
+    );
 
     document.collections[collection.name] = collectionGroup;
   }
 
+  console.log('[serializeToDTCG] Serialized collections:', Object.keys(document.collections));
+
   // Serialize styles if included
   if (options.includeStyles && styles) {
     const styleTypes = options.styleTypes || ['paint', 'text', 'effect', 'grid'];
+    console.log('[serializeToDTCG] Including styles, types:', styleTypes);
     document.$styles = {};
 
     if (styleTypes.includes('paint') && styles.paint.length > 0) {
+      console.log(`[serializeToDTCG] Serializing ${styles.paint.length} paint styles`);
       document.$styles.paint = serializePaintStyles(styles.paint);
     }
 
     if (styleTypes.includes('text') && styles.text.length > 0) {
+      console.log(`[serializeToDTCG] Serializing ${styles.text.length} text styles`);
       document.$styles.text = serializeTextStyles(styles.text);
     }
 
     if (styleTypes.includes('effect') && styles.effect.length > 0) {
+      console.log(`[serializeToDTCG] Serializing ${styles.effect.length} effect styles`);
       document.$styles.effect = serializeEffectStyles(styles.effect);
     }
 
     if (styleTypes.includes('grid') && styles.grid.length > 0) {
+      console.log(`[serializeToDTCG] Serializing ${styles.grid.length} grid styles`);
       document.$styles.grid = serializeGridStyles(styles.grid);
     }
+
+    console.log('[serializeToDTCG] Serialized $styles:', Object.keys(document.$styles));
+  } else {
+    console.log(
+      '[serializeToDTCG] Not including styles (includeStyles:',
+      options.includeStyles,
+      ', styles:',
+      !!styles,
+      ')'
+    );
   }
 
   return document;

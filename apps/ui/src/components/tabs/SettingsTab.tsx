@@ -77,6 +77,10 @@ interface SettingsTabProps {
   syncCodeSyntax: boolean;
   onSyncCodeSyntaxChange: (enabled: boolean) => void;
 
+  // Include collection name in output
+  includeCollectionName: boolean;
+  onIncludeCollectionNameChange: (enabled: boolean) => void;
+
   // Debug mode
   debugMode: boolean;
   onDebugModeChange: (enabled: boolean) => void;
@@ -135,6 +139,8 @@ export function SettingsTab({
   onNameFormatAdvancedChange,
   syncCodeSyntax,
   onSyncCodeSyntaxChange,
+  includeCollectionName,
+  onIncludeCollectionNameChange,
   debugMode,
   onDebugModeChange,
   initialGithubRepository,
@@ -178,6 +184,8 @@ export function SettingsTab({
             onPrefixChange={onPrefixChange}
             collections={collections}
             selectedCollections={selectedCollections}
+            includeCollectionName={includeCollectionName}
+            onIncludeCollectionNameChange={onIncludeCollectionNameChange}
             debugMode={debugMode}
           />
         )}

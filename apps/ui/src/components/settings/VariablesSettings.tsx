@@ -1,13 +1,12 @@
 import { NameFormatRules } from './NameFormatRules';
 import { Button } from '../common/Button';
+import { Checkbox } from '../common/Checkbox';
+import { FormGroup } from '../common/FormGroup';
+import { FormHelpText } from '../common/FormHelpText';
 import { useVariableNames } from '../../hooks/useVariableNames';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
 import { useCallback, useEffect, useState } from 'react';
-import type {
-  NameFormatRule,
-  CasingOption,
-  UIMessage,
-} from '@figma-vex/shared';
+import type { NameFormatRule, CasingOption, UIMessage } from '@figma-vex/shared';
 import { getAllRulesWithDefault } from '@figma-vex/shared';
 
 interface ResetStatus {
@@ -34,6 +33,9 @@ interface VariablesSettingsProps {
   onPrefixChange: (value: string) => void;
   collections: Collection[];
   selectedCollections: string[];
+  // Include collection name in output
+  includeCollectionName: boolean;
+  onIncludeCollectionNameChange: (enabled: boolean) => void;
   // Debug mode
   debugMode?: boolean;
 }
@@ -51,6 +53,8 @@ export function VariablesSettings({
   onPrefixChange,
   collections,
   selectedCollections,
+  includeCollectionName,
+  onIncludeCollectionNameChange,
   debugMode = false,
 }: VariablesSettingsProps) {
   const { variableNames } = useVariableNames();
@@ -94,6 +98,20 @@ export function VariablesSettings({
 
   return (
     <div>
+      <FormGroup label="Variable Names">
+        <div className="space-y-2">
+          <Checkbox
+            label="Include collection name in output"
+            checked={includeCollectionName}
+            onChange={(e) => onIncludeCollectionNameChange(e.target.checked)}
+          />
+          <FormHelpText>
+            When enabled, variable names include the collection (e.g., --color-blue-500). When
+            disabled, only the variable path is used (e.g., --blue-500).
+          </FormHelpText>
+        </div>
+      </FormGroup>
+
       <NameFormatRules
         rules={nameFormatRules}
         onRulesChange={onNameFormatRulesChange}
@@ -109,6 +127,7 @@ export function VariablesSettings({
         variableNames={variableNames}
         collections={collections}
         selectedCollections={selectedCollections}
+        includeCollectionName={includeCollectionName}
       />
 
       {syncStatus && (

@@ -103,6 +103,7 @@ export interface DTCGConversionSettings {
   // Name formatting
   prefix?: string;
   nameFormatRules?: NameFormatRule[];
+  includeCollectionName?: boolean; // Include collection name in variable names (default: true)
 
   // Value formatting
   colorFormat: ColorFormat;

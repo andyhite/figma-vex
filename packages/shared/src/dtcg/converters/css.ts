@@ -162,6 +162,9 @@ export function convertToCss(document: DTCGDocument, options: DTCGConversionSett
       )
     : document.collections;
 
+  // Determine whether to include collection name in path
+  const includeCollectionName = options.includeCollectionName ?? true;
+
   if (options.useModesAsSelectors) {
     // Group tokens by mode - create separate selector blocks for each mode
     for (const [collectionName, collectionGroup] of Object.entries(collections)) {
@@ -171,7 +174,7 @@ export function convertToCss(document: DTCGDocument, options: DTCGConversionSett
 
       const tokens = convertTokenGroup(
         collectionGroup as Record<string, DTCGToken | Record<string, unknown>>,
-        [collectionName],
+        includeCollectionName ? [collectionName] : [],
         options,
         document
       );
@@ -282,7 +285,7 @@ export function convertToCss(document: DTCGDocument, options: DTCGConversionSett
 
       const tokens = convertTokenGroup(
         collectionGroup as Record<string, DTCGToken | Record<string, unknown>>,
-        [collectionName],
+        includeCollectionName ? [collectionName] : [],
         options,
         document
       );
