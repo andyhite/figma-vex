@@ -2,9 +2,9 @@ name: GitHub Action Test
 run-name: "GitHub Action Test: ${{ github.event.client_payload.title || 'Dispatched from Figma' }}"
 
 on:
-  # Only triggered via repository_dispatch (from CI workflow or Figma plugin)
+  # Triggered via repository_dispatch from CI workflow or Figma plugin
   repository_dispatch:
-    types: [test-action]
+    types: [test-action, figma-variables-update]
 
 # Permissions needed for the action
 permissions:
