@@ -22,7 +22,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   githubRepository: '',
   githubToken: '',
   githubWorkflowFileName: 'update-variables.yml',
-  githubExportTypes: ['css', 'json'],
   remBaseVariableId: undefined,
   cssExportAsCalcExpressions: false,
   nameFormatRules: [], // Custom rules only (default is computed from prefix + casing)

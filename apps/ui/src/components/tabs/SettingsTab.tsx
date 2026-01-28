@@ -11,7 +11,6 @@ import type {
   StyleSummary,
   NameFormatRule,
   CasingOption,
-  ExportType,
 } from '@figma-vex/shared';
 
 interface Collection {
@@ -86,12 +85,10 @@ interface SettingsTabProps {
   initialGithubRepository?: string;
   initialGithubToken?: string;
   initialGithubWorkflowFileName?: string;
-  initialGithubExportTypes?: ExportType[];
   onGithubSettingsChange?: (settings: {
     githubRepository: string;
     githubToken: string;
     githubWorkflowFileName: string;
-    githubExportTypes: ExportType[];
   }) => void;
 
   // Import/Export/Reset
@@ -148,7 +145,6 @@ export function SettingsTab({
   initialGithubRepository,
   initialGithubToken,
   initialGithubWorkflowFileName,
-  initialGithubExportTypes,
   onGithubSettingsChange,
   onExportSettings,
   onImportSettings,
@@ -222,7 +218,6 @@ export function SettingsTab({
             initialRepository={initialGithubRepository}
             initialToken={initialGithubToken}
             initialWorkflowFileName={initialGithubWorkflowFileName}
-            initialExportTypes={initialGithubExportTypes}
             onSettingsChange={onGithubSettingsChange}
           />
         )}

@@ -126,7 +126,6 @@ export interface PluginSettings {
   githubRepository: string;
   githubToken: string;
   githubWorkflowFileName: string;
-  githubExportTypes: ExportType[];
 
   // Rem base variable (global setting)
   remBaseVariableId?: string;

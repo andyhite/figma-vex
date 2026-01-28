@@ -15,6 +15,7 @@ import type {
   StyleOutputMode,
   NameFormatRule,
   UIMessage,
+  GitHubDispatchOptions,
 } from '@figma-vex/shared';
 
 interface FormatConfig {
@@ -84,6 +85,11 @@ interface ExportTabProps {
   useModesAsSelectors: boolean;
   exportAsCalcExpressions: boolean;
   selector: string;
+
+  // GitHub settings
+  githubRepository: string;
+  githubToken: string;
+  githubWorkflowFileName: string;
 }
 
 export function ExportTab({
@@ -105,6 +111,9 @@ export function ExportTab({
   useModesAsSelectors,
   exportAsCalcExpressions,
   selector,
+  githubRepository,
+  githubToken,
+  githubWorkflowFileName,
 }: ExportTabProps) {
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { copyToClipboard } = useClipboard();
@@ -131,6 +140,16 @@ export function ExportTab({
     type: 'success' | 'error';
     visible: boolean;
   } | null>(null);
+
+  // GitHub integration state
+  const [sendToGitHub, setSendToGitHub] = useState(false);
+  const [githubStatus, setGithubStatus] = useState<{
+    message: string;
+    type: 'sending' | 'success' | 'error';
+    visible: boolean;
+  } | null>(null);
+
+  const isGitHubConfigured = githubRepository.trim() !== '' && githubToken.trim() !== '';
 
   // Ensure activeOutputTab is valid when selectedFormats changes
   useEffect(() => {
@@ -175,7 +194,29 @@ export function ExportTab({
           next.delete('typescript');
           return next;
         });
+      } else if (message.type === 'github-dispatch-success') {
+        setGithubStatus({ message: 'Sent to GitHub!', type: 'success', visible: true });
+        setTimeout(() => {
+          setGithubStatus((prev) => (prev ? { ...prev, visible: false } : null));
+        }, 2000);
+        setTimeout(() => {
+          setGithubStatus(null);
+        }, 2500);
       } else if (message.type === 'error') {
+        // Handle GitHub errors
+        setGithubStatus((prev) => {
+          if (prev?.type === 'sending') {
+            setTimeout(() => {
+              setGithubStatus((p) => (p ? { ...p, visible: false } : null));
+            }, 3000);
+            setTimeout(() => {
+              setGithubStatus(null);
+            }, 3500);
+            return { message: message.message, type: 'error', visible: true };
+          }
+          return prev;
+        });
+        // Handle generation errors
         setIsGenerating(false);
         setPendingFormats(new Set());
         setGenerateStatus({ message: message.message, type: 'error', visible: true });
@@ -282,7 +323,56 @@ export function ExportTab({
       const options = buildExportOptions(format);
       sendMessage({ type: config.messageType, options });
     }
-  }, [selectedFormats, buildExportOptions, sendMessage]);
+
+    // Send to GitHub if enabled
+    if (sendToGitHub && isGitHubConfigured) {
+      setGithubStatus({ message: 'Sending to GitHub...', type: 'sending', visible: true });
+
+      const githubExportOptions: ExportOptions = {
+        selector: selector.trim() || ':root',
+        prefix: prefix.trim() || undefined,
+        useModesAsSelectors,
+        includeCollectionComments,
+        includeModeComments,
+        selectedCollections: selectedCollections.length > 0 ? selectedCollections : undefined,
+        includeStyles,
+        styleOutputMode,
+        styleTypes,
+        syncCalculations,
+        numberPrecision,
+      };
+
+      const githubOptions: GitHubDispatchOptions = {
+        repository: githubRepository.trim(),
+        token: githubToken.trim(),
+        workflowFileName: githubWorkflowFileName.trim() || 'update-variables.yml',
+        exportTypes: selectedFormats,
+        exportOptions: githubExportOptions,
+      };
+
+      sendMessage({ type: 'github-dispatch', githubOptions });
+    }
+  }, [
+    selectedFormats,
+    buildExportOptions,
+    sendMessage,
+    sendToGitHub,
+    isGitHubConfigured,
+    githubRepository,
+    githubToken,
+    githubWorkflowFileName,
+    selector,
+    prefix,
+    useModesAsSelectors,
+    includeCollectionComments,
+    includeModeComments,
+    selectedCollections,
+    includeStyles,
+    styleOutputMode,
+    styleTypes,
+    syncCalculations,
+    numberPrecision,
+  ]);
 
   // Copy handler
   const handleCopy = useCallback(
@@ -403,10 +493,24 @@ export function ExportTab({
         })}
       </div>
 
+      {/* GitHub Integration */}
+      {isGitHubConfigured && (
+        <div className="border-figma-border mx-4 mb-3 border-t pt-3">
+          <label className="flex cursor-pointer items-center gap-2">
+            <Checkbox
+              checked={sendToGitHub}
+              onChange={() => setSendToGitHub(!sendToGitHub)}
+              aria-label="Send to GitHub"
+            />
+            <span className="text-figma-text text-xs">Send to GitHub</span>
+          </label>
+        </div>
+      )}
+
       {/* Generate Button */}
       <ButtonGroup>
         <Button onClick={handleGenerate} disabled={isGenerateDisabled}>
-          {isGenerating ? 'Generating...' : 'Generate'}
+          {isGenerating ? 'Generating...' : sendToGitHub ? 'Generate & Send to GitHub' : 'Generate'}
         </Button>
         {generateStatus && (
           <span
@@ -415,6 +519,21 @@ export function ExportTab({
             } ${generateStatus.type === 'success' ? 'text-figma-success' : 'text-figma-error'}`}
           >
             {generateStatus.message}
+          </span>
+        )}
+        {githubStatus && (
+          <span
+            className={`ml-3 text-xs transition-opacity duration-500 ${
+              githubStatus.visible ? 'opacity-100' : 'opacity-0'
+            } ${
+              githubStatus.type === 'success'
+                ? 'text-figma-success'
+                : githubStatus.type === 'error'
+                  ? 'text-figma-error'
+                  : 'text-figma-text-secondary'
+            }`}
+          >
+            {githubStatus.message}
           </span>
         )}
       </ButtonGroup>

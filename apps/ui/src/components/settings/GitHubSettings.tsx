@@ -1,21 +1,16 @@
 import { useState, useCallback } from 'react';
-import { Checkbox } from '../common/Checkbox';
-import { FormGroup } from '../common/FormGroup';
 import { FormHelpText } from '../common/FormHelpText';
 import { Input } from '../common/Input';
-import type { ExportType } from '@figma-vex/shared';
 
 interface GitHubSettingsProps {
   // Persisted settings
   initialRepository?: string;
   initialToken?: string;
   initialWorkflowFileName?: string;
-  initialExportTypes?: ExportType[];
   onSettingsChange?: (settings: {
     githubRepository: string;
     githubToken: string;
     githubWorkflowFileName: string;
-    githubExportTypes: ExportType[];
   }) => void;
 }
 
@@ -23,13 +18,11 @@ export function GitHubSettings({
   initialRepository = '',
   initialToken = '',
   initialWorkflowFileName = 'update-variables.yml',
-  initialExportTypes = ['css', 'json'],
   onSettingsChange,
 }: GitHubSettingsProps) {
   const [repository, setRepository] = useState(initialRepository);
   const [token, setToken] = useState(initialToken);
   const [workflowFileName, setWorkflowFileName] = useState(initialWorkflowFileName);
-  const [exportTypes, setExportTypes] = useState<Set<ExportType>>(new Set(initialExportTypes));
 
   // Helper to persist current settings
   const persistSettings = useCallback(
@@ -38,22 +31,19 @@ export function GitHubSettings({
         repository: string;
         token: string;
         workflowFileName: string;
-        exportTypes: Set<ExportType>;
       }>
     ) => {
       const currentRepository = updates.repository ?? repository;
       const currentToken = updates.token ?? token;
       const currentWorkflowFileName = updates.workflowFileName ?? workflowFileName;
-      const currentExportTypes = updates.exportTypes ?? exportTypes;
 
       onSettingsChange?.({
         githubRepository: currentRepository,
         githubToken: currentToken,
         githubWorkflowFileName: currentWorkflowFileName,
-        githubExportTypes: Array.from(currentExportTypes),
       });
     },
-    [repository, token, workflowFileName, exportTypes, onSettingsChange]
+    [repository, token, workflowFileName, onSettingsChange]
   );
 
   const handleRepositoryChange = (value: string) => {
@@ -70,22 +60,6 @@ export function GitHubSettings({
     setWorkflowFileName(value);
     persistSettings({ workflowFileName: value });
   };
-
-  const toggleExportType = useCallback(
-    (type: ExportType) => {
-      setExportTypes((prev) => {
-        const next = new Set(prev);
-        if (next.has(type)) {
-          next.delete(type);
-        } else {
-          next.add(type);
-        }
-        persistSettings({ exportTypes: next });
-        return next;
-      });
-    },
-    [persistSettings]
-  );
 
   return (
     <div>
@@ -127,27 +101,6 @@ export function GitHubSettings({
       />
       <FormHelpText>
         Optional metadata included in the payload (does not need to match an actual workflow file)
-      </FormHelpText>
-
-      <FormGroup label="Export Types">
-        <Checkbox
-          label="CSS"
-          checked={exportTypes.has('css')}
-          onChange={() => toggleExportType('css')}
-        />
-        <Checkbox
-          label="JSON"
-          checked={exportTypes.has('json')}
-          onChange={() => toggleExportType('json')}
-        />
-        <Checkbox
-          label="TypeScript"
-          checked={exportTypes.has('typescript')}
-          onChange={() => toggleExportType('typescript')}
-        />
-      </FormGroup>
-      <FormHelpText>
-        CSS options (selector, modes as selectors) are configured in Settings &gt; Calc.
       </FormHelpText>
 
       <div className="help-section border-figma-border bg-figma-bg-secondary mt-5 rounded border p-3">

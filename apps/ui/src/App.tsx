@@ -2,7 +2,6 @@ import { useState, useRef, useCallback } from 'react';
 import { TabBar } from './components/tabs/TabBar';
 import { TabPanel } from './components/tabs/TabPanel';
 import { ExportTab } from './components/tabs/ExportTab';
-import { GitHubActionTab } from './components/tabs/GitHubActionTab';
 import { SettingsTab } from './components/tabs/SettingsTab';
 import { HelpTab } from './components/tabs/HelpTab';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -19,14 +18,12 @@ import { getAllRulesWithDefault } from '@figma-vex/shared';
 
 const TABS = [
   { id: 'export', label: 'Generate' },
-  { id: 'github', label: 'GitHub' },
   { id: 'settings', label: 'Settings' },
   { id: 'help', label: 'Help' },
 ];
 
 const TAB_DESCRIPTIONS: Record<string, string> = {
   export: 'Generate CSS, JSON, or TypeScript exports from your Figma variables.',
-  github: 'Send generated exports to GitHub via repository_dispatch event.',
   settings: 'Configure global export settings that apply to all export formats.',
   help: 'Learn how to configure variable exports using description fields.',
 };
@@ -285,28 +282,9 @@ export default function App() {
             useModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
             exportAsCalcExpressions={cssExportAsCalcExpressions}
             selector={settings?.cssSelector ?? ':root'}
-          />
-        </ErrorBoundary>
-      </TabPanel>
-
-      <TabPanel id="github" activeTab={activeTab}>
-        <ErrorBoundary>
-          <GitHubActionTab
-            prefix={prefix}
-            selectedCollections={selectedCollections}
-            includeCollectionComments={includeCollectionComments}
-            includeModeComments={includeModeComments}
-            syncCalculations={syncCalculations}
-            includeStyles={includeStyles}
-            styleOutputMode={styleOutputMode}
-            styleTypes={styleTypes}
-            numberPrecision={numberPrecision}
-            repository={settings?.githubRepository ?? ''}
-            token={settings?.githubToken ?? ''}
-            workflowFileName={settings?.githubWorkflowFileName ?? 'update-variables.yml'}
-            exportTypes={settings?.githubExportTypes ?? ['css', 'json']}
-            cssSelector={settings?.cssSelector ?? ':root'}
-            useModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
+            githubRepository={settings?.githubRepository ?? ''}
+            githubToken={settings?.githubToken ?? ''}
+            githubWorkflowFileName={settings?.githubWorkflowFileName ?? 'update-variables.yml'}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -357,7 +335,6 @@ export default function App() {
             initialGithubRepository={settings?.githubRepository}
             initialGithubToken={settings?.githubToken}
             initialGithubWorkflowFileName={settings?.githubWorkflowFileName}
-            initialGithubExportTypes={settings?.githubExportTypes}
             onGithubSettingsChange={(githubSettings) => updateSettings(githubSettings)}
             onExportSettings={handleExportSettings}
             onImportSettings={handleImportSettings}

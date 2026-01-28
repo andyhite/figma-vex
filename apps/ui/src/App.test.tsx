@@ -69,7 +69,6 @@ describe('App', () => {
     // Generate tab and Generate button both exist, so check for at least 2
     const generateButtons = screen.getAllByRole('button', { name: 'Generate' });
     expect(generateButtons.length).toBeGreaterThanOrEqual(2); // Tab + button inside
-    expect(screen.getByRole('button', { name: 'GitHub' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Help' })).toBeInTheDocument();
   });
