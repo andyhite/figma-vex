@@ -66,29 +66,32 @@ describe('App', () => {
   it('should render tab bar with all tabs', () => {
     render(<App />);
 
-    expect(screen.getByRole('button', { name: 'CSS' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'JSON' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'TypeScript' })).toBeInTheDocument();
+    // Generate tab and Generate button both exist, so check for at least 2
+    const generateButtons = screen.getAllByRole('button', { name: 'Generate' });
+    expect(generateButtons.length).toBeGreaterThanOrEqual(2); // Tab + button inside
     expect(screen.getByRole('button', { name: 'GitHub' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Help' })).toBeInTheDocument();
   });
 
-  it('should start with CSS tab active', () => {
+  it('should start with Generate tab active', () => {
     render(<App />);
 
-    expect(screen.getByRole('button', { name: 'Generate CSS' })).toBeInTheDocument();
+    // Generate tab shows format selection checkboxes
+    expect(screen.getByLabelText('CSS')).toBeInTheDocument();
+    expect(screen.getByLabelText('JSON')).toBeInTheDocument();
+    expect(screen.getByLabelText('TypeScript')).toBeInTheDocument();
   });
 
   it('should switch tabs when clicked', async () => {
     renderResult = render(<App />);
 
-    const jsonTab = screen.getByRole('button', { name: 'JSON' });
-    await userEvent.click(jsonTab);
+    const settingsTab = screen.getByRole('button', { name: 'Settings' });
+    await userEvent.click(settingsTab);
 
-    // Wait for the tab to switch and JSON content to appear
+    // Wait for the tab to switch and Settings content to appear
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Generate JSON' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Include collection comments')).toBeInTheDocument();
     });
   });
 
@@ -217,10 +220,10 @@ describe('App', () => {
     expect(screen.queryByText('Collections')).not.toBeInTheDocument();
   });
 
-  it('should hide global settings on export tabs', () => {
+  it('should hide global settings on export tab', () => {
     render(<App />);
 
-    // CSS tab is active by default
+    // Export tab is active by default
     expect(screen.queryByText('Name Prefix')).not.toBeInTheDocument();
     expect(screen.queryByText('Collections')).not.toBeInTheDocument();
   });
@@ -229,9 +232,7 @@ describe('App', () => {
     render(<App />);
 
     expect(
-      screen.getByText(
-        'Export variables as CSS custom properties with customizable selectors and formatting options.'
-      )
+      screen.getByText('Generate CSS, JSON, or TypeScript exports from your Figma variables.')
     ).toBeInTheDocument();
   });
 });

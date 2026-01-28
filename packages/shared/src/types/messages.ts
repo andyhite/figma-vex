@@ -106,6 +106,9 @@ export interface PluginSettings {
   includeModeComments: boolean; // Moved from CSS tab to global settings
   headerBanner?: string; // Custom header banner text for exports
 
+  // Export format selection
+  exportFormats: ExportType[];
+
   // Calculation settings
   syncCalculations: boolean;
 

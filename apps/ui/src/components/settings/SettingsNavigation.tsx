@@ -6,7 +6,7 @@ interface SettingsNavigationProps {
 const TABS = [
   { id: 'general', label: 'General' },
   { id: 'variables', label: 'Variables' },
-  { id: 'calc', label: 'Calc' },
+  { id: 'calc', label: 'Calculations' },
   { id: 'styles', label: 'Styles' },
   { id: 'github', label: 'GitHub' },
   { id: 'backup', label: 'Data' },

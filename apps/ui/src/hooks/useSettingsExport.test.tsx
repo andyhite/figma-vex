@@ -16,6 +16,7 @@ const mockSettings: PluginSettings = {
   selectedCollections: ['col-1', 'col-2'],
   includeCollectionComments: true,
   includeModeComments: false,
+  exportFormats: ['css', 'json', 'typescript'],
   syncCalculations: false,
   includeStyles: true,
   styleOutputMode: 'variables',

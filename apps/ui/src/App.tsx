@@ -1,9 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { TabBar } from './components/tabs/TabBar';
 import { TabPanel } from './components/tabs/TabPanel';
-import { CssTab } from './components/tabs/CssTab';
-import { JsonTab } from './components/tabs/JsonTab';
-import { TypeScriptTab } from './components/tabs/TypeScriptTab';
+import { ExportTab } from './components/tabs/ExportTab';
 import { GitHubActionTab } from './components/tabs/GitHubActionTab';
 import { SettingsTab } from './components/tabs/SettingsTab';
 import { HelpTab } from './components/tabs/HelpTab';
@@ -20,18 +18,14 @@ import type { StyleType, StyleOutputMode, PluginSettings } from '@figma-vex/shar
 import { getAllRulesWithDefault } from '@figma-vex/shared';
 
 const TABS = [
-  { id: 'css', label: 'CSS' },
-  { id: 'json', label: 'JSON' },
-  { id: 'typescript', label: 'TypeScript' },
+  { id: 'export', label: 'Generate' },
   { id: 'github', label: 'GitHub' },
   { id: 'settings', label: 'Settings' },
   { id: 'help', label: 'Help' },
 ];
 
 const TAB_DESCRIPTIONS: Record<string, string> = {
-  css: 'Export variables as CSS custom properties with customizable selectors and formatting options.',
-  json: 'Export as JSON for use with Style Dictionary or other token tools.',
-  typescript: 'Generate TypeScript type definitions for CSS custom properties.',
+  export: 'Generate CSS, JSON, or TypeScript exports from your Figma variables.',
   github: 'Send generated exports to GitHub via repository_dispatch event.',
   settings: 'Configure global export settings that apply to all export formats.',
   help: 'Learn how to configure variable exports using description fields.',
@@ -42,7 +36,7 @@ export default function App() {
   const { settings, updateSettings } = useSettings();
 
   // Local UI state (not persisted)
-  const [activeTab, setActiveTab] = useState('css');
+  const [activeTab, setActiveTab] = useState('export');
   const prefix = settings?.prefix ?? DEFAULT_SETTINGS.prefix;
   const includeCollectionComments =
     settings?.includeCollectionComments ?? DEFAULT_SETTINGS.includeCollectionComments;
@@ -62,6 +56,7 @@ export default function App() {
   const syncCodeSyntax = settings?.syncCodeSyntax ?? DEFAULT_SETTINGS.syncCodeSyntax;
   const numberPrecision = settings?.numberPrecision ?? DEFAULT_SETTINGS.numberPrecision;
   const debugMode = settings?.debugMode ?? DEFAULT_SETTINGS.debugMode;
+  const exportFormats = settings?.exportFormats ?? DEFAULT_SETTINGS.exportFormats;
 
   // Local UI state for settings sub-tab (not persisted)
   const [activeSettingsTab, setActiveSettingsTab] = useState('general');
@@ -138,6 +133,8 @@ export default function App() {
     updateSettings({ cssUseModesAsSelectors: value });
   const handleDebugModeChange = (enabled: boolean) => updateSettings({ debugMode: enabled });
   const handleActiveSettingsTabChange = (tab: string) => setActiveSettingsTab(tab);
+  const handleExportFormatsChange = (formats: import('@figma-vex/shared').ExportType[]) =>
+    updateSettings({ exportFormats: formats });
 
   // Handle collection toggle and persist
   const handleToggleCollection = (collectionId: string) => {
@@ -267,9 +264,11 @@ export default function App() {
         </div>
       )}
 
-      <TabPanel id="css" activeTab={activeTab}>
+      <TabPanel id="export" activeTab={activeTab}>
         <ErrorBoundary>
-          <CssTab
+          <ExportTab
+            selectedFormats={exportFormats}
+            onSelectedFormatsChange={handleExportFormatsChange}
             prefix={prefix}
             selectedCollections={selectedCollections}
             includeCollectionComments={includeCollectionComments}
@@ -286,36 +285,6 @@ export default function App() {
             useModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
             exportAsCalcExpressions={cssExportAsCalcExpressions}
             selector={settings?.cssSelector ?? ':root'}
-          />
-        </ErrorBoundary>
-      </TabPanel>
-
-      <TabPanel id="json" activeTab={activeTab}>
-        <ErrorBoundary>
-          <JsonTab
-            selectedCollections={selectedCollections}
-            includeCollectionComments={includeCollectionComments}
-            includeModeComments={includeModeComments}
-            syncCalculations={syncCalculations}
-            includeStyles={includeStyles}
-            styleOutputMode={styleOutputMode}
-            styleTypes={styleTypes}
-            numberPrecision={numberPrecision}
-          />
-        </ErrorBoundary>
-      </TabPanel>
-
-      <TabPanel id="typescript" activeTab={activeTab}>
-        <ErrorBoundary>
-          <TypeScriptTab
-            prefix={prefix}
-            selectedCollections={selectedCollections}
-            includeModeComments={includeModeComments}
-            syncCalculations={syncCalculations}
-            includeStyles={includeStyles}
-            styleOutputMode={styleOutputMode}
-            styleTypes={styleTypes}
-            numberPrecision={numberPrecision}
           />
         </ErrorBoundary>
       </TabPanel>

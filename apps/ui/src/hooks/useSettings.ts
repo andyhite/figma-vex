@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   includeCollectionComments: true,
   includeModeComments: true, // Moved from CSS tab to global
   headerBanner: undefined,
+  exportFormats: ['css', 'json', 'typescript'], // All formats selected by default
   syncCalculations: false,
   includeStyles: false,
   styleOutputMode: 'variables',
