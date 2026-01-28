@@ -53,6 +53,35 @@ jobs:
           json-path: 'test-output/tokens.json'
           typescript-path: 'test-output/tokens.ts'
 
+      - name: Generate output files
+        env:
+          PAYLOAD: ${{ toJson(github.event.client_payload) }}
+        run: |
+          mkdir -p test-output
+          pnpm dlx tsx -e "
+            import { convertToCss, convertToTypeScript } from './packages/shared/src/index.ts';
+            import * as fs from 'fs';
+
+            const payload = JSON.parse(process.env.PAYLOAD);
+            const document = payload.document;
+            const settings = payload.settings || { colorFormat: 'hex', defaultUnit: 'px', remBase: 16 };
+
+            fs.writeFileSync('test-output/tokens.css', convertToCss(document, settings));
+            fs.writeFileSync('test-output/tokens.json', JSON.stringify(document, null, 2));
+            fs.writeFileSync('test-output/tokens.ts', convertToTypeScript(document, settings));
+
+            console.log('Generated files:');
+            console.log('  - test-output/tokens.css');
+            console.log('  - test-output/tokens.json');
+            console.log('  - test-output/tokens.ts');
+          "
+
+      - name: Upload generated files
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-tokens
+          path: test-output/
+
       - name: Summary
         env:
           REF: ${{ steps.config.outputs.ref }}
@@ -71,6 +100,8 @@ jobs:
             echo "  - test-output/tokens.ts"
             echo ""
             echo "See the action logs above for the full file contents and PR description."
+            echo ""
+            echo "📦 Generated files are available as build artifacts"
             echo ""
             echo "✅ Dry-run completed successfully - no changes were made"
           } >> "$GITHUB_STEP_SUMMARY"
