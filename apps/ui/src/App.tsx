@@ -284,7 +284,6 @@ export default function App() {
             selector={settings?.cssSelector ?? ':root'}
             githubRepository={settings?.githubRepository ?? ''}
             githubToken={settings?.githubToken ?? ''}
-            githubWorkflowFileName={settings?.githubWorkflowFileName ?? 'update-variables.yml'}
           />
         </ErrorBoundary>
       </TabPanel>
@@ -334,7 +333,6 @@ export default function App() {
             onDebugModeChange={handleDebugModeChange}
             initialGithubRepository={settings?.githubRepository}
             initialGithubToken={settings?.githubToken}
-            initialGithubWorkflowFileName={settings?.githubWorkflowFileName}
             onGithubSettingsChange={(githubSettings) => updateSettings(githubSettings)}
             onExportSettings={handleExportSettings}
             onImportSettings={handleImportSettings}

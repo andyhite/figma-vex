@@ -28,7 +28,6 @@ describe('githubService', () => {
           includeModeComments: false,
           useModesAsSelectors: false,
         },
-        workflowFileName: 'workflow.yml',
       };
 
       expect(() => validateGitHubOptions(options)).not.toThrow();
@@ -45,7 +44,6 @@ describe('githubService', () => {
           includeModeComments: false,
           useModesAsSelectors: false,
         },
-        workflowFileName: 'workflow.yml',
       };
 
       expect(() => validateGitHubOptions(options)).toThrow(
@@ -64,7 +62,6 @@ describe('githubService', () => {
           includeModeComments: false,
           useModesAsSelectors: false,
         },
-        workflowFileName: 'workflow.yml',
       };
 
       expect(() => validateGitHubOptions(options)).toThrow('Invalid repository format');
@@ -81,7 +78,6 @@ describe('githubService', () => {
           includeModeComments: false,
           useModesAsSelectors: false,
         },
-        workflowFileName: 'workflow.yml',
       };
 
       expect(() => validateGitHubOptions(options)).toThrow('GitHub token is required');
@@ -98,10 +94,11 @@ describe('githubService', () => {
           includeModeComments: false,
           useModesAsSelectors: false,
         },
-        workflowFileName: 'workflow.yml',
       };
 
-      expect(() => validateGitHubOptions(options)).toThrow('At least one export type must be selected');
+      expect(() => validateGitHubOptions(options)).toThrow(
+        'At least one export type must be selected'
+      );
     });
 
     it('should handle repository with extra slashes', () => {
@@ -115,7 +112,6 @@ describe('githubService', () => {
           includeModeComments: false,
           useModesAsSelectors: false,
         },
-        workflowFileName: 'workflow.yml',
       };
 
       expect(() => validateGitHubOptions(options)).toThrow('Invalid repository format');
@@ -132,7 +128,6 @@ describe('githubService', () => {
           includeModeComments: false,
           useModesAsSelectors: false,
         },
-        workflowFileName: 'workflow.yml',
       };
 
       expect(() => validateGitHubOptions(options)).not.toThrow();
@@ -155,16 +150,14 @@ describe('githubService', () => {
         export_types: ['css', 'json'],
       };
       const figmaFile = 'test.figma';
-      const workflowFile = 'workflow.yml';
 
-      const payload = buildDispatchPayload(dtcgPayload, figmaFile, workflowFile);
+      const payload = buildDispatchPayload(dtcgPayload, figmaFile);
 
       expect(payload.event_type).toBe('figma-variables-update');
       expect(payload.client_payload.document).toEqual(dtcgPayload.document);
       expect(payload.client_payload.settings).toEqual(dtcgPayload.settings);
       expect(payload.client_payload.export_types).toEqual(dtcgPayload.export_types);
       expect(payload.client_payload.figma_file).toBe(figmaFile);
-      expect(payload.client_payload.workflow_file).toBe(workflowFile);
       expect(payload.client_payload.generated_at).toBeDefined();
       expect(new Date(payload.client_payload.generated_at).toISOString()).toBe(
         payload.client_payload.generated_at
@@ -219,13 +212,17 @@ describe('githubService', () => {
     it('should handle 403 status', () => {
       const result = parseGitHubError(403, 'Forbidden');
 
-      expect(result).toBe("Access forbidden. Ensure your token has 'repo' scope and repository access.");
+      expect(result).toBe(
+        "Access forbidden. Ensure your token has 'repo' scope and repository access."
+      );
     });
 
     it('should handle 404 status', () => {
       const result = parseGitHubError(404, 'Not Found');
 
-      expect(result).toBe('Repository not found. Check the repository name and your access permissions.');
+      expect(result).toBe(
+        'Repository not found. Check the repository name and your access permissions.'
+      );
     });
 
     it('should handle invalid JSON gracefully', () => {
@@ -260,7 +257,6 @@ describe('githubService', () => {
         includeModeComments: false,
         useModesAsSelectors: false,
       },
-      workflowFileName: 'workflow.yml',
     };
 
     const mockDtcgPayload = {
@@ -307,9 +303,9 @@ describe('githubService', () => {
 
       global.fetch = mockFetch;
 
-      await expect(
-        sendGitHubDispatch(mockOptions, mockDtcgPayload, 'test.figma')
-      ).rejects.toThrow('Network error: Network error');
+      await expect(sendGitHubDispatch(mockOptions, mockDtcgPayload, 'test.figma')).rejects.toThrow(
+        'Network error: Network error'
+      );
     });
 
     it('should handle API errors', async () => {
@@ -321,35 +317,9 @@ describe('githubService', () => {
 
       global.fetch = mockFetch;
 
-      await expect(
-        sendGitHubDispatch(mockOptions, mockDtcgPayload, 'test.figma')
-      ).rejects.toThrow('Authentication failed. Please check your GitHub token.');
-    });
-
-    it('should use default workflow file name when not provided', async () => {
-      const optionsWithoutWorkflow: GitHubDispatchOptions = {
-        repository: 'owner/repo',
-        token: 'test-token',
-        exportTypes: ['css'],
-        exportOptions: {
-          selector: ':root',
-          includeCollectionComments: true,
-          includeModeComments: false,
-          useModesAsSelectors: false,
-        },
-      };
-
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 204,
-      });
-
-      global.fetch = mockFetch;
-
-      await sendGitHubDispatch(optionsWithoutWorkflow, mockDtcgPayload, 'test.figma');
-
-      const callBody = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(callBody.client_payload.workflow_file).toBe('update-variables.yml');
+      await expect(sendGitHubDispatch(mockOptions, mockDtcgPayload, 'test.figma')).rejects.toThrow(
+        'Authentication failed. Please check your GitHub token.'
+      );
     });
 
     it('should encode repository name and owner in URL', async () => {
@@ -391,7 +361,6 @@ describe('githubService', () => {
           includeModeComments: false,
           useModesAsSelectors: false,
         },
-        workflowFileName: 'workflow.yml',
       };
 
       await expect(

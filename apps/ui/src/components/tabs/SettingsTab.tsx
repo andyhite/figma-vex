@@ -84,12 +84,7 @@ interface SettingsTabProps {
   // GitHub settings
   initialGithubRepository?: string;
   initialGithubToken?: string;
-  initialGithubWorkflowFileName?: string;
-  onGithubSettingsChange?: (settings: {
-    githubRepository: string;
-    githubToken: string;
-    githubWorkflowFileName: string;
-  }) => void;
+  onGithubSettingsChange?: (settings: { githubRepository: string; githubToken: string }) => void;
 
   // Import/Export/Reset
   onExportSettings: () => void;
@@ -144,7 +139,6 @@ export function SettingsTab({
   onDebugModeChange,
   initialGithubRepository,
   initialGithubToken,
-  initialGithubWorkflowFileName,
   onGithubSettingsChange,
   onExportSettings,
   onImportSettings,
@@ -217,7 +211,6 @@ export function SettingsTab({
           <GitHubSettings
             initialRepository={initialGithubRepository}
             initialToken={initialGithubToken}
-            initialWorkflowFileName={initialGithubWorkflowFileName}
             onSettingsChange={onGithubSettingsChange}
           />
         )}

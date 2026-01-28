@@ -125,7 +125,6 @@ export interface PluginSettings {
   // GitHub settings
   githubRepository: string;
   githubToken: string;
-  githubWorkflowFileName: string;
 
   // Rem base variable (global setting)
   remBaseVariableId?: string;
@@ -179,7 +178,6 @@ export interface ExportOptions {
 export interface GitHubDispatchOptions {
   repository: string;
   token: string;
-  workflowFileName?: string;
   exportTypes: ExportType[];
   exportOptions: ExportOptions;
 }

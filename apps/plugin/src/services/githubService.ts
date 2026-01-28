@@ -6,7 +6,6 @@ export interface DispatchPayload {
   client_payload: GitHubDispatchPayload & {
     generated_at: string;
     figma_file: string;
-    workflow_file: string;
   };
 }
 
@@ -42,8 +41,7 @@ export function validateGitHubOptions(options: GitHubDispatchOptions): void {
  */
 export function buildDispatchPayload(
   dtcgPayload: GitHubDispatchPayload,
-  figmaFile: string,
-  workflowFile: string
+  figmaFile: string
 ): DispatchPayload {
   return {
     event_type: 'figma-variables-update',
@@ -51,7 +49,6 @@ export function buildDispatchPayload(
       ...dtcgPayload,
       generated_at: new Date().toISOString(),
       figma_file: figmaFile,
-      workflow_file: workflowFile,
     },
   };
 }
@@ -96,11 +93,7 @@ export async function sendGitHubDispatch(
   const [owner, repo] = options.repository.trim().split('/');
   const token = options.token.trim();
 
-  const payload = buildDispatchPayload(
-    dtcgPayload,
-    figmaFileName,
-    options.workflowFileName || 'update-variables.yml'
-  );
+  const payload = buildDispatchPayload(dtcgPayload, figmaFileName);
 
   const url = `${GITHUB_API_CONFIG.BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/dispatches`;
 

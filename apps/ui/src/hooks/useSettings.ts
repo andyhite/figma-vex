@@ -21,7 +21,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   cssIncludeModeComments: true, // Deprecated, kept for migration
   githubRepository: '',
   githubToken: '',
-  githubWorkflowFileName: 'update-variables.yml',
   remBaseVariableId: undefined,
   cssExportAsCalcExpressions: false,
   nameFormatRules: [], // Custom rules only (default is computed from prefix + casing)

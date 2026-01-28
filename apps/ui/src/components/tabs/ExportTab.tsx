@@ -89,7 +89,6 @@ interface ExportTabProps {
   // GitHub settings
   githubRepository: string;
   githubToken: string;
-  githubWorkflowFileName: string;
 }
 
 export function ExportTab({
@@ -113,7 +112,6 @@ export function ExportTab({
   selector,
   githubRepository,
   githubToken,
-  githubWorkflowFileName,
 }: ExportTabProps) {
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { copyToClipboard } = useClipboard();
@@ -345,7 +343,6 @@ export function ExportTab({
       const githubOptions: GitHubDispatchOptions = {
         repository: githubRepository.trim(),
         token: githubToken.trim(),
-        workflowFileName: githubWorkflowFileName.trim() || 'update-variables.yml',
         exportTypes: selectedFormats,
         exportOptions: githubExportOptions,
       };
@@ -360,7 +357,6 @@ export function ExportTab({
     isGitHubConfigured,
     githubRepository,
     githubToken,
-    githubWorkflowFileName,
     selector,
     prefix,
     useModesAsSelectors,

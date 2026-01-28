@@ -30,7 +30,6 @@ describe('ExportTab', () => {
     selector: ':root',
     githubRepository: '',
     githubToken: '',
-    githubWorkflowFileName: '',
   };
 
   let mockSendMessage: ReturnType<typeof vi.fn>;
