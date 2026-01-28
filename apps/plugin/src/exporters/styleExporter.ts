@@ -37,6 +37,7 @@ export function exportPaintStylesToCss(
   for (const style of styles) {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
+      ...(options.colorFormat !== undefined && { colorFormat: options.colorFormat }),
       ...parseDescription(style.description),
       ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
@@ -66,6 +67,7 @@ export function exportTextStylesToCss(
   for (const style of styles) {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
+      ...(options.colorFormat !== undefined && { colorFormat: options.colorFormat }),
       ...parseDescription(style.description),
       ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
@@ -98,6 +100,7 @@ export function exportEffectStylesToCss(
   for (const style of styles) {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
+      ...(options.colorFormat !== undefined && { colorFormat: options.colorFormat }),
       ...parseDescription(style.description),
       ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
@@ -150,6 +153,7 @@ export function exportStylesAsCssClasses(
     for (const style of styles.paint) {
       const config: TokenConfig = {
         ...DEFAULT_CONFIG,
+        ...(options.colorFormat !== undefined && { colorFormat: options.colorFormat }),
         ...parseDescription(style.description),
         ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
       };
@@ -176,6 +180,7 @@ export function exportStylesAsCssClasses(
     for (const style of styles.text) {
       const config: TokenConfig = {
         ...DEFAULT_CONFIG,
+        ...(options.colorFormat !== undefined && { colorFormat: options.colorFormat }),
         ...parseDescription(style.description),
         ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
       };
@@ -198,6 +203,7 @@ export function exportStylesAsCssClasses(
     for (const style of styles.effect) {
       const config: TokenConfig = {
         ...DEFAULT_CONFIG,
+        ...(options.colorFormat !== undefined && { colorFormat: options.colorFormat }),
         ...parseDescription(style.description),
         ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
       };

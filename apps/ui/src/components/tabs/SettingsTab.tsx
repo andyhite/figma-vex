@@ -11,6 +11,7 @@ import type {
   StyleSummary,
   NameFormatRule,
   CasingOption,
+  ColorFormat,
 } from '@figma-vex/shared';
 
 interface Collection {
@@ -36,6 +37,10 @@ interface SettingsTabProps {
   // Mode comments (moved from CSS tab to global)
   includeModeComments: boolean;
   onIncludeModeCommentsChange: (value: boolean) => void;
+
+  // Color format
+  colorFormat: ColorFormat;
+  onColorFormatChange: (value: ColorFormat) => void;
 
   // Header banner
   headerBanner: string | undefined;
@@ -111,6 +116,8 @@ export function SettingsTab({
   onIncludeCollectionCommentsChange,
   includeModeComments,
   onIncludeModeCommentsChange,
+  colorFormat,
+  onColorFormatChange,
   headerBanner,
   onHeaderBannerChange,
   remBaseVariableId,
@@ -166,6 +173,8 @@ export function SettingsTab({
             onIncludeCollectionCommentsChange={onIncludeCollectionCommentsChange}
             includeModeComments={includeModeComments}
             onIncludeModeCommentsChange={onIncludeModeCommentsChange}
+            colorFormat={colorFormat}
+            onColorFormatChange={onColorFormatChange}
             headerBanner={headerBanner}
             onHeaderBannerChange={onHeaderBannerChange}
           />

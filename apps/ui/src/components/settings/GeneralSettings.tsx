@@ -1,6 +1,7 @@
 import { Checkbox } from '../common/Checkbox';
 import { FormGroup } from '../common/FormGroup';
 import { FormHelpText } from '../common/FormHelpText';
+import type { ColorFormat } from '@figma-vex/shared';
 
 interface Collection {
   id: string;
@@ -20,10 +21,21 @@ interface GeneralSettingsProps {
   includeModeComments: boolean;
   onIncludeModeCommentsChange: (value: boolean) => void;
 
+  // Color format
+  colorFormat: ColorFormat;
+  onColorFormatChange: (value: ColorFormat) => void;
+
   // Header banner
   headerBanner: string | undefined;
   onHeaderBannerChange: (value: string) => void;
 }
+
+const COLOR_FORMAT_OPTIONS: { value: ColorFormat; label: string }[] = [
+  { value: 'hex', label: 'Hex (#rrggbb)' },
+  { value: 'rgb', label: 'RGB (rgb/rgba)' },
+  { value: 'hsl', label: 'HSL (hsl/hsla)' },
+  { value: 'oklch', label: 'OKLCH' },
+];
 
 export function GeneralSettings({
   collections,
@@ -34,6 +46,8 @@ export function GeneralSettings({
   onIncludeCollectionCommentsChange,
   includeModeComments,
   onIncludeModeCommentsChange,
+  colorFormat,
+  onColorFormatChange,
   headerBanner,
   onHeaderBannerChange,
 }: GeneralSettingsProps) {
@@ -69,6 +83,21 @@ export function GeneralSettings({
             onChange={(e) => onIncludeModeCommentsChange(e.target.checked)}
           />
         </div>
+      </FormGroup>
+
+      <FormGroup label="Color Format">
+        <select
+          className="border-figma-border bg-figma-bg text-figma-text focus:ring-figma-border-focus w-full rounded border px-2 py-1.5 text-xs focus:outline-none focus:ring-1"
+          value={colorFormat}
+          onChange={(e) => onColorFormatChange(e.target.value as ColorFormat)}
+        >
+          {COLOR_FORMAT_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <FormHelpText>Format used for color values in exports</FormHelpText>
       </FormGroup>
 
       <FormGroup label="Header Banner">

@@ -13,7 +13,6 @@ import {
 } from './services';
 import { mergeWithDefaults } from './utils/optionDefaults';
 import { parseDescription } from './utils/descriptionParser';
-import { countTokens } from './utils/tokenHelpers';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
 import { toCustomCssName } from './utils/globMatcher';
 import { lookupByPath } from './utils/variableLookup';
@@ -269,47 +268,10 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
         throw new Error('GitHub options are required');
       }
 
-      // Debug: Log input data
-      console.log('[GitHub Dispatch] Input:');
-      console.log('  - Variables count:', variables.length);
-      console.log('  - Collections count:', collections.length);
-      console.log(
-        '  - Collections:',
-        collections.map((c) => `${c.name} (${c.id})`)
-      );
-      console.log('  - Export types:', msg.githubOptions.exportTypes);
-      console.log('  - Export options:', JSON.stringify(msg.githubOptions.exportOptions, null, 2));
-
       const payload = await prepareGitHubPayload(variables, collections, fileName, {
         exportTypes: msg.githubOptions.exportTypes,
         exportOptions: msg.githubOptions.exportOptions,
       });
-
-      // Debug: Log payload summary
-      console.log('[GitHub Dispatch] Payload prepared:');
-      console.log('  - Document collections:', Object.keys(payload.document.collections));
-      console.log('  - Document $styles:', Object.keys(payload.document.$styles || {}));
-      console.log('  - Settings:', JSON.stringify(payload.settings, null, 2));
-      console.log('  - Export types:', payload.export_types);
-
-      // Count tokens in each collection
-      for (const [name, group] of Object.entries(payload.document.collections)) {
-        console.log(
-          `  - Collection "${name}" token count:`,
-          countTokens(group as Record<string, unknown>)
-        );
-      }
-
-      if (payload.document.$styles) {
-        for (const [type, group] of Object.entries(payload.document.$styles)) {
-          if (group) {
-            console.log(
-              `  - Style "${type}" token count:`,
-              countTokens(group as Record<string, unknown>)
-            );
-          }
-        }
-      }
 
       await sendGitHubDispatch(msg.githubOptions, payload, fileName);
       postToUI({

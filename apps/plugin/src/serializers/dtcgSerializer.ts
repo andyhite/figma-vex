@@ -16,7 +16,6 @@ import type {
 } from '@figma-vex/shared';
 import { parseDescription } from '../utils/descriptionParser';
 import { filterCollections, getCollectionVariablesByName } from '../utils/collectionUtils';
-import { countTokens } from '../utils/tokenHelpers';
 import { rgbToHex } from '../formatters/colorFormatter';
 import { resolvePaintValue, resolveTextProperties } from '../services/styleValueResolver';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
@@ -418,16 +417,7 @@ export async function serializeToDTCG(
   options: SerializationOptions,
   styles?: StyleCollection
 ): Promise<DTCGDocument> {
-  console.log('[serializeToDTCG] Starting...');
-  console.log('[serializeToDTCG] Input variables:', variables.length);
-  console.log('[serializeToDTCG] Input collections:', collections.length);
-  console.log('[serializeToDTCG] selectedCollections option:', options.selectedCollections);
-
   const filteredCollections = filterCollections(collections, options.selectedCollections);
-  console.log(
-    '[serializeToDTCG] Filtered collections:',
-    filteredCollections.map((c) => c.name)
-  );
 
   const document: DTCGDocument = {
     $schema: 'https://design-tokens.github.io/format/',
@@ -442,74 +432,36 @@ export async function serializeToDTCG(
   for (const collection of filteredCollections) {
     const collectionGroup: DTCGTokenGroup = {};
     const collectionVars = getCollectionVariablesByName(variables, collection.id);
-    console.log(
-      `[serializeToDTCG] Collection "${collection.name}" has ${collectionVars.length} variables`
-    );
 
-    // Log first 5 variable names for debugging
-    if (collectionVars.length > 0) {
-      console.log(
-        `[serializeToDTCG] First 5 variables in "${collection.name}":`,
-        collectionVars.slice(0, 5).map((v) => v.name)
-      );
-    }
-
-    let addedCount = 0;
     for (const variable of collectionVars) {
       const token = serializeVariable(variable, collection, variables, collections);
       const pathParts = variable.name.split('/');
       buildTokenGroup(pathParts, token, collectionGroup);
-      addedCount++;
     }
-
-    console.log(`[serializeToDTCG] Added ${addedCount} tokens to "${collection.name}"`);
-
-    // Count actual tokens in the group for verification
-    console.log(
-      `[serializeToDTCG] Actual token count in "${collection.name}":`,
-      countTokens(collectionGroup as Record<string, unknown>)
-    );
 
     document.collections[collection.name] = collectionGroup;
   }
 
-  console.log('[serializeToDTCG] Serialized collections:', Object.keys(document.collections));
-
   // Serialize styles if included
   if (options.includeStyles && styles) {
     const styleTypes = options.styleTypes || ['paint', 'text', 'effect', 'grid'];
-    console.log('[serializeToDTCG] Including styles, types:', styleTypes);
     document.$styles = {};
 
     if (styleTypes.includes('paint') && styles.paint.length > 0) {
-      console.log(`[serializeToDTCG] Serializing ${styles.paint.length} paint styles`);
       document.$styles.paint = serializePaintStyles(styles.paint);
     }
 
     if (styleTypes.includes('text') && styles.text.length > 0) {
-      console.log(`[serializeToDTCG] Serializing ${styles.text.length} text styles`);
       document.$styles.text = serializeTextStyles(styles.text);
     }
 
     if (styleTypes.includes('effect') && styles.effect.length > 0) {
-      console.log(`[serializeToDTCG] Serializing ${styles.effect.length} effect styles`);
       document.$styles.effect = serializeEffectStyles(styles.effect);
     }
 
     if (styleTypes.includes('grid') && styles.grid.length > 0) {
-      console.log(`[serializeToDTCG] Serializing ${styles.grid.length} grid styles`);
       document.$styles.grid = serializeGridStyles(styles.grid);
     }
-
-    console.log('[serializeToDTCG] Serialized $styles:', Object.keys(document.$styles));
-  } else {
-    console.log(
-      '[serializeToDTCG] Not including styles (includeStyles:',
-      options.includeStyles,
-      ', styles:',
-      !!styles,
-      ')'
-    );
   }
 
   return document;

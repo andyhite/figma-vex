@@ -17,6 +17,7 @@ const mockSettings: PluginSettings = {
   includeCollectionComments: true,
   includeModeComments: false,
   includeCollectionName: true,
+  colorFormat: 'hex',
   exportFormats: ['css', 'json', 'typescript'],
   syncCalculations: false,
   includeStyles: true,

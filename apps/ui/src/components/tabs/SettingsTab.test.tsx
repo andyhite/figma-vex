@@ -18,6 +18,8 @@ describe('SettingsTab', () => {
     onIncludeCollectionCommentsChange: vi.fn(),
     includeModeComments: false,
     onIncludeModeCommentsChange: vi.fn(),
+    colorFormat: 'hex' as const,
+    onColorFormatChange: vi.fn(),
     headerBanner: undefined,
     onHeaderBannerChange: vi.fn(),
     remBaseVariableId: null,

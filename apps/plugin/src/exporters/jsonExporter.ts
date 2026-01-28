@@ -37,12 +37,16 @@ function setNestedValue(root: Record<string, unknown>, path: string, value: unkn
 }
 
 /**
- * Builds a token config from a style description and optional precision override.
+ * Builds a token config from a style description and export options.
  */
-function buildTokenConfig(description: string, numberPrecision?: number): TokenConfig {
-  const config = { ...DEFAULT_CONFIG, ...parseDescription(description) };
-  if (numberPrecision !== undefined) {
-    config.precision = numberPrecision;
+function buildTokenConfig(description: string, options?: ExportOptions): TokenConfig {
+  const config = {
+    ...DEFAULT_CONFIG,
+    ...(options?.colorFormat !== undefined && { colorFormat: options.colorFormat }),
+    ...parseDescription(description),
+  };
+  if (options?.numberPrecision !== undefined) {
+    config.precision = options.numberPrecision;
   }
   return config;
 }
@@ -172,7 +176,7 @@ function buildStyleTokens(
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const config = buildTokenConfig(style.description, options?.numberPrecision);
+    const config = buildTokenConfig(style.description, options);
     const value = resolvePaintValue(style, config);
 
     setNestedValue(result, style.name, {
@@ -195,7 +199,7 @@ function buildTextStyleTokens(
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const config = buildTokenConfig(style.description, options?.numberPrecision);
+    const config = buildTokenConfig(style.description, options);
     const props = resolveTextProperties(style, config);
 
     setNestedValue(result, style.name, {
@@ -227,7 +231,7 @@ function buildEffectStyleTokens(
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const config = buildTokenConfig(style.description, options?.numberPrecision);
+    const config = buildTokenConfig(style.description, options);
     const value = resolveEffectValue(style, config);
 
     setNestedValue(result, style.name, {

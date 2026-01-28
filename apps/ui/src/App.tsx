@@ -54,6 +54,7 @@ export default function App() {
   const includeCollectionName =
     settings?.includeCollectionName ?? DEFAULT_SETTINGS.includeCollectionName;
   const numberPrecision = settings?.numberPrecision ?? DEFAULT_SETTINGS.numberPrecision;
+  const colorFormat = settings?.colorFormat ?? DEFAULT_SETTINGS.colorFormat;
   const debugMode = settings?.debugMode ?? DEFAULT_SETTINGS.debugMode;
   const exportFormats = settings?.exportFormats ?? DEFAULT_SETTINGS.exportFormats;
 
@@ -128,6 +129,8 @@ export default function App() {
     updateSettings({ includeCollectionName: enabled });
   const handleNumberPrecisionChange = (precision: number) =>
     updateSettings({ numberPrecision: precision });
+  const handleColorFormatChange = (value: import('@figma-vex/shared').ColorFormat) =>
+    updateSettings({ colorFormat: value });
   const handleCssExportAsCalcExpressionsChange = (value: boolean) =>
     updateSettings({ cssExportAsCalcExpressions: value });
   const handleCssUseModesAsSelectorsChange = (value: boolean) =>
@@ -286,6 +289,7 @@ export default function App() {
             nameFormatRules={allNameFormatRules}
             syncCodeSyntax={syncCodeSyntax}
             numberPrecision={numberPrecision}
+            colorFormat={colorFormat}
             includeCollectionName={includeCollectionName}
             useModesAsSelectors={settings?.cssUseModesAsSelectors ?? false}
             exportAsCalcExpressions={cssExportAsCalcExpressions}
@@ -309,6 +313,8 @@ export default function App() {
             onIncludeCollectionCommentsChange={handleIncludeCollectionCommentsChange}
             includeModeComments={includeModeComments}
             onIncludeModeCommentsChange={handleIncludeModeCommentsChange}
+            colorFormat={colorFormat}
+            onColorFormatChange={handleColorFormatChange}
             headerBanner={headerBanner}
             onHeaderBannerChange={handleHeaderBannerChange}
             remBaseVariableId={remBaseVariableId}

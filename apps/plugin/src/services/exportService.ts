@@ -190,25 +190,7 @@ export async function prepareGitHubPayload(
   settings: DTCGConversionSettings;
   export_types: ExportType[];
 }> {
-  console.log('[prepareGitHubPayload] Starting...');
-  console.log('[prepareGitHubPayload] includeStyles:', options.exportOptions.includeStyles);
-  console.log('[prepareGitHubPayload] styleTypes:', options.exportOptions.styleTypes);
-  console.log(
-    '[prepareGitHubPayload] selectedCollections:',
-    options.exportOptions.selectedCollections
-  );
-
   const styles = options.exportOptions.includeStyles ? await fetchAllStyles() : undefined;
-
-  if (styles) {
-    console.log('[prepareGitHubPayload] Fetched styles:');
-    console.log('  - Paint styles:', styles.paint?.length ?? 0);
-    console.log('  - Text styles:', styles.text?.length ?? 0);
-    console.log('  - Effect styles:', styles.effect?.length ?? 0);
-    console.log('  - Grid styles:', styles.grid?.length ?? 0);
-  } else {
-    console.log('[prepareGitHubPayload] No styles fetched (includeStyles is false)');
-  }
 
   const document = await serializeToDTCG(
     variables,
@@ -222,41 +204,19 @@ export async function prepareGitHubPayload(
     styles
   );
 
-  console.log('[prepareGitHubPayload] Document serialized:');
-  console.log('  - Collections:', Object.keys(document.collections));
-  console.log('  - $styles:', document.$styles ? Object.keys(document.$styles) : 'none');
-
   // Map options to settings
   const settings = mapOptionsToSettings(options.exportOptions);
-
-  console.log(
-    '[prepareGitHubPayload] Settings before ID->name conversion:',
-    JSON.stringify(settings.selectedCollections)
-  );
 
   // Convert collection IDs to names for the settings, since the document uses
   // collection names as keys and the converters filter by name
   if (settings.selectedCollections && settings.selectedCollections.length > 0) {
-    const originalIds = settings.selectedCollections;
     settings.selectedCollections = settings.selectedCollections
       .map((id) => collections.find((c) => c.id === id)?.name)
       .filter((name): name is string => name !== undefined);
-    console.log('[prepareGitHubPayload] Converted IDs to names:');
-    console.log('  - Original IDs:', originalIds);
-    console.log('  - Converted names:', settings.selectedCollections);
   }
-
-  console.log('[prepareGitHubPayload] Final settings:', JSON.stringify(settings, null, 2));
 
   // Minimize document for transmission (removes descriptions, empty extensions, etc.)
   const minimizedDocument = minimizeDocument(document);
-
-  // Log size comparison
-  const originalSize = JSON.stringify(document).length;
-  const minimizedSize = JSON.stringify(minimizedDocument).length;
-  console.log(
-    `[prepareGitHubPayload] Document size: ${originalSize} -> ${minimizedSize} bytes (${Math.round((1 - minimizedSize / originalSize) * 100)}% reduction)`
-  );
 
   return {
     document: minimizedDocument,

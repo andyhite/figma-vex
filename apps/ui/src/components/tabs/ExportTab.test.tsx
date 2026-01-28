@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExportTab } from './ExportTab';
 import * as usePluginMessage from '../../hooks/usePluginMessage';
@@ -25,6 +25,7 @@ describe('ExportTab', () => {
     nameFormatRules: [],
     syncCodeSyntax: false,
     numberPrecision: 4,
+    colorFormat: 'hex' as const,
     includeCollectionName: true,
     useModesAsSelectors: false,
     exportAsCalcExpressions: false,
@@ -179,7 +180,9 @@ describe('ExportTab', () => {
       expect(messageCallback).not.toBeNull();
     });
 
-    messageCallback!({ type: 'css-result', css: ':root { --color: red; }' });
+    act(() => {
+      messageCallback!({ type: 'css-result', css: ':root { --color: red; }' });
+    });
 
     await waitFor(() => {
       expect(screen.getByDisplayValue(':root { --color: red; }')).toBeInTheDocument();

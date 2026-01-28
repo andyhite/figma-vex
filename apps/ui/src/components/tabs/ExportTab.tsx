@@ -17,6 +17,7 @@ import type {
   NameFormatRule,
   UIMessage,
   GitHubDispatchOptions,
+  ColorFormat,
 } from '@figma-vex/shared';
 
 interface FormatConfig {
@@ -81,6 +82,7 @@ interface ExportTabProps {
   nameFormatRules: NameFormatRule[];
   syncCodeSyntax: boolean;
   numberPrecision: number;
+  colorFormat: ColorFormat;
 
   // Variable name options
   includeCollectionName: boolean;
@@ -111,6 +113,7 @@ export function ExportTab({
   nameFormatRules,
   syncCodeSyntax,
   numberPrecision,
+  colorFormat,
   includeCollectionName,
   useModesAsSelectors,
   exportAsCalcExpressions,
@@ -308,6 +311,7 @@ export function ExportTab({
         styleTypes,
         syncCalculations,
         numberPrecision,
+        colorFormat,
       };
 
       // CSS-specific options
@@ -334,6 +338,7 @@ export function ExportTab({
       styleTypes,
       syncCalculations,
       numberPrecision,
+      colorFormat,
       exportAsCalcExpressions,
       remBaseVariableId,
       nameFormatRules,
@@ -377,8 +382,7 @@ export function ExportTab({
         exportAsCalcExpressions,
         nameFormatRules: nameFormatRules?.length > 0 ? nameFormatRules : undefined,
         headerBanner,
-        // These use defaults from shared/src/config.ts
-        colorFormat: 'hex',
+        colorFormat,
         remBase: 16,
       };
 
@@ -411,6 +415,7 @@ export function ExportTab({
     styleTypes,
     syncCalculations,
     numberPrecision,
+    colorFormat,
     exportAsCalcExpressions,
     nameFormatRules,
     headerBanner,

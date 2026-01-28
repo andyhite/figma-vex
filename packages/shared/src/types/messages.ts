@@ -106,6 +106,7 @@ export interface PluginSettings {
   includeModeComments: boolean; // Moved from CSS tab to global settings
   includeCollectionName: boolean; // Include collection name in variable names (e.g., --color-blue vs --blue)
   headerBanner?: string; // Custom header banner text for exports
+  colorFormat: ColorFormat; // Default color format for exports (hex, rgb, hsl, oklch)
 
   // Export format selection
   exportFormats: ExportType[];

@@ -49,6 +49,7 @@ export async function exportToCss(
   ): Promise<string> => {
     const config: TokenConfig = {
       ...DEFAULT_CONFIG,
+      ...(options.colorFormat !== undefined && { colorFormat: options.colorFormat }),
       ...parseDescription(variable.description),
       ...(options.numberPrecision !== undefined && { precision: options.numberPrecision }),
     };
