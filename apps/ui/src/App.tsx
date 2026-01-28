@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { TabBar } from './components/tabs/TabBar';
 import { TabPanel } from './components/tabs/TabPanel';
 import { ExportTab } from './components/tabs/ExportTab';
+import { InspectTab } from './components/tabs/InspectTab';
 import { SettingsTab } from './components/tabs/SettingsTab';
 import { HelpTab } from './components/tabs/HelpTab';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -18,12 +19,14 @@ import { getAllRulesWithDefault } from '@figma-vex/shared';
 
 const TABS = [
   { id: 'export', label: 'Generate' },
+  { id: 'inspect', label: 'Inspect' },
   { id: 'settings', label: 'Settings' },
   { id: 'help', label: 'Help' },
 ];
 
 const TAB_DESCRIPTIONS: Record<string, string> = {
   export: 'Generate CSS, JSON, or TypeScript exports from your Figma variables.',
+  inspect: 'Analyze variable usage across your Figma document.',
   settings: 'Configure global export settings that apply to all export formats.',
   help: 'Learn how to configure variable exports using description fields.',
 };
@@ -297,6 +300,12 @@ export default function App() {
             githubRepository={settings?.githubRepository ?? ''}
             githubToken={settings?.githubToken ?? ''}
           />
+        </ErrorBoundary>
+      </TabPanel>
+
+      <TabPanel id="inspect" activeTab={activeTab}>
+        <ErrorBoundary>
+          <InspectTab />
         </ErrorBoundary>
       </TabPanel>
 

@@ -11,6 +11,7 @@ import {
   fetchAllStyles,
   resolveExpression,
 } from './services';
+import { analyzeVariableUsage } from './services/usageAnalyzer';
 import { mergeWithDefaults } from './utils/optionDefaults';
 import { parseDescription } from './utils/descriptionParser';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
@@ -376,6 +377,14 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
           id: null,
         });
       }
+      break;
+    }
+
+    case 'get-variable-usage': {
+      const usageData = await analyzeVariableUsage(variables, collections, {
+        currentPageOnly: msg.currentPageOnly,
+      });
+      postToUI({ type: 'variable-usage-result', data: usageData });
       break;
     }
 

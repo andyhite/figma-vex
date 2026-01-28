@@ -191,6 +191,58 @@ export interface CollectionInfo {
 }
 
 /**
+ * Information about a node that uses a variable
+ */
+export interface NodeUsageLocation {
+  nodeId: string;
+  nodeName: string;
+  nodePath: string; // e.g., "Page 1 / Frame / Button / Icon"
+  nodeType: string; // e.g., "RECTANGLE", "TEXT", "FRAME"
+  property: string; // e.g., "fills", "width", "opacity"
+}
+
+/**
+ * Information about a variable that aliases another variable
+ */
+export interface AliasUsageLocation {
+  variableId: string;
+  variableName: string;
+  collectionName: string;
+}
+
+/**
+ * Information about a single variable's usage
+ */
+export interface VariableUsageInfo {
+  id: string;
+  name: string;
+  type: 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN';
+  usageCount: number; // Total: nodeBindings + aliasReferences
+  nodeBindings: number; // How many nodes in the design use this variable
+  aliasReferences: number; // How many other variables alias to this variable
+  nodeLocations: NodeUsageLocation[]; // Details about where this variable is used
+  aliasLocations: AliasUsageLocation[]; // Variables that alias this one
+}
+
+/**
+ * Variables grouped by collection
+ */
+export interface CollectionUsageInfo {
+  id: string;
+  name: string;
+  variables: VariableUsageInfo[];
+}
+
+/**
+ * Complete variable usage data for the document
+ */
+export interface VariableUsageData {
+  collections: CollectionUsageInfo[];
+  totalVariables: number;
+  totalUsages: number;
+}
+
+/**
  * Settings that can be exported/imported (excludes UI state and sensitive data).
  * Uses names instead of IDs for portability across documents.
  * Note: githubToken is excluded for security - never export tokens.
@@ -230,7 +282,8 @@ export type PluginMessage =
   | { type: 'sync-code-syntax'; options: { nameFormatRules: NameFormatRule[]; prefix?: string } }
   | { type: 'reset-code-syntax' }
   | { type: 'resolve-collection-names'; names: string[] }
-  | { type: 'resolve-variable-path'; path: string };
+  | { type: 'resolve-variable-path'; path: string }
+  | { type: 'get-variable-usage'; currentPageOnly?: boolean };
 
 export interface NumericVariableInfo {
   id: string;
@@ -254,4 +307,5 @@ export type UIMessage =
   | { type: 'sync-code-syntax-result'; synced: number; skipped: number }
   | { type: 'reset-code-syntax-result'; reset: number; skipped: number }
   | { type: 'collection-names-resolved'; results: Array<{ name: string; id: string | null }> }
-  | { type: 'variable-path-resolved'; path: string; id: string | null };
+  | { type: 'variable-path-resolved'; path: string; id: string | null }
+  | { type: 'variable-usage-result'; data: VariableUsageData };
