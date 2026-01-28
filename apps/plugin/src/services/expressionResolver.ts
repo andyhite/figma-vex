@@ -1,9 +1,6 @@
 import type { TokenConfig, Unit } from '@figma-vex/shared';
 import { RESOLUTION_CONFIG } from '@figma-vex/shared';
-import {
-  extractPathReferences,
-  lookupByPath,
-} from '@plugin/utils/variableLookup';
+import { extractPathReferences, lookupByPath } from '@plugin/utils/variableLookup';
 import {
   evaluateExpression,
   type EvaluationContext,
@@ -20,7 +17,7 @@ function findMatchingModeId(
   currentModeName: string | undefined,
   collections: VariableCollection[]
 ): string | null {
-  const variableCollection = collections.find(c => c.id === variable.variableCollectionId);
+  const variableCollection = collections.find((c) => c.id === variable.variableCollectionId);
   if (!variableCollection) return null;
 
   // First try: exact mode ID match (same collection)
@@ -30,7 +27,7 @@ function findMatchingModeId(
 
   // Second try: match by mode name
   if (currentModeName) {
-    const matchingMode = variableCollection.modes.find(m => m.name === currentModeName);
+    const matchingMode = variableCollection.modes.find((m) => m.name === currentModeName);
     if (matchingMode && variable.valuesByMode[matchingMode.modeId] !== undefined) {
       return matchingMode.modeId;
     }
@@ -88,7 +85,15 @@ async function resolveToNumber(
     if (!aliasedVar) {
       return { value: null, unit: 'px' };
     }
-    return resolveToNumber(aliasedVar, modeId, modeName, variables, collections, depth + 1, visited);
+    return resolveToNumber(
+      aliasedVar,
+      modeId,
+      modeName,
+      variables,
+      collections,
+      depth + 1,
+      visited
+    );
   }
 
   // Handle direct number value
@@ -124,7 +129,7 @@ export async function resolveExpression(
   // Find the current mode name for cross-collection matching
   let currentModeName: string | undefined;
   for (const collection of collections) {
-    const mode = collection.modes.find(m => m.modeId === modeId);
+    const mode = collection.modes.find((m) => m.modeId === modeId);
     if (mode) {
       currentModeName = mode.name;
       break;
@@ -156,13 +161,17 @@ export async function resolveExpression(
 
     // Check if variable is numeric
     if (variable.resolvedType !== 'FLOAT') {
-      warnings.push(
-        `Variable '${pathRef}' is not numeric (type: ${variable.resolvedType})`
-      );
+      warnings.push(`Variable '${pathRef}' is not numeric (type: ${variable.resolvedType})`);
       continue;
     }
 
-    const resolved = await resolveToNumber(variable, modeId, currentModeName, variables, collections);
+    const resolved = await resolveToNumber(
+      variable,
+      modeId,
+      currentModeName,
+      variables,
+      collections
+    );
 
     if (resolved.value === null) {
       warnings.push(`Could not resolve value for '${pathRef}'`);

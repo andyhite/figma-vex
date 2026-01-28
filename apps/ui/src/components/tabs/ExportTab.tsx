@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '../common/Button';
 import { ButtonGroup } from '../common/ButtonGroup';
 import { Checkbox } from '../common/Checkbox';
@@ -8,6 +8,7 @@ import { IconButton } from '../common/IconButton';
 import { ExportOutputNavigation } from './ExportOutputNavigation';
 import { usePluginMessage } from '../../hooks/usePluginMessage';
 import { useClipboard } from '../../hooks/useClipboard';
+import { useStatusMessage } from '../../hooks/useStatusMessage';
 import type {
   ExportType,
   ExportOptions,
@@ -120,6 +121,17 @@ export function ExportTab({
   const { sendMessage, listenToMessage } = usePluginMessage();
   const { copyToClipboard } = useClipboard();
 
+  // Status messages with proper timeout cleanup
+  const { status: generateStatus, showStatus: showGenerateStatus } = useStatusMessage();
+  const {
+    status: githubStatus,
+    showStatus: showGithubStatus,
+    updateStatus: updateGithubStatus,
+  } = useStatusMessage({ duration: 3000 });
+
+  // Refs for per-format action status timeouts (to enable cleanup)
+  const actionTimeoutsRef = useRef<Map<ExportType, ReturnType<typeof setTimeout>[]>>(new Map());
+
   // Active output tab (which format's output is visible)
   const [activeOutputTab, setActiveOutputTab] = useState<ExportType>(() => {
     // Default to first selected format, or 'css' if none selected
@@ -136,22 +148,70 @@ export function ExportTab({
   // Generating state
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Generate status message (shown next to button)
-  const [generateStatus, setGenerateStatus] = useState<{
-    message: string;
-    type: 'success' | 'error';
-    visible: boolean;
-  } | null>(null);
-
   // GitHub integration state
   const [sendToGitHub, setSendToGitHub] = useState(false);
-  const [githubStatus, setGithubStatus] = useState<{
-    message: string;
-    type: 'sending' | 'success' | 'error';
-    visible: boolean;
-  } | null>(null);
 
   const isGitHubConfigured = githubRepository.trim() !== '' && githubToken.trim() !== '';
+
+  // Cleanup action timeouts on unmount
+  useEffect(() => {
+    const timeoutsRef = actionTimeoutsRef.current;
+    return () => {
+      timeoutsRef.forEach((timeouts) => {
+        timeouts.forEach((t) => clearTimeout(t));
+      });
+      timeoutsRef.clear();
+    };
+  }, []);
+
+  // Helper to show action status with proper cleanup
+  const showActionStatus = useCallback(
+    (format: ExportType, message: string, type: 'success' | 'error') => {
+      // Clear existing timeouts for this format
+      const existing = actionTimeoutsRef.current.get(format);
+      if (existing) {
+        existing.forEach((t) => clearTimeout(t));
+      }
+
+      // Set the status
+      setOutputs((prev) => ({
+        ...prev,
+        [format]: {
+          ...prev[format],
+          actionStatus: { message, type, visible: true },
+        },
+      }));
+
+      // Create new timeouts
+      const timeouts: ReturnType<typeof setTimeout>[] = [];
+
+      timeouts.push(
+        setTimeout(() => {
+          setOutputs((prev) => ({
+            ...prev,
+            [format]: {
+              ...prev[format],
+              actionStatus: prev[format].actionStatus
+                ? { ...prev[format].actionStatus!, visible: false }
+                : null,
+            },
+          }));
+        }, 2000)
+      );
+
+      timeouts.push(
+        setTimeout(() => {
+          setOutputs((prev) => ({
+            ...prev,
+            [format]: { ...prev[format], actionStatus: null },
+          }));
+        }, 2500)
+      );
+
+      actionTimeoutsRef.current.set(format, timeouts);
+    },
+    []
+  );
 
   // Ensure activeOutputTab is valid when selectedFormats changes
   useEffect(() => {
@@ -197,60 +257,29 @@ export function ExportTab({
           return next;
         });
       } else if (message.type === 'github-dispatch-success') {
-        setGithubStatus({ message: 'Sent to GitHub!', type: 'success', visible: true });
-        setTimeout(() => {
-          setGithubStatus((prev) => (prev ? { ...prev, visible: false } : null));
-        }, 2000);
-        setTimeout(() => {
-          setGithubStatus(null);
-        }, 2500);
+        updateGithubStatus('Sent to GitHub!', 'success');
       } else if (message.type === 'error') {
-        // Handle GitHub errors
-        setGithubStatus((prev) => {
-          if (prev?.type === 'sending') {
-            setTimeout(() => {
-              setGithubStatus((p) => (p ? { ...p, visible: false } : null));
-            }, 3000);
-            setTimeout(() => {
-              setGithubStatus(null);
-            }, 3500);
-            return { message: message.message, type: 'error', visible: true };
-          }
-          return prev;
-        });
+        // Handle GitHub errors (if we were sending to GitHub)
+        if (githubStatus?.type === 'sending') {
+          updateGithubStatus(message.message, 'error');
+        }
         // Handle generation errors
         setIsGenerating(false);
         setPendingFormats(new Set());
-        setGenerateStatus({ message: message.message, type: 'error', visible: true });
-        // Fade out after 2 seconds
-        setTimeout(() => {
-          setGenerateStatus((prev) => (prev ? { ...prev, visible: false } : null));
-        }, 2000);
-        // Remove after fade
-        setTimeout(() => {
-          setGenerateStatus(null);
-        }, 2500);
+        showGenerateStatus(message.message, 'error');
       }
     });
 
     return cleanup;
-  }, [listenToMessage]);
+  }, [listenToMessage, githubStatus?.type, updateGithubStatus, showGenerateStatus]);
 
   // Show success when all pending formats complete
   useEffect(() => {
     if (isGenerating && pendingFormats.size === 0) {
       setIsGenerating(false);
-      setGenerateStatus({ message: 'Generated!', type: 'success', visible: true });
-      // Fade out after 2 seconds
-      setTimeout(() => {
-        setGenerateStatus((prev) => (prev ? { ...prev, visible: false } : null));
-      }, 2000);
-      // Remove after fade
-      setTimeout(() => {
-        setGenerateStatus(null);
-      }, 2500);
+      showGenerateStatus('Generated!', 'success');
     }
-  }, [isGenerating, pendingFormats.size]);
+  }, [isGenerating, pendingFormats.size, showGenerateStatus]);
 
   // Toggle format selection
   const handleFormatToggle = useCallback(
@@ -318,7 +347,6 @@ export function ExportTab({
     if (selectedFormats.length === 0) return;
 
     setIsGenerating(true);
-    setGenerateStatus(null);
     setPendingFormats(new Set(selectedFormats));
 
     // Send export message for each selected format
@@ -330,7 +358,7 @@ export function ExportTab({
 
     // Send to GitHub if enabled
     if (sendToGitHub && isGitHubConfigured) {
-      setGithubStatus({ message: 'Sending to GitHub...', type: 'sending', visible: true });
+      showGithubStatus('Sending to GitHub...', 'sending');
 
       // Use all export options so GitHub action generates identical output
       const githubExportOptions: ExportOptions = {
@@ -386,6 +414,7 @@ export function ExportTab({
     exportAsCalcExpressions,
     nameFormatRules,
     headerBanner,
+    showGithubStatus,
   ]);
 
   // Copy handler
@@ -395,40 +424,13 @@ export function ExportTab({
       if (!output) return;
 
       const success = await copyToClipboard(output);
-      setOutputs((prev) => ({
-        ...prev,
-        [format]: {
-          ...prev[format],
-          actionStatus: {
-            message: success ? 'Copied!' : 'Failed to copy',
-            type: success ? 'success' : 'error',
-            visible: true,
-          },
-        },
-      }));
-
-      // Fade out after 2 seconds
-      setTimeout(() => {
-        setOutputs((prev) => ({
-          ...prev,
-          [format]: {
-            ...prev[format],
-            actionStatus: prev[format].actionStatus
-              ? { ...prev[format].actionStatus!, visible: false }
-              : null,
-          },
-        }));
-      }, 2000);
-
-      // Remove after fade
-      setTimeout(() => {
-        setOutputs((prev) => ({
-          ...prev,
-          [format]: { ...prev[format], actionStatus: null },
-        }));
-      }, 2500);
+      showActionStatus(
+        format,
+        success ? 'Copied!' : 'Failed to copy',
+        success ? 'success' : 'error'
+      );
     },
-    [outputs, copyToClipboard]
+    [outputs, copyToClipboard, showActionStatus]
   );
 
   // Download handler
@@ -448,36 +450,9 @@ export function ExportTab({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      setOutputs((prev) => ({
-        ...prev,
-        [format]: {
-          ...prev[format],
-          actionStatus: { message: 'Downloaded!', type: 'success', visible: true },
-        },
-      }));
-
-      // Fade out after 2 seconds
-      setTimeout(() => {
-        setOutputs((prev) => ({
-          ...prev,
-          [format]: {
-            ...prev[format],
-            actionStatus: prev[format].actionStatus
-              ? { ...prev[format].actionStatus!, visible: false }
-              : null,
-          },
-        }));
-      }, 2000);
-
-      // Remove after fade
-      setTimeout(() => {
-        setOutputs((prev) => ({
-          ...prev,
-          [format]: { ...prev[format], actionStatus: null },
-        }));
-      }, 2500);
+      showActionStatus(format, 'Downloaded!', 'success');
     },
-    [outputs]
+    [outputs, showActionStatus]
   );
 
   const isGenerateDisabled = selectedFormats.length === 0 || isGenerating;

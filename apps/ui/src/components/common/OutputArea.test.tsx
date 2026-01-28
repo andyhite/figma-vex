@@ -33,22 +33,13 @@ describe('OutputArea', () => {
   });
 
   it('should display status message as label when success', () => {
-    render(
-      <OutputArea
-        value="test"
-        readOnly
-        statusMessage="Success!"
-        statusType="success"
-      />
-    );
+    render(<OutputArea value="test" readOnly statusMessage="Success!" statusType="success" />);
 
     expect(screen.getByText('Success!')).toBeInTheDocument();
   });
 
   it('should display status message as label when error', () => {
-    render(
-      <OutputArea value="test" readOnly statusMessage="Error!" statusType="error" />
-    );
+    render(<OutputArea value="test" readOnly statusMessage="Error!" statusType="error" />);
 
     expect(screen.getByText('Error!')).toBeInTheDocument();
   });
@@ -77,13 +68,7 @@ describe('OutputArea', () => {
 
   it('should revert to original label after error timeout', () => {
     render(
-      <OutputArea
-        label="Output"
-        value="test"
-        readOnly
-        statusMessage="Error!"
-        statusType="error"
-      />
+      <OutputArea label="Output" value="test" readOnly statusMessage="Error!" statusType="error" />
     );
 
     expect(screen.getByText('Error!')).toBeInTheDocument();
@@ -98,21 +83,13 @@ describe('OutputArea', () => {
   });
 
   it('should render actions', () => {
-    render(
-      <OutputArea
-        value="test"
-        readOnly
-        actions={<button>Action Button</button>}
-      />
-    );
+    render(<OutputArea value="test" readOnly actions={<button>Action Button</button>} />);
 
     expect(screen.getByRole('button', { name: 'Action Button' })).toBeInTheDocument();
   });
 
   it('should apply custom className', () => {
-    const { container } = render(
-      <OutputArea value="test" readOnly className="custom-class" />
-    );
+    const { container } = render(<OutputArea value="test" readOnly className="custom-class" />);
 
     const textarea = container.querySelector('textarea');
     expect(textarea?.className).toContain('custom-class');

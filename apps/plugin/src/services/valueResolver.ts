@@ -71,10 +71,7 @@ export async function resolveValue(
     // Fall through to normal resolution if expression failed
     // Warnings are logged but we use the fallback value
     if (result.warnings.length > 0) {
-      console.warn(
-        `Expression evaluation warnings for "${config.expression}":`,
-        result.warnings
-      );
+      console.warn(`Expression evaluation warnings for "${config.expression}":`, result.warnings);
     }
   }
 

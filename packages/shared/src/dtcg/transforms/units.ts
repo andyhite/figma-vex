@@ -51,7 +51,7 @@ function findTokenByPath(
   // Normalize path separator (support both . and /)
   const normalizedPath = pathRef.replace(/\//g, '.');
   const pathParts = normalizedPath.split('.').filter(Boolean);
-  
+
   if (pathParts.length === 0) {
     return { path: [], found: false };
   }
@@ -59,7 +59,7 @@ function findTokenByPath(
   // First part should be collection name
   const collectionName = pathParts[0];
   const collection = document.collections[collectionName];
-  
+
   if (!collection) {
     return { path: [], found: false };
   }
@@ -70,16 +70,16 @@ function findTokenByPath(
 
   for (let i = 1; i < pathParts.length; i++) {
     const part = pathParts[i];
-    
+
     if (current && typeof current === 'object' && part in current) {
       const next = (current as Record<string, unknown>)[part];
-      
+
       // Check if it's a token (has $type)
       if (next && typeof next === 'object' && '$type' in next) {
         resolvedPath.push(part);
         return { path: resolvedPath, found: true };
       }
-      
+
       // Continue traversing
       current = next;
       resolvedPath.push(part);
@@ -120,7 +120,7 @@ export function formatCalcExpression(
   for (const match of matches) {
     const pathRef = match[1].replace(/\\(.)/g, '$1'); // Unescape
     const { path, found } = findTokenByPath(pathRef, document);
-    
+
     if (found) {
       // Format the path as CSS variable name
       const cssName = path.join('-').toLowerCase();

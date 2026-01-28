@@ -11,6 +11,43 @@ import {
 } from '@plugin/services/styleValueResolver';
 
 /**
+ * Builds or navigates to a nested path in an object and sets the leaf value.
+ * Path is specified as a forward-slash-separated string (e.g., "Colors/Brand/Primary").
+ *
+ * @param root - The root object to build the path in
+ * @param path - Forward-slash-separated path (e.g., "Colors/Brand/Primary")
+ * @param value - The value to set at the leaf
+ */
+function setNestedValue(root: Record<string, unknown>, path: string, value: unknown): void {
+  const pathParts = path.split('/');
+  let current = root;
+
+  // Navigate/create intermediate nodes
+  for (let i = 0; i < pathParts.length - 1; i++) {
+    const part = pathParts[i];
+    if (!current[part]) {
+      current[part] = {};
+    }
+    current = current[part] as Record<string, unknown>;
+  }
+
+  // Set the leaf value
+  const leafName = pathParts[pathParts.length - 1];
+  current[leafName] = value;
+}
+
+/**
+ * Builds a token config from a style description and optional precision override.
+ */
+function buildTokenConfig(description: string, numberPrecision?: number): TokenConfig {
+  const config = { ...DEFAULT_CONFIG, ...parseDescription(description) };
+  if (numberPrecision !== undefined) {
+    config.precision = numberPrecision;
+  }
+  return config;
+}
+
+/**
  * Formats a raw value for JSON export (Style Dictionary compatible).
  */
 function formatRawValue(
@@ -61,19 +98,6 @@ export async function exportToJson(
 
     for (const variable of collectionVars) {
       const config = parseDescription(variable.description);
-      const pathParts = variable.name.split('/');
-
-      // Build nested structure
-      let current = collectionData as Record<string, unknown>;
-      for (let i = 0; i < pathParts.length - 1; i++) {
-        const part = pathParts[i];
-        if (!current[part]) {
-          current[part] = {};
-        }
-        current = current[part] as Record<string, unknown>;
-      }
-
-      const leafName = pathParts[pathParts.length - 1];
       const defaultModeId = collection.defaultModeId;
       const rawValue = variable.valuesByMode[defaultModeId];
 
@@ -102,7 +126,7 @@ export async function exportToJson(
         };
       }
 
-      current[leafName] = token;
+      setNestedValue(collectionData, variable.name, token);
     }
 
     result[collection.name] = collectionData;
@@ -148,25 +172,14 @@ function buildStyleTokens(
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options?.numberPrecision !== undefined && { precision: options.numberPrecision }) };
-    const pathParts = style.name.split('/');
+    const config = buildTokenConfig(style.description, options?.numberPrecision);
     const value = resolvePaintValue(style, config);
 
-    let current = result;
-    for (let i = 0; i < pathParts.length - 1; i++) {
-      const part = pathParts[i];
-      if (!current[part]) {
-        current[part] = {};
-      }
-      current = current[part] as Record<string, unknown>;
-    }
-
-    const leafName = pathParts[pathParts.length - 1];
-    current[leafName] = {
+    setNestedValue(result, style.name, {
       $type: type,
       $value: value,
       ...(style.description && { $description: style.description }),
-    };
+    });
   }
 
   return result;
@@ -175,25 +188,17 @@ function buildStyleTokens(
 /**
  * Builds DTCG tokens for text styles
  */
-function buildTextStyleTokens(styles: StyleCollection['text'], options?: ExportOptions): Record<string, unknown> {
+function buildTextStyleTokens(
+  styles: StyleCollection['text'],
+  options?: ExportOptions
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options?.numberPrecision !== undefined && { precision: options.numberPrecision }) };
-    const pathParts = style.name.split('/');
+    const config = buildTokenConfig(style.description, options?.numberPrecision);
     const props = resolveTextProperties(style, config);
 
-    let current = result;
-    for (let i = 0; i < pathParts.length - 1; i++) {
-      const part = pathParts[i];
-      if (!current[part]) {
-        current[part] = {};
-      }
-      current = current[part] as Record<string, unknown>;
-    }
-
-    const leafName = pathParts[pathParts.length - 1];
-    current[leafName] = {
+    setNestedValue(result, style.name, {
       $type: 'typography',
       $value: {
         fontFamily: props['font-family'],
@@ -206,7 +211,7 @@ function buildTextStyleTokens(styles: StyleCollection['text'], options?: ExportO
         ...(props['text-transform'] && { textTransform: props['text-transform'] }),
       },
       ...(style.description && { $description: style.description }),
-    };
+    });
   }
 
   return result;
@@ -215,29 +220,21 @@ function buildTextStyleTokens(styles: StyleCollection['text'], options?: ExportO
 /**
  * Builds DTCG tokens for effect styles
  */
-function buildEffectStyleTokens(styles: StyleCollection['effect'], options?: ExportOptions): Record<string, unknown> {
+function buildEffectStyleTokens(
+  styles: StyleCollection['effect'],
+  options?: ExportOptions
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const config: TokenConfig = { ...DEFAULT_CONFIG, ...parseDescription(style.description), ...(options?.numberPrecision !== undefined && { precision: options.numberPrecision }) };
-    const pathParts = style.name.split('/');
+    const config = buildTokenConfig(style.description, options?.numberPrecision);
     const value = resolveEffectValue(style, config);
 
-    let current = result;
-    for (let i = 0; i < pathParts.length - 1; i++) {
-      const part = pathParts[i];
-      if (!current[part]) {
-        current[part] = {};
-      }
-      current = current[part] as Record<string, unknown>;
-    }
-
-    const leafName = pathParts[pathParts.length - 1];
-    current[leafName] = {
+    setNestedValue(result, style.name, {
       $type: 'shadow',
       $value: value,
       ...(style.description && { $description: style.description }),
-    };
+    });
   }
 
   return result;
@@ -250,24 +247,13 @@ function buildGridStyleTokens(styles: StyleCollection['grid']): Record<string, u
   const result: Record<string, unknown> = {};
 
   for (const style of styles) {
-    const pathParts = style.name.split('/');
     const value = resolveGridValue(style);
 
-    let current = result;
-    for (let i = 0; i < pathParts.length - 1; i++) {
-      const part = pathParts[i];
-      if (!current[part]) {
-        current[part] = {};
-      }
-      current = current[part] as Record<string, unknown>;
-    }
-
-    const leafName = pathParts[pathParts.length - 1];
-    current[leafName] = {
+    setNestedValue(result, style.name, {
       $type: 'grid',
       $value: value,
       ...(style.description && { $description: style.description }),
-    };
+    });
   }
 
   return result;

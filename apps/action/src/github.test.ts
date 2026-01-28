@@ -57,8 +57,12 @@ describe('github', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(github, 'getOctokit').mockReturnValue(mockOctokit as unknown as ReturnType<typeof github.getOctokit>);
-    vi.spyOn(github, 'context', 'get').mockReturnValue(mockContext as unknown as typeof github.context);
+    vi.spyOn(github, 'getOctokit').mockReturnValue(
+      mockOctokit as unknown as ReturnType<typeof github.getOctokit>
+    );
+    vi.spyOn(github, 'context', 'get').mockReturnValue(
+      mockContext as unknown as typeof github.context
+    );
     vi.spyOn(exec, 'exec').mockResolvedValue(0);
     vi.spyOn(exec, 'getExecOutput').mockResolvedValue({
       exitCode: 0,
@@ -193,11 +197,7 @@ describe('github', () => {
 
       await handleBranchAndPR(mockInputs, mockPayload, ['file.css']);
 
-      expect(exec.exec).toHaveBeenCalledWith('git', [
-        'fetch',
-        'origin',
-        'figma-vex/update-12345',
-      ]);
+      expect(exec.exec).toHaveBeenCalledWith('git', ['fetch', 'origin', 'figma-vex/update-12345']);
       expect(exec.exec).toHaveBeenCalledWith('git', ['checkout', 'figma-vex/update-12345'], {
         ignoreReturnCode: true,
       });
@@ -217,7 +217,11 @@ describe('github', () => {
         data: { number: 42, html_url: 'https://github.com/test/test/pull/42' },
       });
       vi.spyOn(exec, 'exec').mockImplementation(async (command, args) => {
-        if (command === 'git' && args?.[0] === 'checkout' && args?.[1] === 'figma-vex/update-12345') {
+        if (
+          command === 'git' &&
+          args?.[0] === 'checkout' &&
+          args?.[1] === 'figma-vex/update-12345'
+        ) {
           return 1; // Checkout fails
         }
         return 0;
@@ -259,7 +263,7 @@ describe('github', () => {
         'remote',
         'set-url',
         'origin',
-        'https://test-token@github.com/test-owner/test-repo.git',
+        'https://x-access-token:test-token@github.com/test-owner/test-repo.git',
       ]);
       expect(exec.exec).toHaveBeenCalledWith('git', ['push', 'origin', 'figma-vex/update-12345']);
     });
@@ -446,16 +450,14 @@ describe('github', () => {
         stderr: 'git status failed',
       });
 
-      await expect(
-        handleBranchAndPR(mockInputs, mockPayload, ['file.css'])
-      ).rejects.toThrow();
+      await expect(handleBranchAndPR(mockInputs, mockPayload, ['file.css'])).rejects.toThrow();
     });
 
     it('should handle PR list API failure', async () => {
       mockOctokit.rest.pulls.list.mockRejectedValue(new Error('API Error'));
-      await expect(
-        handleBranchAndPR(mockInputs, mockPayload, ['file.css'])
-      ).rejects.toThrow('API Error');
+      await expect(handleBranchAndPR(mockInputs, mockPayload, ['file.css'])).rejects.toThrow(
+        'API Error'
+      );
     });
 
     it('should handle PR create API failure', async () => {
@@ -467,9 +469,9 @@ describe('github', () => {
         stderr: '',
       });
 
-      await expect(
-        handleBranchAndPR(mockInputs, mockPayload, ['file.css'])
-      ).rejects.toThrow('Create PR failed');
+      await expect(handleBranchAndPR(mockInputs, mockPayload, ['file.css'])).rejects.toThrow(
+        'Create PR failed'
+      );
     });
 
     it('should handle PR update API failure', async () => {
@@ -489,9 +491,9 @@ describe('github', () => {
         stderr: '',
       });
 
-      await expect(
-        handleBranchAndPR(mockInputs, mockPayload, ['file.css'])
-      ).rejects.toThrow('Update PR failed');
+      await expect(handleBranchAndPR(mockInputs, mockPayload, ['file.css'])).rejects.toThrow(
+        'Update PR failed'
+      );
     });
 
     it('should handle git fetch failure', async () => {
@@ -511,9 +513,9 @@ describe('github', () => {
         stderr: '',
       });
 
-      await expect(
-        handleBranchAndPR(mockInputs, mockPayload, ['file.css'])
-      ).rejects.toThrow('Fetch failed');
+      await expect(handleBranchAndPR(mockInputs, mockPayload, ['file.css'])).rejects.toThrow(
+        'Fetch failed'
+      );
     });
 
     it('should handle empty file paths array', async () => {
@@ -585,6 +587,5 @@ describe('github', () => {
       });
       expect(result.updated).toBe(true);
     });
-
   });
 });

@@ -80,9 +80,7 @@ function applyModifier(value: string, modifier: string | undefined): string {
 
     case 'camel':
       // camelCase: first segment lowercase, rest capitalized, no separator
-      return segments
-        .map((s, i) => (i === 0 ? s.toLowerCase() : capitalize(s)))
-        .join('');
+      return segments.map((s, i) => (i === 0 ? s.toLowerCase() : capitalize(s))).join('');
 
     case 'pascal':
       // PascalCase: all segments capitalized, no separator
@@ -122,13 +120,16 @@ export function applyReplacement(template: string, captures: string[]): string {
   // Matches both ${1:modifier} and $1:modifier formats
   // Group 1,2: curly brace format {index, modifier}
   // Group 3,4: plain format (index, modifier)
-  return template.replace(/\$(?:\{(\d+)(?::(\w+))?\}|(\d+)(?::(\w+))?)/g, (_, braceIndex, braceMod, plainIndex, plainMod) => {
-    const index = braceIndex ?? plainIndex;
-    const modifier = braceMod ?? plainMod;
-    const i = parseInt(index, 10) - 1; // $1 → captures[0]
-    const value = captures[i] ?? '';
-    return applyModifier(value, modifier);
-  });
+  return template.replace(
+    /\$(?:\{(\d+)(?::(\w+))?\}|(\d+)(?::(\w+))?)/g,
+    (_, braceIndex, braceMod, plainIndex, plainMod) => {
+      const index = braceIndex ?? plainIndex;
+      const modifier = braceMod ?? plainMod;
+      const i = parseInt(index, 10) - 1; // $1 → captures[0]
+      const value = captures[i] ?? '';
+      return applyModifier(value, modifier);
+    }
+  );
 }
 
 /**

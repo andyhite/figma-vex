@@ -74,36 +74,21 @@ describe('ImportSettingsModal', () => {
 
   describe('error mode', () => {
     it('should display error message', () => {
-      render(
-        <ImportSettingsModal
-          {...defaultProps}
-          error="Invalid file format"
-        />
-      );
+      render(<ImportSettingsModal {...defaultProps} error="Invalid file format" />);
 
       expect(screen.getByText('Import Error')).toBeInTheDocument();
       expect(screen.getByText('Invalid file format')).toBeInTheDocument();
     });
 
     it('should show Close button instead of Cancel in error mode', () => {
-      render(
-        <ImportSettingsModal
-          {...defaultProps}
-          error="Invalid file format"
-        />
-      );
+      render(<ImportSettingsModal {...defaultProps} error="Invalid file format" />);
 
       expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
     });
 
     it('should not show Import button in error mode', () => {
-      render(
-        <ImportSettingsModal
-          {...defaultProps}
-          error="Invalid file format"
-        />
-      );
+      render(<ImportSettingsModal {...defaultProps} error="Invalid file format" />);
 
       expect(screen.queryByRole('button', { name: 'Import' })).not.toBeInTheDocument();
     });

@@ -15,13 +15,7 @@ function TestComponent({
 }) {
   const ref = useAutoResize(deps);
 
-  return (
-    <div
-      ref={ref}
-      data-testid="container"
-      style={{ height: `${height}px` }}
-    />
-  );
+  return <div ref={ref} data-testid="container" style={{ height: `${height}px` }} />;
 }
 
 describe('useAutoResize', () => {
@@ -30,7 +24,7 @@ describe('useAutoResize', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    
+
     vi.spyOn(useWindowResize, 'useWindowResize').mockReturnValue({
       resizeWindow: mockResizeWindow,
     });
@@ -141,8 +135,8 @@ describe('useAutoResize', () => {
       toJSON: vi.fn(),
     } as DOMRect);
 
-    const resizeObserverCallback = (global.ResizeObserver as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[0];
+    const resizeObserverCallback = (global.ResizeObserver as unknown as ReturnType<typeof vi.fn>)
+      .mock.calls[0]?.[0];
     if (resizeObserverCallback) {
       resizeObserverCallback();
     }
@@ -198,8 +192,8 @@ describe('useAutoResize', () => {
     } as DOMRect);
 
     // Get the ResizeObserver callback
-    const resizeObserverCallback = (global.ResizeObserver as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[0];
+    const resizeObserverCallback = (global.ResizeObserver as unknown as ReturnType<typeof vi.fn>)
+      .mock.calls[0]?.[0];
 
     // Trigger multiple rapid events
     act(() => {
@@ -286,8 +280,8 @@ describe('useAutoResize', () => {
 
     // Ref is null, should not throw
     expect(() => {
-      const resizeObserverCallback = (global.ResizeObserver as unknown as ReturnType<typeof vi.fn>).mock
-        .calls[0]?.[0];
+      const resizeObserverCallback = (global.ResizeObserver as unknown as ReturnType<typeof vi.fn>)
+        .mock.calls[0]?.[0];
       if (resizeObserverCallback) {
         resizeObserverCallback();
       }
@@ -306,8 +300,8 @@ describe('useAutoResize', () => {
     result.current.current = container;
 
     vi.advanceTimersByTime(10);
-    const initialResizeObserver = (global.ResizeObserver as unknown as ReturnType<typeof vi.fn>).mock
-      .calls.length;
+    const initialResizeObserver = (global.ResizeObserver as unknown as ReturnType<typeof vi.fn>)
+      .mock.calls.length;
 
     // Update container ref for new render
     result.current.current = container;
@@ -315,8 +309,8 @@ describe('useAutoResize', () => {
     vi.advanceTimersByTime(10);
 
     // Should create new observers (effect re-runs)
-    expect((global.ResizeObserver as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(
-      initialResizeObserver
-    );
+    expect(
+      (global.ResizeObserver as unknown as ReturnType<typeof vi.fn>).mock.calls.length
+    ).toBeGreaterThan(initialResizeObserver);
   });
 });

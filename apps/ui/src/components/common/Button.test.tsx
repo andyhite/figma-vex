@@ -49,7 +49,11 @@ describe('Button', () => {
   });
 
   it('should pass through other button props', () => {
-    render(<Button disabled aria-label="Test button">Disabled</Button>);
+    render(
+      <Button disabled aria-label="Test button">
+        Disabled
+      </Button>
+    );
 
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();

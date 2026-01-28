@@ -129,7 +129,9 @@ describe('applyReplacement', () => {
       it('works with globstar captures containing paths', () => {
         // Simulating ** capturing "Color/Teal" from "Color/Teal/Alpha/2"
         expect(applyReplacement('$1:kebab-a$2', ['Color/Teal', '2'])).toBe('color-teal-a2');
-        expect(applyReplacement('$1:pascal$2:pascal', ['color/teal', 'alpha/2'])).toBe('ColorTealAlpha2');
+        expect(applyReplacement('$1:pascal$2:pascal', ['color/teal', 'alpha/2'])).toBe(
+          'ColorTealAlpha2'
+        );
       });
     });
 

@@ -54,7 +54,7 @@ export function OutputArea({
           {actions && <div className="flex items-center gap-1">{actions}</div>}
         </div>
         <textarea
-          className={`output-area min-h-[200px] w-full resize-y rounded border border-figma-border bg-figma-bg p-3 font-mono text-xs text-figma-text ${className}`}
+          className={`output-area border-figma-border bg-figma-bg text-figma-text min-h-[200px] w-full resize-y rounded border p-3 font-mono text-xs ${className}`}
           {...props}
         />
       </div>

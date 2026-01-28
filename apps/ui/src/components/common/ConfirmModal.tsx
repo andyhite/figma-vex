@@ -95,11 +95,7 @@ export function ConfirmModal({
           <Button ref={cancelButtonRef} variant="secondary" onClick={onClose}>
             {cancelLabel}
           </Button>
-          <Button
-            variant={variant === 'danger' ? 'primary' : 'primary'}
-            onClick={onConfirm}
-            className={variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : ''}
-          >
+          <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </div>

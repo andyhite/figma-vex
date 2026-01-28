@@ -19,9 +19,7 @@ describe('TabBar', () => {
   });
 
   it('should highlight active tab', () => {
-    render(
-      <TabBar tabs={tabs} activeTab="tab2" onTabChange={() => {}} />
-    );
+    render(<TabBar tabs={tabs} activeTab="tab2" onTabChange={() => {}} />);
 
     const activeButton = screen.getByRole('button', { name: 'Tab 2' });
     expect(activeButton.className).toContain('border-b-2');

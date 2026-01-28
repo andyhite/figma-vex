@@ -247,9 +247,15 @@ describe('serializeToDTCG with styles', () => {
   };
 
   it('should include styles when includeStyles is true', async () => {
-    const result = await serializeToDTCG(mockVariables, mockCollections, 'test.figma', {
-      includeStyles: true,
-    }, mockStyles);
+    const result = await serializeToDTCG(
+      mockVariables,
+      mockCollections,
+      'test.figma',
+      {
+        includeStyles: true,
+      },
+      mockStyles
+    );
 
     expect(result.$styles).toBeDefined();
     expect(result.$styles?.paint).toBeDefined();
@@ -259,18 +265,30 @@ describe('serializeToDTCG with styles', () => {
   });
 
   it('should not include styles when includeStyles is false', async () => {
-    const result = await serializeToDTCG(mockVariables, mockCollections, 'test.figma', {
-      includeStyles: false,
-    }, mockStyles);
+    const result = await serializeToDTCG(
+      mockVariables,
+      mockCollections,
+      'test.figma',
+      {
+        includeStyles: false,
+      },
+      mockStyles
+    );
 
     expect(result.$styles).toBeUndefined();
   });
 
   it('should serialize paint styles correctly', async () => {
-    const result = await serializeToDTCG(mockVariables, mockCollections, 'test.figma', {
-      includeStyles: true,
-      styleTypes: ['paint'],
-    }, mockStyles);
+    const result = await serializeToDTCG(
+      mockVariables,
+      mockCollections,
+      'test.figma',
+      {
+        includeStyles: true,
+        styleTypes: ['paint'],
+      },
+      mockStyles
+    );
 
     const brandGroup = result.$styles?.paint?.['brand'] as Record<string, unknown>;
     const primaryStyle = brandGroup?.['primary'] as { $type: string; $value: string };
@@ -279,10 +297,16 @@ describe('serializeToDTCG with styles', () => {
   });
 
   it('should serialize text styles as typography tokens', async () => {
-    const result = await serializeToDTCG(mockVariables, mockCollections, 'test.figma', {
-      includeStyles: true,
-      styleTypes: ['text'],
-    }, mockStyles);
+    const result = await serializeToDTCG(
+      mockVariables,
+      mockCollections,
+      'test.figma',
+      {
+        includeStyles: true,
+        styleTypes: ['text'],
+      },
+      mockStyles
+    );
 
     const headingGroup = result.$styles?.text?.['heading'] as Record<string, unknown>;
     const h1Style = headingGroup?.['h1'] as { $type: string; $value: { fontFamily: string } };
@@ -291,10 +315,16 @@ describe('serializeToDTCG with styles', () => {
   });
 
   it('should serialize effect styles as shadow tokens', async () => {
-    const result = await serializeToDTCG(mockVariables, mockCollections, 'test.figma', {
-      includeStyles: true,
-      styleTypes: ['effect'],
-    }, mockStyles);
+    const result = await serializeToDTCG(
+      mockVariables,
+      mockCollections,
+      'test.figma',
+      {
+        includeStyles: true,
+        styleTypes: ['effect'],
+      },
+      mockStyles
+    );
 
     const shadowGroup = result.$styles?.effect?.['shadow'] as Record<string, unknown>;
     const smallShadow = shadowGroup?.['small'] as { $type: string; $value: { blur: number } };
@@ -303,23 +333,38 @@ describe('serializeToDTCG with styles', () => {
   });
 
   it('should serialize grid styles correctly', async () => {
-    const result = await serializeToDTCG(mockVariables, mockCollections, 'test.figma', {
-      includeStyles: true,
-      styleTypes: ['grid'],
-    }, mockStyles);
+    const result = await serializeToDTCG(
+      mockVariables,
+      mockCollections,
+      'test.figma',
+      {
+        includeStyles: true,
+        styleTypes: ['grid'],
+      },
+      mockStyles
+    );
 
     const layoutGroup = result.$styles?.grid?.['layout'] as Record<string, unknown>;
-    const gridStyle = layoutGroup?.['12col'] as { $type: string; $value: { pattern: string; count: number } };
+    const gridStyle = layoutGroup?.['12col'] as {
+      $type: string;
+      $value: { pattern: string; count: number };
+    };
     expect(gridStyle?.$type).toBe('grid');
     expect(gridStyle?.$value?.pattern).toBe('columns');
     expect(gridStyle?.$value?.count).toBe(12);
   });
 
   it('should filter style types', async () => {
-    const result = await serializeToDTCG(mockVariables, mockCollections, 'test.figma', {
-      includeStyles: true,
-      styleTypes: ['paint', 'text'],
-    }, mockStyles);
+    const result = await serializeToDTCG(
+      mockVariables,
+      mockCollections,
+      'test.figma',
+      {
+        includeStyles: true,
+        styleTypes: ['paint', 'text'],
+      },
+      mockStyles
+    );
 
     expect(result.$styles?.paint).toBeDefined();
     expect(result.$styles?.text).toBeDefined();

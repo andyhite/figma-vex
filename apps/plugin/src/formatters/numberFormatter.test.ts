@@ -92,8 +92,8 @@ describe('edge cases', () => {
     });
 
     it('should handle numbers with many trailing zeros', () => {
-      expect(cleanNumber(1.5000)).toBe('1.5');
-      expect(cleanNumber(10.0000)).toBe('10');
+      expect(cleanNumber(1.5)).toBe('1.5');
+      expect(cleanNumber(10.0)).toBe('10');
     });
 
     it('should handle numbers that round to integers', () => {
@@ -148,7 +148,9 @@ describe('edge cases', () => {
 
     it('should handle very large numbers', () => {
       expect(formatNumber(999999, { ...DEFAULT_CONFIG, unit: 'px' })).toBe('999999px');
-      expect(formatNumber(999999, { ...DEFAULT_CONFIG, unit: 'rem', remBase: 16 })).toBe('62499.9375rem');
+      expect(formatNumber(999999, { ...DEFAULT_CONFIG, unit: 'rem', remBase: 16 })).toBe(
+        '62499.9375rem'
+      );
     });
 
     it('should handle very small numbers', () => {
@@ -156,7 +158,9 @@ describe('edge cases', () => {
       // 0.0001 / 16 = 0.00000625, but cleanNumber with default 4 decimals rounds to 0.0000
       expect(formatNumber(0.0001, { ...DEFAULT_CONFIG, unit: 'rem', remBase: 16 })).toBe('0rem');
       // But larger values work
-      expect(formatNumber(0.001, { ...DEFAULT_CONFIG, unit: 'rem', remBase: 16 })).toBe('0.0001rem');
+      expect(formatNumber(0.001, { ...DEFAULT_CONFIG, unit: 'rem', remBase: 16 })).toBe(
+        '0.0001rem'
+      );
     });
 
     it('should handle decimal numbers that result in clean rem values', () => {

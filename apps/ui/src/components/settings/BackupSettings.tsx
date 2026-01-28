@@ -41,9 +41,7 @@ export function BackupSettings({
       </FormGroup>
 
       <FormGroup label="Reset" className="mt-6">
-        <FormHelpText>
-          Reset all settings to their default values.
-        </FormHelpText>
+        <FormHelpText>Reset all settings to their default values.</FormHelpText>
 
         <div className="mt-2">
           <Button variant="danger" onClick={onResetSettings}>

@@ -1,15 +1,15 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { viteSingleFile } from 'vite-plugin-singlefile'
-import { resolve } from 'path'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { viteSingleFile } from 'vite-plugin-singlefile';
+import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react(), viteSingleFile()],
   root: 'src',
   resolve: {
     alias: {
-      '@figma-vex/shared': resolve(__dirname, '../../packages/shared/src')
-    }
+      '@figma-vex/shared': resolve(__dirname, '../../packages/shared/src'),
+    },
   },
   build: {
     outDir: '../../../dist',
@@ -22,8 +22,8 @@ export default defineConfig({
       input: resolve(__dirname, 'src/index.html'),
       output: {
         inlineDynamicImports: true,
-        entryFileNames: 'ui.js'
-      }
-    }
-  }
-})
+        entryFileNames: 'ui.js',
+      },
+    },
+  },
+});

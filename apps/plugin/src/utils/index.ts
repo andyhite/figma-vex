@@ -1,9 +1,4 @@
-export {
-  parseDescription,
-  UNIT_REGEX,
-  FORMAT_REGEX,
-  CALC_REGEX,
-} from './descriptionParser';
+export { parseDescription, UNIT_REGEX, FORMAT_REGEX, CALC_REGEX } from './descriptionParser';
 export {
   buildVariableLookup,
   lookupVariable,
@@ -16,3 +11,4 @@ export {
   getCollectionVariablesByName,
 } from './collectionUtils';
 export { mergeWithDefaults } from './optionDefaults';
+export { countTokens } from './tokenHelpers';

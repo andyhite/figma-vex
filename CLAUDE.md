@@ -55,6 +55,7 @@ pnpm format:check
 ### Plugin-UI Communication
 
 The plugin and UI communicate via typed messages defined in `packages/shared/src/types/messages.ts`:
+
 - `PluginMessage` - Messages from UI to plugin (e.g., `export-css`, `save-settings`)
 - `UIMessage` - Messages from plugin to UI (e.g., `css-result`, `error`)
 
@@ -77,6 +78,7 @@ The plugin and UI communicate via typed messages defined in `packages/shared/src
 ### Build Output
 
 All packages build to the root `dist/` directory:
+
 - `dist/plugin.js` - Plugin backend (IIFE format)
 - `dist/index.html` - React UI (single file with inlined assets via vite-plugin-singlefile)
 - `dist/action.js` - GitHub Action

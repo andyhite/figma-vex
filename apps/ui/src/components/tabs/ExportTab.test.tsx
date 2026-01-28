@@ -144,8 +144,8 @@ describe('ExportTab', () => {
     render(<ExportTab {...defaultProps} selectedFormats={['css', 'json']} />);
 
     // The navigation should show tabs for selected formats
-    const navButtons = screen.getAllByRole('button');
-    const navLabels = navButtons.map((b) => b.textContent);
+    const navTabs = screen.getAllByRole('tab');
+    const navLabels = navTabs.map((b) => b.textContent);
 
     expect(navLabels).toContain('CSS');
     expect(navLabels).toContain('JSON');

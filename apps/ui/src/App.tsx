@@ -139,11 +139,14 @@ export default function App() {
 
   // Handle collection toggle and persist
   const handleToggleCollection = (collectionId: string) => {
-    toggleCollection(collectionId);
-    // Update settings with new selection
-    const newSelected = selectedCollections.includes(collectionId)
+    // Compute new selection before state updates
+    const isCurrentlySelected = selectedCollections.includes(collectionId);
+    const newSelected = isCurrentlySelected
       ? selectedCollections.filter((id) => id !== collectionId)
       : [...selectedCollections, collectionId];
+
+    // Update both states - they use the same derived value
+    toggleCollection(collectionId);
     updateSettings({ selectedCollections: newSelected });
   };
 

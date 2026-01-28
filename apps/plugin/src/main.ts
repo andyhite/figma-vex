@@ -13,6 +13,7 @@ import {
 } from './services';
 import { mergeWithDefaults } from './utils/optionDefaults';
 import { parseDescription } from './utils/descriptionParser';
+import { countTokens } from './utils/tokenHelpers';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
 import { toCustomCssName } from './utils/globMatcher';
 import { lookupByPath } from './utils/variableLookup';
@@ -97,8 +98,12 @@ async function syncVariableCodeSyntax(
       try {
         variable.setVariableCodeSyntax('WEB', cssVarName);
         synced++;
-      } catch {
-        // Silently skip on error (e.g., variable is read-only)
+      } catch (error) {
+        // Expected: read-only variables throw errors
+        // Log unexpected errors for debugging
+        if (error instanceof Error && !error.message.includes('read-only')) {
+          console.warn(`Unexpected error syncing ${variable.name}:`, error.message);
+        }
         skipped++;
       }
     } else {
@@ -128,8 +133,12 @@ async function resetVariableCodeSyntax(
       try {
         variable.removeVariableCodeSyntax('WEB');
         reset++;
-      } catch {
-        // Silently skip on error (e.g., variable is read-only)
+      } catch (error) {
+        // Expected: read-only variables throw errors
+        // Log unexpected errors for debugging
+        if (error instanceof Error && !error.message.includes('read-only')) {
+          console.warn(`Unexpected error resetting ${variable.name}:`, error.message);
+        }
         skipped++;
       }
     }
@@ -284,18 +293,6 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
       console.log('  - Export types:', payload.export_types);
 
       // Count tokens in each collection
-      const countTokens = (obj: Record<string, unknown>, depth = 0): number => {
-        let count = 0;
-        for (const value of Object.values(obj)) {
-          if (value && typeof value === 'object' && '$type' in value) {
-            count++;
-          } else if (value && typeof value === 'object') {
-            count += countTokens(value as Record<string, unknown>, depth + 1);
-          }
-        }
-        return count;
-      };
-
       for (const [name, group] of Object.entries(payload.document.collections)) {
         console.log(
           `  - Collection "${name}" token count:`,
@@ -421,7 +418,12 @@ async function handleMessage(msg: PluginMessage): Promise<void> {
     }
 
     default: {
-      console.warn('Unknown message type:', (msg as { type: string }).type);
+      const unknownType = (msg as { type: string }).type;
+      console.warn('Unknown message type:', unknownType);
+      postToUI({
+        type: 'error',
+        message: `Unknown message type: ${unknownType}`,
+      });
       break;
     }
   }

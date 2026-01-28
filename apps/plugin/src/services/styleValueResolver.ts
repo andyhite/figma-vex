@@ -193,9 +193,7 @@ export function resolveEffectValue(style: ResolvedEffectStyle, config: TokenConf
  */
 export function hasBoxShadow(style: ResolvedEffectStyle): boolean {
   const effects = style.effects as Effect[];
-  return effects.some(
-    (e) => e.visible && (e.type === 'DROP_SHADOW' || e.type === 'INNER_SHADOW')
-  );
+  return effects.some((e) => e.visible && (e.type === 'DROP_SHADOW' || e.type === 'INNER_SHADOW'));
 }
 
 /**
@@ -217,10 +215,7 @@ export function hasBackdropFilter(style: ResolvedEffectStyle): boolean {
 /**
  * Resolves a shadow effect to CSS
  */
-function resolveShadow(
-  effect: DropShadowEffect | InnerShadowEffect,
-  config: TokenConfig
-): string {
+function resolveShadow(effect: DropShadowEffect | InnerShadowEffect, config: TokenConfig): string {
   const x = effect.offset.x;
   const y = effect.offset.y;
   const blur = effect.radius;

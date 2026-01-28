@@ -34,13 +34,7 @@ describe('ConfirmModal', () => {
   });
 
   it('should use custom button labels', () => {
-    render(
-      <ConfirmModal
-        {...defaultProps}
-        confirmLabel="Delete"
-        cancelLabel="Keep"
-      />
-    );
+    render(<ConfirmModal {...defaultProps} confirmLabel="Delete" cancelLabel="Keep" />);
 
     expect(screen.getByRole('button', { name: 'Keep' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
@@ -78,7 +72,8 @@ describe('ConfirmModal', () => {
       <ConfirmModal {...defaultProps} variant="danger" confirmLabel="Delete" />
     );
 
-    const confirmButton = container.querySelector('button.bg-red-600');
+    // The danger variant uses bg-figma-error class from the Button component
+    const confirmButton = container.querySelector('button.bg-figma-error');
     expect(confirmButton).toBeInTheDocument();
   });
 

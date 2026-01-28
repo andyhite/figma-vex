@@ -16,6 +16,7 @@ import type {
 } from '@figma-vex/shared';
 import { parseDescription } from '../utils/descriptionParser';
 import { filterCollections, getCollectionVariablesByName } from '../utils/collectionUtils';
+import { countTokens } from '../utils/tokenHelpers';
 import { rgbToHex } from '../formatters/colorFormatter';
 import { resolvePaintValue, resolveTextProperties } from '../services/styleValueResolver';
 import { DEFAULT_CONFIG } from '@figma-vex/shared';
@@ -464,20 +465,9 @@ export async function serializeToDTCG(
     console.log(`[serializeToDTCG] Added ${addedCount} tokens to "${collection.name}"`);
 
     // Count actual tokens in the group for verification
-    const countTokensInGroup = (obj: Record<string, unknown>): number => {
-      let count = 0;
-      for (const value of Object.values(obj)) {
-        if (value && typeof value === 'object' && '$type' in value) {
-          count++;
-        } else if (value && typeof value === 'object') {
-          count += countTokensInGroup(value as Record<string, unknown>);
-        }
-      }
-      return count;
-    };
     console.log(
       `[serializeToDTCG] Actual token count in "${collection.name}":`,
-      countTokensInGroup(collectionGroup)
+      countTokens(collectionGroup as Record<string, unknown>)
     );
 
     document.collections[collection.name] = collectionGroup;

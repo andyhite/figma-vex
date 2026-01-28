@@ -37,8 +37,8 @@ export async function commitAndPush(
   // Commit changes
   await actionsExec.exec('git', ['commit', '-m', commitMessage]);
 
-  // Configure remote URL with token
-  const remoteUrl = `https://${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}.git`;
+  // Configure remote URL with token using x-access-token format for proper log redaction
+  const remoteUrl = `https://x-access-token:${token}@github.com/${github.context.repo.owner}/${github.context.repo.repo}.git`;
   await actionsExec.exec('git', ['remote', 'set-url', 'origin', remoteUrl]);
 
   // Push changes

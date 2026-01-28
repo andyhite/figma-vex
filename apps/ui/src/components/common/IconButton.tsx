@@ -8,7 +8,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export function IconButton({ icon, className = '', ...props }: IconButtonProps) {
   return (
     <button
-      className={`flex items-center justify-center rounded p-1.5 text-figma-text-secondary transition-colors hover:bg-figma-bg-secondary hover:text-figma-text active:bg-figma-bg-tertiary ${className}`}
+      className={`text-figma-text-secondary hover:bg-figma-bg-secondary hover:text-figma-text active:bg-figma-bg-tertiary flex items-center justify-center rounded p-1.5 transition-colors ${className}`}
       {...props}
     >
       {icon}

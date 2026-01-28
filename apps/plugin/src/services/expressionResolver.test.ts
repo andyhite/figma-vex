@@ -56,13 +56,7 @@ describe('resolveExpression', () => {
       ...DEFAULT_CONFIG,
       expression: "'spacing/base' * 2",
     };
-    const result = await resolveExpression(
-      config,
-      'mode-1',
-      mockVariables,
-      mockCollections,
-      ''
-    );
+    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
 
     expect(result.value).toBe(16);
     expect(result.unit).toBe('px');
@@ -75,20 +69,8 @@ describe('resolveExpression', () => {
       expression: "'spacing/base' * 2",
     };
 
-    const result1 = await resolveExpression(
-      config,
-      'mode-1',
-      mockVariables,
-      mockCollections,
-      ''
-    );
-    const result2 = await resolveExpression(
-      config,
-      'mode-2',
-      mockVariables,
-      mockCollections,
-      ''
-    );
+    const result1 = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
+    const result2 = await resolveExpression(config, 'mode-2', mockVariables, mockCollections, '');
 
     expect(result1.value).toBe(16); // 8 * 2
     expect(result2.value).toBe(12); // 6 * 2
@@ -99,13 +81,7 @@ describe('resolveExpression', () => {
       ...DEFAULT_CONFIG,
       expression: "'alias/spacing' * 2",
     };
-    const result = await resolveExpression(
-      config,
-      'mode-1',
-      mockVariables,
-      mockCollections,
-      ''
-    );
+    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
 
     expect(result.value).toBe(16); // alias resolves to 8, 8 * 2 = 16
   });
@@ -116,13 +92,7 @@ describe('resolveExpression', () => {
       unit: 'rem',
       expression: "'spacing/base' * 2",
     };
-    const result = await resolveExpression(
-      config,
-      'mode-1',
-      mockVariables,
-      mockCollections,
-      ''
-    );
+    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
 
     expect(result.value).toBe(16);
     expect(result.unit).toBe('rem');
@@ -133,13 +103,7 @@ describe('resolveExpression', () => {
       ...DEFAULT_CONFIG,
       expression: "'nonexistent' * 2",
     };
-    const result = await resolveExpression(
-      config,
-      'mode-1',
-      mockVariables,
-      mockCollections,
-      ''
-    );
+    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
 
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(result.warnings[0]).toContain('not found');
@@ -150,13 +114,7 @@ describe('resolveExpression', () => {
       ...DEFAULT_CONFIG,
       expression: "'colors/primary' * 2",
     };
-    const result = await resolveExpression(
-      config,
-      'mode-1',
-      mockVariables,
-      mockCollections,
-      ''
-    );
+    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
 
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(result.warnings[0]).toContain('not numeric');
@@ -168,26 +126,14 @@ describe('resolveExpression', () => {
       ...DEFAULT_CONFIG,
       expression: "'spacing/base' * 2",
     };
-    const result = await resolveExpression(
-      config,
-      'mode-1',
-      mockVariables,
-      mockCollections,
-      'ds'
-    );
+    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, 'ds');
 
     expect(result.value).toBe(16);
   });
 
   it('should return warning when no expression provided', async () => {
     const config: TokenConfig = { ...DEFAULT_CONFIG };
-    const result = await resolveExpression(
-      config,
-      'mode-1',
-      mockVariables,
-      mockCollections,
-      ''
-    );
+    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
 
     expect(result.value).toBeNull();
     expect(result.warnings).toContain('No expression provided');
@@ -200,13 +146,7 @@ describe('resolveExpression', () => {
       ...DEFAULT_CONFIG,
       expression: "'spacing/base' + 'typography/font-lg'",
     };
-    const result = await resolveExpression(
-      config,
-      'mode-1',
-      mockVariables,
-      mockCollections,
-      ''
-    );
+    const result = await resolveExpression(config, 'mode-1', mockVariables, mockCollections, '');
 
     expect(result.value).toBe(32); // 8 + 24
     expect(result.unit).toBe('px');

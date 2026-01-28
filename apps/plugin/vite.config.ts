@@ -1,12 +1,12 @@
-import { defineConfig } from 'vite'
-import { resolve } from 'path'
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
 export default defineConfig({
   resolve: {
     alias: {
       '@figma-vex/shared': resolve(__dirname, '../../packages/shared/src'),
-      '@plugin': resolve(__dirname, 'src')
-    }
+      '@plugin': resolve(__dirname, 'src'),
+    },
   },
   build: {
     outDir: '../../dist',
@@ -16,13 +16,13 @@ export default defineConfig({
       entry: 'src/main.ts',
       fileName: () => 'plugin.js',
       formats: ['iife'],
-      name: 'FigmaVexPlugin'
+      name: 'FigmaVexPlugin',
     },
     rollupOptions: {
       output: {
         inlineDynamicImports: true,
-        entryFileNames: 'plugin.js'
-      }
-    }
-  }
-})
+        entryFileNames: 'plugin.js',
+      },
+    },
+  },
+});

@@ -199,17 +199,29 @@ describe('lookupByPath', () => {
   });
 
   it('should find variable by full path with collection', () => {
-    const result = lookupByPath('Primitives/Spacing/base', mockVariablesForPath, mockCollectionsForPath);
+    const result = lookupByPath(
+      'Primitives/Spacing/base',
+      mockVariablesForPath,
+      mockCollectionsForPath
+    );
     expect(result?.variable.id).toBe('var-1');
   });
 
   it('should find variable in other collection by full path', () => {
-    const result = lookupByPath('Semantic/Spacing/base', mockVariablesForPath, mockCollectionsForPath);
+    const result = lookupByPath(
+      'Semantic/Spacing/base',
+      mockVariablesForPath,
+      mockCollectionsForPath
+    );
     expect(result?.variable.id).toBe('var-3');
   });
 
   it('should return null for non-existent path', () => {
-    const result = lookupByPath('Spacing/nonexistent', mockVariablesForPath, mockCollectionsForPath);
+    const result = lookupByPath(
+      'Spacing/nonexistent',
+      mockVariablesForPath,
+      mockCollectionsForPath
+    );
     expect(result).toBeNull();
   });
 

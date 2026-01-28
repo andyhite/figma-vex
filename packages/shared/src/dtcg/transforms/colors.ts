@@ -14,10 +14,10 @@ interface RGBA {
 function hexToRgb(hex: string): RGBA | null {
   // Remove # if present
   const cleanHex = hex.replace('#', '');
-  
+
   // Handle 3, 6, or 8 character hex
   let r: number, g: number, b: number, a: number | undefined;
-  
+
   if (cleanHex.length === 3) {
     r = parseInt(cleanHex[0] + cleanHex[0], 16) / 255;
     g = parseInt(cleanHex[1] + cleanHex[1], 16) / 255;
@@ -34,7 +34,7 @@ function hexToRgb(hex: string): RGBA | null {
   } else {
     return null;
   }
-  
+
   return { r, g, b, a };
 }
 

@@ -15,7 +15,7 @@ interface FormGroupProps {
 export function FormGroup({ children, label, className = '' }: FormGroupProps) {
   return (
     <div className={`mb-4 ${className}`}>
-      {label && <label className="mb-2 block text-xs font-medium text-figma-text">{label}</label>}
+      {label && <label className="text-figma-text mb-2 block text-xs font-medium">{label}</label>}
       <div className="space-y-2">{children}</div>
     </div>
   );

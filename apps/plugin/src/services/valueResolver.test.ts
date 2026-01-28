@@ -253,24 +253,12 @@ describe('resolveValue', () => {
     });
 
     it('should handle very large float value', async () => {
-      const result = await resolveValue(
-        999999,
-        'mode-1',
-        mockVariables,
-        'FLOAT',
-        DEFAULT_CONFIG
-      );
+      const result = await resolveValue(999999, 'mode-1', mockVariables, 'FLOAT', DEFAULT_CONFIG);
       expect(result).toBe('999999px');
     });
 
     it('should handle very small float value', async () => {
-      const result = await resolveValue(
-        0.0001,
-        'mode-1',
-        mockVariables,
-        'FLOAT',
-        DEFAULT_CONFIG
-      );
+      const result = await resolveValue(0.0001, 'mode-1', mockVariables, 'FLOAT', DEFAULT_CONFIG);
       expect(result).toBe('0.0001px');
     });
 

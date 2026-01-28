@@ -27,7 +27,9 @@ export function validateFilePath(filePath: string): string {
   const resolved = path.resolve(workspace, filePath);
 
   // Ensure resolved path is within workspace (prevents ../ traversal)
-  if (!resolved.startsWith(workspace + path.sep) && resolved !== workspace) {
+  // Use path.relative() for robust cross-platform validation
+  const relative = path.relative(workspace, resolved);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
     throw new Error(`Path traversal detected: ${filePath} resolves outside workspace`);
   }
 
