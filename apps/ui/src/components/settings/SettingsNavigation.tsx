@@ -14,7 +14,7 @@ const TABS = [
 
 export function SettingsNavigation({ activeTab, onTabChange }: SettingsNavigationProps) {
   return (
-    <div className="border-figma-border mr-4 w-20 flex-shrink-0 border-r pr-2">
+    <div className="border-figma-border mr-4 w-24 flex-shrink-0 border-r pr-2">
       <nav className="space-y-1">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
