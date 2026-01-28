@@ -478,11 +478,15 @@ export function NameFormatRules({
               )
             ).map(([collectionName, names]) => (
               <optgroup key={collectionName} label={collectionName}>
-                {names.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
+                {names.map((name) => {
+                  // Remove collection name prefix since it's already shown in the group
+                  const displayName = name.split('/').slice(1).join('/') || name;
+                  return (
+                    <option key={name} value={name}>
+                      {displayName}
+                    </option>
+                  );
+                })}
               </optgroup>
             ))}
           </select>

@@ -3,6 +3,7 @@ import {
   filterCollections,
   getCollectionVariables,
   getCollectionVariablesByName,
+  naturalCompare,
 } from './collectionUtils';
 
 const mockCollections = [
@@ -17,6 +18,51 @@ const mockVariables = [
   { id: 'var-3', name: 'colorBackground', variableCollectionId: 'col-1' },
   { id: 'var-4', name: 'spacing/sm', variableCollectionId: 'col-2' },
 ] as Variable[];
+
+describe('naturalCompare', () => {
+  it('should sort numeric values correctly', () => {
+    const values = ['10', '2', '1', '20', '3'];
+    const sorted = values.sort(naturalCompare);
+    expect(sorted).toEqual(['1', '2', '3', '10', '20']);
+  });
+
+  it('should sort mixed numeric and text correctly', () => {
+    const values = ['item10', 'item2', 'item1', 'item20'];
+    const sorted = values.sort(naturalCompare);
+    expect(sorted).toEqual(['item1', 'item2', 'item10', 'item20']);
+  });
+
+  it('should handle paths with numeric segments', () => {
+    const values = ['spacing/10', 'spacing/2', 'spacing/1', 'spacing/20'];
+    const sorted = values.sort(naturalCompare);
+    expect(sorted).toEqual(['spacing/1', 'spacing/2', 'spacing/10', 'spacing/20']);
+  });
+
+  it('should handle multiple numeric segments', () => {
+    const values = ['v2.10', 'v2.2', 'v10.1', 'v2.1'];
+    const sorted = values.sort(naturalCompare);
+    expect(sorted).toEqual(['v2.1', 'v2.2', 'v2.10', 'v10.1']);
+  });
+
+  it('should handle pure text correctly', () => {
+    const values = ['banana', 'apple', 'cherry'];
+    const sorted = values.sort(naturalCompare);
+    expect(sorted).toEqual(['apple', 'banana', 'cherry']);
+  });
+
+  it('should handle empty strings', () => {
+    const values = ['a', '', 'b'];
+    const sorted = values.sort(naturalCompare);
+    expect(sorted).toEqual(['', 'a', 'b']);
+  });
+
+  it('should handle leading zeros', () => {
+    const values = ['file001', 'file01', 'file1', 'file10'];
+    const sorted = values.sort(naturalCompare);
+    // Numbers with same value (1) are sorted by their string representation
+    expect(sorted).toEqual(['file001', 'file01', 'file1', 'file10']);
+  });
+});
 
 describe('filterCollections', () => {
   it('should return all collections when no filter specified', () => {
@@ -228,14 +274,29 @@ describe('edge cases', () => {
       ] as Variable[];
       const result = getCollectionVariablesByName(varsWithCase, 'col-1');
       expect(result).toHaveLength(3);
-      // localeCompare is case-insensitive by default, so sorting may vary by locale
-      // Just verify all three are present and sorted (order may vary by locale)
+      // naturalCompare uses localeCompare for text segments, so case behavior is preserved
       const names = result.map((v) => v.name);
       expect(names).toContain('COLOR/PRIMARY');
       expect(names).toContain('Color/Primary');
       expect(names).toContain('color/primary');
-      // Verify they are sorted (even if case-insensitive)
-      expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+      // Verify they are sorted using naturalCompare
+      expect(names).toEqual([...names].sort(naturalCompare));
+    });
+
+    it('should sort numeric variable names correctly', () => {
+      const varsWithNumbers = [
+        { id: 'var-1', name: 'spacing/10', variableCollectionId: 'col-1' },
+        { id: 'var-2', name: 'spacing/2', variableCollectionId: 'col-1' },
+        { id: 'var-3', name: 'spacing/1', variableCollectionId: 'col-1' },
+        { id: 'var-4', name: 'spacing/20', variableCollectionId: 'col-1' },
+      ] as Variable[];
+      const result = getCollectionVariablesByName(varsWithNumbers, 'col-1');
+      expect(result.map((v) => v.name)).toEqual([
+        'spacing/1',
+        'spacing/2',
+        'spacing/10',
+        'spacing/20',
+      ]);
     });
   });
 });
